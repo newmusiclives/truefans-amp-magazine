@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Social Posts — TrueFans AMP{% endblock %}
+{% block nav_growth %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Social Posts</h2>
+    <p>AI-generated social media posts for promoting issues.</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <span class="card-title">Generate Posts</span>
+    </div>
+    <form method="post" action="/growth/social/generate">
+        <div style="display: flex; gap: 12px; align-items: flex-end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Issue ID</label>
+                <input name="issue_id" type="number" required placeholder="Issue ID" style="width: 120px;">
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Generate Social Posts</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Posts</span>
+    </div>
+    {% if posts %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Platform</th>
+                    <th>Content</th>
+                    <th>Status</th>
+                    <th>Issue</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td><span class="badge" style="background: var(--blue-bg); color: var(--blue);">{{ post.platform }}</span></td>
+                    <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ post.content[:100] }}</td>
+                    <td><span class="badge badge-{{ post.status }}">{{ post.status }}</span></td>
+                    <td>{{ post.issue_id or '—' }}</td>
+                    <td style="color: var(--text-dim);">{{ post.created_at[:10] if post.created_at else '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#128172;</div>
+        <h3>No social posts yet</h3>
+        <p>Generate posts for an issue above.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

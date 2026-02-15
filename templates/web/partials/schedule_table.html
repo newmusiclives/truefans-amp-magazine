@@ -1,0 +1,61 @@
+{% if message is defined and message %}
+<div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
+{% endif %}
+
+<div class="card" id="schedule-table">
+    <div class="card-header">
+        <span class="card-title">Configured Send Days ({{ schedules | length }})</span>
+    </div>
+    {% if schedules %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Day</th><th>Label</th><th>Sections</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for s in schedules %}
+                <tr>
+                    <td><span class="badge badge-core">{{ s.day_of_week | title }}</span></td>
+                    <td>{{ s.label or '—' }}</td>
+                    <td style="font-family:var(--font-mono);font-size:12px">{{ s.section_slugs or 'All active' }}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                hx-post="/schedule/remove-day/{{ s.day_of_week }}"
+                                hx-target="#schedule-table"
+                                hx-swap="outerHTML">Remove</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);padding:8px 0">No send days configured. Add one above to enable multi-frequency publishing.</p>
+    {% endif %}
+</div>
+
+{% if upcoming is defined and upcoming %}
+<div class="card" style="margin-top:16px">
+    <div class="card-header">
+        <span class="card-title">Upcoming Issues</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>#</th><th>Title</th><th>Week</th><th>Day</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for i in upcoming %}
+                <tr>
+                    <td>{{ i.issue_number }}</td>
+                    <td>{{ i.title }}</td>
+                    <td>{{ i.week_id or '—' }}</td>
+                    <td>{% if i.send_day %}<span class="badge badge-core">{{ i.send_day | title }}</span>{% else %}—{% endif %}</td>
+                    <td><span class="badge badge-{{ i.status }}">{{ i.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

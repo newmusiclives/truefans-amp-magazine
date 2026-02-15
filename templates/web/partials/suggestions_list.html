@@ -1,0 +1,39 @@
+{% if message is defined and message %}
+<div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
+{% endif %}
+
+<div id="suggestions-list">
+{% if suggestions %}
+    {% for s in suggestions %}
+    <div class="suggestion-card">
+        <div class="suggestion-header">
+            <span class="suggestion-name">{{ s.display_name }}</span>
+            <span class="badge badge-suggested">Suggested</span>
+        </div>
+        <div class="suggestion-meta">
+            <span style="font-family:var(--font-mono);font-size:12px">{{ s.slug }}</span>
+            <span class="wc-target">{{ s.word_count_label }} (~{{ s.target_word_count }}w)</span>
+        </div>
+        {% if s.suggested_reason %}
+        <p class="suggestion-reason">{{ s.suggested_reason }}</p>
+        {% endif %}
+        <div class="actions" style="margin-top:10px">
+            <form style="display:inline" hx-post="/sections/accept/{{ s.slug }}" hx-target="#suggestions-list" hx-swap="outerHTML">
+                <input type="hidden" name="as_type" value="rotating">
+                <button type="submit" class="btn btn-success btn-sm">Accept as Rotating</button>
+            </form>
+            <form style="display:inline" hx-post="/sections/accept/{{ s.slug }}" hx-target="#suggestions-list" hx-swap="outerHTML">
+                <input type="hidden" name="as_type" value="core">
+                <button type="submit" class="btn btn-primary btn-sm">Accept as Core</button>
+            </form>
+            <button class="btn btn-danger btn-sm"
+                    hx-post="/sections/dismiss/{{ s.slug }}"
+                    hx-target="#suggestions-list"
+                    hx-swap="outerHTML">Dismiss</button>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p style="color:var(--text-dim);padding:12px 0">No suggestions yet. Click "Suggest Sections" to generate ideas.</p>
+{% endif %}
+</div>

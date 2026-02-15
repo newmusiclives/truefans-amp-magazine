@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ newsletter_name }} — Issue #{{ issue_number }}</title>
+    <style>
+        {{ css }}
+    </style>
+</head>
+<body>
+    <div class="newsletter-wrapper">
+        <div class="header">
+            <h1>{{ newsletter_name }}</h1>
+            <div class="tagline">{{ tagline }}</div>
+            {% if title %}
+            <div style="margin-top: 10px; font-size: 14px; color: #444;">Issue #{{ issue_number }}{% if title %} — {{ title }}{% endif %}</div>
+            {% endif %}
+        </div>
+
+        {% for section in sections %}
+        {{ section.html }}
+        {% endfor %}
+
+        <div class="footer">
+            <p>&copy; {{ newsletter_name }} | You received this because you subscribed.</p>
+            <p><a href="{{ unsubscribe_url | default('#') }}">Unsubscribe</a></p>
+        </div>
+    </div>
+</body>
+</html>

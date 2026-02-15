@@ -1,0 +1,60 @@
+<div class="card" {% if not draft %}style="opacity:0.5"{% endif %}>
+    <div class="card-header">
+        <span class="card-title" style="color:var(--accent)">{{ section.display_name }}</span>
+        {% if draft %}
+        <div class="actions">
+            <span class="badge badge-{{ draft.status }}">{{ draft.status }}</span>
+            <span style="color:var(--text-muted);font-size:12px">v{{ draft.version }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if draft %}
+    {% set word_count = draft.content.split()|length %}
+    {% set target = section.target_word_count|default(300) %}
+    <div class="wc-indicator" style="margin-bottom:12px">
+        <span class="wc-count">{{ word_count }} words</span>
+        <span class="wc-target">target: ~{{ target }}w</span>
+        {% if word_count < (target * 0.75) %}
+        <span class="badge badge-wc-under">Under</span>
+        {% elif word_count > (target * 1.25) %}
+        <span class="badge badge-wc-over">Over</span>
+        {% else %}
+        <span class="badge badge-wc-target">On Target</span>
+        {% endif %}
+    </div>
+
+    <div class="content-preview" style="margin-bottom:16px;max-height:200px;overflow-y:auto">
+        {{ draft.content | markdown | safe }}
+    </div>
+
+    <div class="actions">
+        {% if draft.status != 'approved' %}
+        <button class="btn btn-success btn-sm"
+                hx-post="/review/approve/{{ section.slug }}"
+                hx-target="#review-{{ section.slug }}"
+                hx-swap="innerHTML">
+            Approve
+        </button>
+        {% endif %}
+
+        {% if draft.status != 'rejected' %}
+        <button class="btn btn-danger btn-sm"
+                hx-post="/review/reject/{{ section.slug }}"
+                hx-target="#review-{{ section.slug }}"
+                hx-swap="innerHTML"
+                hx-vals='{"notes": ""}'>
+            Reject
+        </button>
+        {% endif %}
+
+        <a href="/drafts/{{ section.slug }}" class="btn btn-ghost btn-sm">Edit</a>
+    </div>
+
+    {% if draft.reviewer_notes %}
+    <p style="color:var(--text-dim);font-size:13px;margin-top:8px">Notes: {{ draft.reviewer_notes }}</p>
+    {% endif %}
+    {% else %}
+    <p style="color:var(--text-dim)">No draft generated.</p>
+    {% endif %}
+</div>

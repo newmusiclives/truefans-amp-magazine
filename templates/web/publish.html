@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Publish — WEEKLYAMP{% endblock %}
+{% block nav_publish %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Publish</h2>
+    <p>{% if issue %}Issue #{{ issue.issue_number }} — Assemble and send{% else %}No current issue{% endif %}</p>
+</div>
+
+{% if not issue %}
+<div class="empty-state">
+    <div class="icon">&#9993;</div>
+    <h3>No issue to publish</h3>
+    <p>Start from the <a href="/drafts" style="color:var(--accent)">Drafts page</a>.</p>
+</div>
+{% else %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Approved Sections</div>
+        <div class="value green">{{ approved }}/{{ total }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Issue Status</div>
+        <div class="value"><span class="badge badge-{{ issue.status }}">{{ issue.status }}</span></div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Beehiiv</div>
+        <div class="value" style="font-size:14px">
+            {% if has_beehiiv %}
+            <span class="badge badge-active">Connected</span>
+            {% else %}
+            <span class="badge badge-inactive">Not configured</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Actions</span>
+    </div>
+    <div id="publish-alerts"></div>
+    <div class="actions" style="margin-bottom:16px">
+        <button class="btn btn-primary"
+                hx-post="/publish/assemble"
+                hx-target="#publish-alerts"
+                hx-indicator="#assemble-spinner">
+            <span class="spinner htmx-indicator" id="assemble-spinner"></span>
+            Assemble Newsletter
+        </button>
+        {% if assembled %}
+        <button class="btn btn-success"
+                hx-post="/publish/push"
+                hx-target="#publish-alerts"
+                hx-confirm="Push to Beehiiv as draft?"
+                hx-indicator="#push-spinner"
+                {% if not has_beehiiv %}disabled{% endif %}>
+            <span class="spinner htmx-indicator" id="push-spinner"></span>
+            Push to Beehiiv
+        </button>
+        {% endif %}
+    </div>
+    {% if approved < total %}
+    <p style="color:var(--yellow);font-size:13px">Note: Only {{ approved }} of {{ total }} sections are approved. Unapproved sections will be excluded.</p>
+    {% endif %}
+</div>
+
+<!-- Preview -->
+{% if assembled %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Newsletter Preview</span>
+        <span style="color:var(--text-muted);font-size:12px">{{ assembled.html_content | length }} chars HTML</span>
+    </div>
+    <iframe src="/publish/preview" class="preview-frame"></iframe>
+</div>
+{% endif %}
+
+{% endif %}
+{% endblock %}

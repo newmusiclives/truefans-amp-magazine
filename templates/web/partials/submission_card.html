@@ -1,0 +1,13 @@
+<div class="section-card">
+    <div class="section-name">{{ submission.artist_name }}</div>
+    <div style="margin-bottom: 8px;">
+        <strong>{{ submission.title or '(untitled)' }}</strong>
+    </div>
+    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <span class="badge badge-{{ submission.review_state }}">{{ submission.review_state }}</span>
+        <span class="badge" style="background: var(--blue-bg); color: var(--blue);">{{ submission.submission_type|replace('_', ' ') }}</span>
+    </div>
+    <div style="font-size: 12px; color: var(--text-dim);">
+        {{ submission.intake_method }} | {{ submission.created_at[:10] if submission.created_at else '' }}
+    </div>
+</div>

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Subscribers — WEEKLYAMP{% endblock %}
+{% block nav_subscribers %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Subscribers</h2>
+    <p>Manage your audience and track engagement</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Active Subscribers</div>
+        <div class="value green">{{ active }}</div>
+    </div>
+    {% if engagement %}
+    <div class="stat-card">
+        <div class="label">Last Open Rate</div>
+        <div class="value blue">{{ "%.1f%%" | format(engagement.open_rate * 100) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Last Click Rate</div>
+        <div class="value">{{ "%.1f%%" | format(engagement.click_rate * 100) }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Beehiiv Sync</span>
+        <button class="btn btn-primary btn-sm"
+                hx-post="/subscribers/sync"
+                hx-target="#sync-results"
+                hx-indicator="#sync-spinner"
+                {% if not has_beehiiv %}disabled{% endif %}>
+            <span class="spinner htmx-indicator" id="sync-spinner"></span>
+            Sync from Beehiiv
+        </button>
+    </div>
+    <div id="sync-results">
+        {% if not has_beehiiv %}
+        <p style="color:var(--text-dim);font-size:13px">Set BEEHIIV_API_KEY and BEEHIIV_PUBLICATION_ID in .env to enable sync.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if engagement %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Latest Issue Engagement</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Sends</td><td>{{ engagement.sends }}</td></tr>
+                <tr><td>Opens</td><td>{{ engagement.opens }}</td></tr>
+                <tr><td>Clicks</td><td>{{ engagement.clicks }}</td></tr>
+                <tr><td>Open Rate</td><td>{{ "%.1f%%" | format(engagement.open_rate * 100) }}</td></tr>
+                <tr><td>Click Rate</td><td>{{ "%.1f%%" | format(engagement.click_rate * 100) }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

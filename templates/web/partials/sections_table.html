@@ -1,0 +1,72 @@
+{% if message is defined and message %}
+<div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
+{% endif %}
+
+<div class="card" id="sections-table">
+    <div class="card-header">
+        <span class="card-title">All Sections ({{ sections | length }})</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Slug</th>
+                    <th>Display Name</th>
+                    <th>Type</th>
+                    <th>Word Count</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sec in sections %}
+                {% if sec.section_type != 'suggested' %}
+                <tr>
+                    <td>{{ sec.sort_order }}</td>
+                    <td style="font-family:var(--font-mono);font-size:13px">{{ sec.slug }}</td>
+                    <td>{{ sec.display_name }}</td>
+                    <td>
+                        <select class="select-sm"
+                                hx-post="/sections/update-type/{{ sec.slug }}"
+                                hx-target="#sections-table"
+                                hx-swap="outerHTML"
+                                name="section_type">
+                            <option value="core" {% if sec.section_type == 'core' %}selected{% endif %}>Core</option>
+                            <option value="rotating" {% if sec.section_type == 'rotating' %}selected{% endif %}>Rotating</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select class="select-sm"
+                                hx-post="/sections/update-word-count/{{ sec.slug }}"
+                                hx-target="#sections-table"
+                                hx-swap="outerHTML"
+                                name="word_count_label">
+                            <option value="short" {% if sec.word_count_label == 'short' %}selected{% endif %}>Short</option>
+                            <option value="medium" {% if sec.word_count_label == 'medium' %}selected{% endif %}>Medium</option>
+                            <option value="long" {% if sec.word_count_label == 'long' %}selected{% endif %}>Long</option>
+                        </select>
+                        <span class="wc-target">~{{ sec.target_word_count }}w</span>
+                    </td>
+                    <td>
+                        {% if sec.is_active %}
+                        <span class="badge badge-active">Active</span>
+                        {% else %}
+                        <span class="badge badge-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-ghost btn-sm"
+                                hx-post="/sections/toggle/{{ sec.slug }}"
+                                hx-target="#sections-table"
+                                hx-swap="outerHTML">
+                            {% if sec.is_active %}Disable{% else %}Enable{% endif %}
+                        </button>
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

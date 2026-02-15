@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}AI Staff — TrueFans AMP{% endblock %}
+{% block nav_agents %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>AI Staff</h2>
+    <p>Manage your AI team — trigger tasks, review outputs, run autonomous cycles.</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <span class="card-title">Quick Actions</span>
+    </div>
+    <div class="actions">
+        <form method="post" action="/agents/run-cycle" style="display: inline;">
+            <input type="hidden" name="issue_id" value="0">
+            <button class="btn btn-primary" type="submit">Run Full Cycle</button>
+        </form>
+    </div>
+</div>
+
+{% if pending_reviews %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <span class="card-title">Pending Reviews ({{ pending_reviews|length }})</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Agent</th>
+                    <th>Task</th>
+                    <th>Section</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in pending_reviews %}
+                <tr>
+                    <td>{{ task.id }}</td>
+                    <td>{{ task.agent_name }}</td>
+                    <td>{{ task.task_type }}</td>
+                    <td>{{ task.section_slug or '—' }}</td>
+                    <td class="actions">
+                        <form method="post" action="/agents/tasks/{{ task.id }}/approve" style="display:inline;">
+                            <button class="btn btn-success btn-sm" type="submit">Approve</button>
+                        </form>
+                        <form method="post" action="/agents/tasks/{{ task.id }}/reject" style="display:inline;">
+                            <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="card-title" style="margin-bottom: 16px;">Staff Directory</div>
+<div class="sections-grid">
+    {% for agent in staff %}
+    <div class="section-card">
+        <div class="section-name">{{ agent.name }}</div>
+        <div style="margin-bottom: 8px;">
+            <span class="badge badge-{{ agent.agent_type }}">{{ agent.agent_type|replace('_', ' ') }}</span>
+            <span class="badge" style="background: var(--teal-bg, rgba(20,184,166,0.12)); color: var(--teal, #14b8a6);">{{ agent.autonomy_level }}</span>
+        </div>
+        <div class="meta" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+            <span>Active: <strong>{{ agent.active_tasks }}</strong> | Review: <strong>{{ agent.review_tasks }}</strong></span>
+            <span>Complete: <strong>{{ agent.completed_tasks }}</strong> | Failed: <strong>{{ agent.failed_tasks }}</strong></span>
+        </div>
+        <div style="margin-top: 12px;">
+            <a href="/agents/{{ agent.id }}" class="btn btn-ghost btn-sm">View Details</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not staff %}
+<div class="empty-state">
+    <div class="icon">&#129302;</div>
+    <h3>No agents yet</h3>
+    <p>Agents are auto-created when you run tasks. Try "Run Full Cycle" above.</p>
+</div>
+{% endif %}
+{% endblock %}

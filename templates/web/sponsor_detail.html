@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}{{ sponsor.name }} — Sponsors — WEEKLYAMP{% endblock %}
+{% block nav_sponsors %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ sponsor.name }}</h2>
+    <p><a href="/sponsors" style="color:var(--accent)">&larr; Back to Sponsors</a></p>
+</div>
+
+{% if message is defined and message %}
+<div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
+{% endif %}
+
+<!-- Edit sponsor form -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Sponsor Details</span>
+    </div>
+    <form hx-post="/sponsors/{{ sponsor.id }}/update" hx-target="body" hx-swap="innerHTML">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" name="name" value="{{ sponsor.name }}" required>
+            </div>
+            <div class="form-group">
+                <label>Contact Name</label>
+                <input type="text" name="contact_name" value="{{ sponsor.contact_name }}">
+            </div>
+            <div class="form-group">
+                <label>Contact Email</label>
+                <input type="email" name="contact_email" value="{{ sponsor.contact_email }}">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+            <div class="form-group">
+                <label>Website</label>
+                <input type="text" name="website" value="{{ sponsor.website }}">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" name="notes" value="{{ sponsor.notes }}">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+</div>
+
+<!-- New booking form -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Book Into Issue</span>
+    </div>
+    <form hx-post="/sponsors/book" hx-target="body" hx-swap="innerHTML"
+          style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:12px;align-items:end">
+        <input type="hidden" name="sponsor_id" value="{{ sponsor.id }}">
+        <div class="form-group">
+            <label>Issue</label>
+            <select name="issue_id">
+                {% for i in upcoming_issues %}
+                <option value="{{ i.id }}">#{{ i.issue_number }} — {{ i.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Position</label>
+            <select name="position">
+                <option value="top">Top</option>
+                <option value="mid" selected>Mid</option>
+                <option value="bottom">Bottom</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Rate (cents)</label>
+            <input type="number" name="rate_cents" value="0" style="width:120px">
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <input type="text" name="notes" placeholder="Optional">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Book</button>
+    </form>
+</div>
+
+<!-- Booking history -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Booking History ({{ bookings | length }})</span>
+    </div>
+    {% if bookings %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Issue</th><th>Position</th><th>Status</th><th>Rate</th><th>Booked</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for b in bookings %}
+                <tr>
+                    <td>{% if b.issue_number %}#{{ b.issue_number }}{% else %}—{% endif %}</td>
+                    <td><span class="badge badge-sponsor-{{ b.position }}">{{ b.position | title }}</span></td>
+                    <td><span class="badge badge-{{ b.status }}">{{ b.status }}</span></td>
+                    <td>${{ "%.2f" | format(b.rate_cents / 100) }}</td>
+                    <td style="font-size:12px;color:var(--text-dim)">{{ b.booked_at }}</td>
+                    <td>
+                        <form style="display:inline" hx-post="/sponsors/booking/{{ b.id }}/status">
+                            <select name="status" class="select-sm" onchange="this.form.requestSubmit()">
+                                {% for st in statuses %}
+                                <option value="{{ st }}" {% if b.status == st %}selected{% endif %}>{{ st | title }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);padding:8px 0">No bookings yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

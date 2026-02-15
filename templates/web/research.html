@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Research — WEEKLYAMP{% endblock %}
+{% block nav_research %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Research</h2>
+    <p>Discover content and add editorial topics for the next issue</p>
+</div>
+
+<!-- Scrape action -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Content Sources ({{ sources | length }})</span>
+        <div class="actions">
+            <button class="btn btn-primary btn-sm"
+                    hx-post="/research/scrape"
+                    hx-target="#scrape-results"
+                    hx-indicator="#scrape-spinner">
+                <span class="spinner htmx-indicator" id="scrape-spinner"></span>
+                Scrape All Sources
+            </button>
+        </div>
+    </div>
+    <div id="scrape-results"></div>
+
+    {% if sources %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Name</th><th>Type</th><th>Target Sections</th><th>Last Fetched</th></tr>
+            </thead>
+            <tbody>
+                {% for s in sources %}
+                <tr>
+                    <td>{{ s.name }}</td>
+                    <td><span class="badge badge-{{ 'active' if s.source_type == 'rss' else 'revised' }}">{{ s.source_type }}</span></td>
+                    <td style="color:var(--text-dim);font-size:13px">{{ s.target_sections }}</td>
+                    <td style="color:var(--text-muted);font-size:13px">{{ s.last_fetched or 'Never' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);padding:12px 0">No sources configured yet. Run <code>weeklyamp research scrape</code> to sync from sources.yaml.</p>
+    {% endif %}
+</div>
+
+<!-- Add editorial topic -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Add Editorial Topic</span>
+    </div>
+    <form hx-post="/research/add-topic" hx-target="#editorial-list" hx-swap="outerHTML"
+          style="display:grid;grid-template-columns:1fr 2fr 2fr auto;gap:12px;align-items:end">
+        <div class="form-group">
+            <label>Section</label>
+            <select name="section_slug">
+                {% for sec in sections %}
+                <option value="{{ sec.slug }}">{{ sec.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Topic</label>
+            <input type="text" name="topic" placeholder="e.g. Tom Petty" required>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <input type="text" name="notes" placeholder="Focus on...">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Add</button>
+    </form>
+</div>
+
+<!-- Editorial inputs -->
+<div class="card" id="editorial-list">
+    <div class="card-header">
+        <span class="card-title">Editorial Topics ({{ editorial | length }})</span>
+    </div>
+    {% if editorial %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Section</th><th>Topic</th><th>Notes</th></tr></thead>
+            <tbody>
+                {% for e in editorial %}
+                <tr>
+                    <td><span class="badge badge-active">{{ e.section_slug }}</span></td>
+                    <td>{{ e.topic }}</td>
+                    <td style="color:var(--text-dim)">{{ e.notes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);padding:8px 0">No editorial topics added for this issue yet.</p>
+    {% endif %}
+</div>
+
+<!-- Discovered content -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Discovered Content ({{ content | length }})</span>
+    </div>
+    {% if content %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Title</th><th>Matched Sections</th><th>Score</th></tr></thead>
+            <tbody>
+                {% for c in content %}
+                <tr>
+                    <td>
+                        {% if c.url %}<a href="{{ c.url }}" target="_blank" style="color:var(--blue);text-decoration:none">{{ c.title | truncate_words(10) }}</a>
+                        {% else %}{{ c.title | truncate_words(10) }}{% endif %}
+                    </td>
+                    <td style="color:var(--text-dim);font-size:13px">{{ c.matched_sections }}</td>
+                    <td>{{ "%.2f" | format(c.relevance_score) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#128270;</div>
+        <h3>No content yet</h3>
+        <p>Click "Scrape All Sources" to fetch content from RSS feeds and blogs.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

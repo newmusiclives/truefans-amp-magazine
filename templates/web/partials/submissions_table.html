@@ -1,0 +1,32 @@
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Artist</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Method</th>
+                <th>State</th>
+                <th>Date</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+            <tr>
+                <td><strong>{{ sub.artist_name }}</strong></td>
+                <td>{{ sub.title or '—' }}</td>
+                <td>{{ sub.submission_type|replace('_', ' ')|title }}</td>
+                <td>{{ sub.intake_method }}</td>
+                <td><span class="badge badge-{{ sub.review_state }}">{{ sub.review_state }}</span></td>
+                <td style="color: var(--text-dim);">{{ sub.created_at[:10] if sub.created_at else '—' }}</td>
+                <td><a href="/submissions/{{ sub.id }}" class="btn btn-ghost btn-sm">View</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

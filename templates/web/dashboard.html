@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — WEEKLYAMP{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block pipeline %}
+<div class="pipeline">
+    <a href="/research" class="pipeline-step {% if issue and issue.status == 'planning' %}active{% endif %}">1. Research</a>
+    <a href="/drafts" class="pipeline-step {% if issue and issue.status == 'drafting' %}active{% endif %}">2. Draft</a>
+    <a href="/review" class="pipeline-step {% if issue and issue.status == 'reviewing' %}active{% endif %}">3. Review</a>
+    <a href="/publish" class="pipeline-step {% if issue and issue.status in ('assembled', 'published') %}active{% endif %}">4. Publish</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <p>{{ config.newsletter.name }} — {{ config.newsletter.tagline }}</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Current Issue</div>
+        <div class="value gold">{% if issue %}#{{ issue.issue_number }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Status</div>
+        <div class="value">
+            {% if issue %}
+            <span class="badge badge-{{ issue.status }}">{{ issue.status }}</span>
+            {% else %}
+            <span style="font-size:14px;color:var(--text-dim)">No issue yet</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Drafts Approved</div>
+        <div class="value green">{{ stats.approved }}/{{ stats.total }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Content Items</div>
+        <div class="value blue">{{ counts.raw_content }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Sources</div>
+        <div class="value">{{ counts.sources }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Subscribers</div>
+        <div class="value">{{ counts.subscribers }}</div>
+    </div>
+</div>
+
+<!-- Sponsor stats + upcoming sends -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+    {% if sponsor_stats %}
+    <div class="stat-card">
+        <div class="label">Sponsor Slots (Current Issue)</div>
+        <div class="value">
+            <span class="gold">{{ sponsor_stats.booked }}</span>
+            <span style="font-size:14px;color:var(--text-dim)">booked</span>
+            /
+            <span class="green">{{ sponsor_stats.open }}</span>
+            <span style="font-size:14px;color:var(--text-dim)">open</span>
+        </div>
+    </div>
+    {% endif %}
+    {% if upcoming_sends %}
+    <div class="card" style="margin-bottom:0">
+        <div class="card-header">
+            <span class="card-title">Upcoming Sends</span>
+        </div>
+        <div class="upcoming-mini">
+            {% for u in upcoming_sends %}
+            <div class="upcoming-item">
+                <span class="badge badge-core">{{ u.send_day | default('—') | title }}</span>
+                <span>#{{ u.issue_number }} {{ u.title }}</span>
+                <span class="badge badge-{{ u.status }}">{{ u.status }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Section status cards -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Newsletter Sections</span>
+        {% if not issue %}
+        <a href="/drafts" class="btn btn-primary btn-sm">Start New Issue</a>
+        {% endif %}
+    </div>
+
+    <div class="sections-grid">
+        {% for sec in sections %}
+        {% set d = draft_map.get(sec.slug) %}
+        <div class="section-card">
+            <div class="section-name">
+                {{ sec.display_name }}
+                {% if sec.section_type == 'rotating' %}
+                <span class="badge badge-rotating" style="font-size:9px;margin-left:4px">Rotating</span>
+                {% endif %}
+            </div>
+            {% if d %}
+            <div class="draft-preview">{{ d.content | truncate_words(25) }}</div>
+            <div class="meta">
+                <span class="badge badge-{{ d.status }}">{{ d.status }}</span>
+                <span style="color:var(--text-muted)">v{{ d.version }} &middot; {{ d.ai_model }}</span>
+            </div>
+            <div class="wc-indicator" style="margin-top:6px">
+                {% set wc = d.content.split()|length %}
+                <span class="wc-count">{{ wc }}w</span>
+                <span class="wc-target">/ ~{{ sec.target_word_count|default(300) }}w</span>
+            </div>
+            {% else %}
+            <div class="draft-preview" style="color:var(--text-muted)">No draft generated yet</div>
+            <div class="meta">
+                <span class="badge badge-pending">awaiting</span>
+                <span class="wc-target">{{ sec.word_count_label|default('medium') }} (~{{ sec.target_word_count|default(300) }}w)</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

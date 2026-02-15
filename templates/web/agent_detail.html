@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ agent.name }} — TrueFans AMP{% endblock %}
+{% block nav_agents %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ agent.name }}</h2>
+    <p>{{ agent.agent_type|replace('_', ' ')|title }} — {{ agent.autonomy_level }}</p>
+</div>
+
+{% if agent.persona %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Persona</div>
+    <p style="color: var(--text-dim); margin-top: 8px;">{{ agent.persona }}</p>
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <span class="card-title">Trigger Task</span>
+    </div>
+    <form method="post" action="/agents/{{ agent.id }}/trigger">
+        <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Task Type</label>
+                <input name="task_type" placeholder="e.g. write_section, discover_content" required style="width: 250px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Issue ID</label>
+                <input name="issue_id" type="number" value="0" style="width: 100px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Section</label>
+                <input name="section_slug" placeholder="optional" style="width: 150px;">
+            </div>
+            <button type="submit" class="btn btn-primary">Run</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Task History</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>State</th>
+                    <th>Section</th>
+                    <th>Priority</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.id }}</td>
+                    <td>{{ task.task_type }}</td>
+                    <td><span class="badge badge-{{ task.state }}">{{ task.state }}</span></td>
+                    <td>{{ task.section_slug or '—' }}</td>
+                    <td>{{ task.priority }}</td>
+                    <td style="color: var(--text-dim);">{{ task.created_at }}</td>
+                </tr>
+                {% endfor %}
+                {% if not tasks %}
+                <tr><td colspan="6" style="color: var(--text-dim); text-align: center;">No tasks yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

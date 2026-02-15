@@ -1,0 +1,37 @@
+sources:
+  # RSS Feeds
+  - name: "Hypebot"
+    type: "rss"
+    url: "https://www.hypebot.com/feed/"
+    target_sections: "tech_talk,recommends"
+
+  - name: "Digital Music News"
+    type: "rss"
+    url: "https://www.digitalmusicnews.com/feed/"
+    target_sections: "tech_talk,backstage_pass"
+
+  - name: "Music Business Worldwide"
+    type: "rss"
+    url: "https://www.musicbusinessworldwide.com/feed/"
+    target_sections: "backstage_pass,recommends"
+
+  - name: "DIY Musician Blog (CD Baby)"
+    type: "rss"
+    url: "https://diymusician.cdbaby.com/feed/"
+    target_sections: "tech_talk,coaching"
+
+  - name: "Ari's Take"
+    type: "rss"
+    url: "https://aristake.com/feed/"
+    target_sections: "tech_talk,coaching,recommends"
+
+  # Blog / Scrape targets
+  - name: "Song Exploder"
+    type: "scrape"
+    url: "https://songexploder.net"
+    target_sections: "backstage_pass,mondegreen"
+
+  - name: "American Songwriter"
+    type: "scrape"
+    url: "https://americansongwriter.com"
+    target_sections: "greatest_songwriters,mondegreen,backstage_pass"

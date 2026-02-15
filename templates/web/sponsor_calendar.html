@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Sponsor Calendar — WEEKLYAMP{% endblock %}
+{% block nav_sponsors %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sponsor Inventory Calendar</h2>
+    <p><a href="/sponsors" style="color:var(--accent)">&larr; Back to Sponsors</a></p>
+</div>
+
+<div class="calendar-grid">
+    {% for item in calendar %}
+    <div class="calendar-cell {% if item.open > 0 %}calendar-open{% else %}calendar-full{% endif %}">
+        <div class="calendar-issue">
+            <strong>#{{ item.issue.issue_number }}</strong>
+            <span style="font-size:12px;color:var(--text-dim)">{{ item.issue.title }}</span>
+        </div>
+        {% if item.issue.send_day %}
+        <div style="margin:4px 0">
+            <span class="badge badge-core">{{ item.issue.send_day | title }}</span>
+        </div>
+        {% endif %}
+        <div class="calendar-slots">
+            {% for b in item.bookings %}
+            <div class="calendar-slot booked">
+                <span class="badge badge-{{ b.status }}">{{ b.status }}</span>
+                {{ b.sponsor_name }} ({{ b.position }})
+            </div>
+            {% endfor %}
+            {% for _ in range(item.open) %}
+            <div class="calendar-slot open">
+                <span class="badge badge-active">Open</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if not calendar %}
+<div class="empty-state">
+    <div class="icon">&#128197;</div>
+    <h3>No Upcoming Issues</h3>
+    <p>Create issues from the <a href="/schedule" style="color:var(--accent)">Schedule</a> or <a href="/drafts" style="color:var(--accent)">Drafts</a> page.</p>
+</div>
+{% endif %}
+{% endblock %}

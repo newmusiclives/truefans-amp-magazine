@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Ad Blocks — WEEKLYAMP{% endblock %}
+{% block nav_sponsor_blocks %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sponsor Ad Blocks</h2>
+    <p>{% if issue %}Managing blocks for Issue #{{ issue.issue_number }}{% else %}No current issue{% endif %}</p>
+</div>
+
+{% if issue %}
+<!-- Add sponsor block form -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Add Sponsor Block</span>
+    </div>
+    <form hx-post="/sponsor-blocks/add" hx-target="#blocks-list" hx-swap="outerHTML">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div class="form-group">
+                <label>Position</label>
+                <select name="position">
+                    {% for p in positions %}
+                    <option value="{{ p }}">{{ p | title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Sponsor Name</label>
+                <input type="text" name="sponsor_name" placeholder="Acme Corp" required>
+            </div>
+            <div class="form-group">
+                <label>Headline</label>
+                <input type="text" name="headline" placeholder="Check out our latest product">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="form-group">
+                <label>CTA URL</label>
+                <input type="text" name="cta_url" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>CTA Text</label>
+                <input type="text" name="cta_text" value="Learn More">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Body HTML</label>
+            <textarea name="body_html" rows="3" placeholder="Ad copy..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Image URL (optional)</label>
+            <input type="text" name="image_url" placeholder="https://...">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Block</button>
+    </form>
+</div>
+
+<!-- Existing blocks -->
+<div id="blocks-list">
+    {% include "partials/sponsor_blocks_list.html" %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">&#128230;</div>
+    <h3>No Current Issue</h3>
+    <p>Start a new issue from the <a href="/drafts" style="color:var(--accent)">Drafts</a> page first.</p>
+</div>
+{% endif %}
+{% endblock %}

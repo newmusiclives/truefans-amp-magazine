@@ -1,0 +1,22 @@
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+{% for post in posts %}
+<div class="section-card" style="margin-bottom: 12px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span class="badge" style="background: var(--blue-bg); color: var(--blue);">{{ post.platform }}</span>
+        <span class="badge badge-{{ post.status }}">{{ post.status }}</span>
+    </div>
+    <div style="font-size: 13px; color: var(--text-dim); white-space: pre-wrap;">{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</div>
+    <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+        Issue: {{ post.issue_id or '—' }} | {{ post.created_at[:10] if post.created_at else '' }}
+    </div>
+</div>
+{% endfor %}
+
+{% if not posts %}
+<div class="empty-state">
+    <p>No social posts yet.</p>
+</div>
+{% endif %}

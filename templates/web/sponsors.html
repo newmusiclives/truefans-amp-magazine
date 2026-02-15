@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Sponsors — WEEKLYAMP{% endblock %}
+{% block nav_sponsors %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sponsor CRM</h2>
+    <p>Manage sponsor relationships and bookings</p>
+</div>
+
+<!-- Revenue stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Total Bookings</div>
+        <div class="value gold">{{ revenue.total_bookings }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Revenue (Paid)</div>
+        <div class="value green">${{ "%.2f" | format(revenue.paid_cents / 100) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Pipeline</div>
+        <div class="value blue">${{ "%.2f" | format(revenue.pipeline_cents / 100) }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Paid Bookings</div>
+        <div class="value">{{ revenue.paid_count }}</div>
+    </div>
+</div>
+
+<!-- Add sponsor form -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Add New Sponsor</span>
+    </div>
+    <form hx-post="/sponsors/add" hx-target="#sponsors-table" hx-swap="outerHTML">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" name="name" required>
+            </div>
+            <div class="form-group">
+                <label>Contact Name</label>
+                <input type="text" name="contact_name">
+            </div>
+            <div class="form-group">
+                <label>Contact Email</label>
+                <input type="email" name="contact_email">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:12px">
+            <div class="form-group">
+                <label>Website</label>
+                <input type="text" name="website" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" name="notes">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Sponsor</button>
+    </form>
+</div>
+
+<!-- Sponsors table -->
+<div id="sponsors-table">
+    {% include "partials/sponsors_table.html" %}
+</div>
+
+<!-- Calendar link -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Inventory Calendar</span>
+        <a href="/sponsors/calendar" class="btn btn-ghost btn-sm">View Calendar</a>
+    </div>
+    <p style="color:var(--text-dim)">See which issues have open sponsor slots.</p>
+</div>
+{% endblock %}

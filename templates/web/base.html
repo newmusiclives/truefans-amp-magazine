@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TrueFans AMP{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h1>TrueFans AMP</h1>
+                <div class="tagline">AI Magazine for Independent Artists</div>
+            </div>
+            <nav>
+                <a href="/" class="{% block nav_dashboard %}{% endblock %}">
+                    <span class="icon">&#9776;</span> Dashboard
+                </a>
+                <a href="/research" class="{% block nav_research %}{% endblock %}">
+                    <span class="icon">&#128270;</span> Research
+                </a>
+                <a href="/drafts" class="{% block nav_drafts %}{% endblock %}">
+                    <span class="icon">&#9998;</span> Drafts
+                </a>
+                <a href="/review" class="{% block nav_review %}{% endblock %}">
+                    <span class="icon">&#10003;</span> Review
+                </a>
+                <a href="/publish" class="{% block nav_publish %}{% endblock %}">
+                    <span class="icon">&#9993;</span> Publish
+                </a>
+                <a href="/subscribers" class="{% block nav_subscribers %}{% endblock %}">
+                    <span class="icon">&#128101;</span> Subscribers
+                </a>
+                <a href="/sections" class="{% block nav_sections %}{% endblock %}">
+                    <span class="icon">&#9881;</span> Sections
+                </a>
+                <a href="/schedule" class="{% block nav_schedule %}{% endblock %}">
+                    <span class="icon">&#128197;</span> Schedule
+                </a>
+                <a href="/sponsor-blocks" class="{% block nav_sponsor_blocks %}{% endblock %}">
+                    <span class="icon">&#128230;</span> Ad Blocks
+                </a>
+                <a href="/sponsors" class="{% block nav_sponsors %}{% endblock %}">
+                    <span class="icon">&#127919;</span> Sponsors
+                </a>
+                <a href="/agents" class="{% block nav_agents %}{% endblock %}">
+                    <span class="icon">&#129302;</span> AI Staff
+                </a>
+                <a href="/submissions" class="{% block nav_submissions %}{% endblock %}">
+                    <span class="icon">&#127925;</span> Submissions
+                </a>
+                <a href="/guests" class="{% block nav_guests %}{% endblock %}">
+                    <span class="icon">&#128221;</span> Guest Articles
+                </a>
+                <a href="/calendar" class="{% block nav_calendar %}{% endblock %}">
+                    <span class="icon">&#128467;</span> Calendar
+                </a>
+                <a href="/growth" class="{% block nav_growth %}{% endblock %}">
+                    <span class="icon">&#128200;</span> Growth
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main">
+            {% block pipeline %}{% endblock %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</body>
+</html>

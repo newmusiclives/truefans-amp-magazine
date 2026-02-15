@@ -1,0 +1,6 @@
+<div class="alert alert-success">
+    Scraped {{ total }} new items from {{ results | length }} sources.
+    {% for name, count in results.items() %}
+    <br><span style="color:var(--text-dim)">&middot; {{ name }}: {{ count }}</span>
+    {% endfor %}
+</div>

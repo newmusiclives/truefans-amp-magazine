@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Guest Contacts — TrueFans AMP{% endblock %}
+{% block nav_guests %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Guest Contacts</h2>
+    <p>Manage your network of potential guest contributors.</p>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <span class="card-title">Add Contact</span>
+    </div>
+    <form method="post" action="/guests/contacts/add">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+                <label>Name</label>
+                <input name="name" required placeholder="Full name">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input name="email" type="email" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label>Organization</label>
+                <input name="organization" placeholder="Company or publication">
+            </div>
+            <div class="form-group">
+                <label>Role</label>
+                <input name="role" placeholder="Title or role">
+            </div>
+            <div class="form-group">
+                <label>Website</label>
+                <input name="website" placeholder="https://...">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input name="notes" placeholder="Any notes">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 12px;">Add Contact</button>
+    </form>
+</div>
+
+<div class="card">
+    {% include "partials/guest_contacts_table.html" %}
+</div>
+{% endblock %}

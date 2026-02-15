@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Drafts — WEEKLYAMP{% endblock %}
+{% block nav_drafts %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Drafts</h2>
+    <p>{% if issue %}Issue #{{ issue.issue_number }}{% if issue.title %} — {{ issue.title }}{% endif %}{% else %}No current issue{% endif %}</p>
+</div>
+
+<!-- Generate controls -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">AI Generation</span>
+        <div class="actions">
+            <button class="btn btn-primary"
+                    hx-post="/drafts/generate"
+                    hx-target="#draft-cards"
+                    hx-vals='{"section_slug": ""}'
+                    hx-indicator="#gen-spinner">
+                <span class="spinner htmx-indicator" id="gen-spinner"></span>
+                Generate All Sections
+            </button>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+        {% for sec in sections %}
+        <button class="btn btn-ghost btn-sm"
+                hx-post="/drafts/generate"
+                hx-target="#draft-cards"
+                hx-vals='{"section_slug": "{{ sec.slug }}"}'
+                hx-indicator="#gen-spinner">
+            {{ sec.display_name }}
+        </button>
+        {% endfor %}
+    </div>
+    <p style="color:var(--text-muted);font-size:12px;margin-top:12px">Click a section name to generate only that section, or "Generate All" for the full issue.</p>
+</div>
+
+<!-- Draft cards -->
+<div id="draft-cards">
+    <div class="sections-grid">
+        {% for sec in sections %}
+        {% set d = draft_map.get(sec.slug) %}
+        <div class="section-card">
+            <div class="section-name">{{ sec.display_name }}</div>
+            {% if d %}
+            <div class="draft-preview">{{ d.content | truncate_words(30) }}</div>
+            <div class="meta">
+                <span class="badge badge-{{ d.status }}">{{ d.status }}</span>
+                <a href="/drafts/{{ sec.slug }}" class="btn btn-ghost btn-sm">View / Edit</a>
+            </div>
+            {% else %}
+            <div class="draft-preview" style="color:var(--text-muted)">Not yet generated</div>
+            <div class="meta">
+                <span style="color:var(--text-muted);font-size:12px">—</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

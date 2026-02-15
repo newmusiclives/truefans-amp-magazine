@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Review — WEEKLYAMP{% endblock %}
+{% block nav_review %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Review Drafts</h2>
+    <p>{% if issue %}Issue #{{ issue.issue_number }} — Approve, reject, or edit each section{% else %}No current issue{% endif %}</p>
+</div>
+
+{% if not issue or not draft_map %}
+<div class="empty-state">
+    <div class="icon">&#10003;</div>
+    <h3>Nothing to review</h3>
+    <p>Generate drafts first from the <a href="/drafts" style="color:var(--accent)">Drafts page</a>.</p>
+</div>
+{% else %}
+
+{% for sec in sections %}
+{% set d = draft_map.get(sec.slug) %}
+{% if d %}
+{% set section = sec %}
+{% set draft = d %}
+<div id="review-{{ sec.slug }}">
+    {% include "partials/review_card.html" with context %}
+</div>
+{% endif %}
+{% endfor %}
+
+<div style="margin-top:24px">
+    <a href="/publish" class="btn btn-primary">Proceed to Publish &rarr;</a>
+</div>
+
+{% endif %}
+{% endblock %}

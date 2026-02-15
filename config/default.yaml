@@ -1,0 +1,39 @@
+newsletter:
+  name: "TrueFans AMP Magazine"
+  tagline: "AI Magazine for Independent Artists & Songwriters"
+  from_name: "PS"
+  reply_to: ""
+
+ai:
+  provider: "anthropic"
+  model: "claude-sonnet-4-5-20250929"
+  max_tokens: 2000
+  temperature: 0.7
+
+beehiiv:
+  api_key: ""
+  publication_id: ""
+
+schedule:
+  frequency: 1
+  send_days:
+    - "tuesday"
+
+sponsor_slots:
+  max_per_issue: 2
+  available_positions:
+    - "top"
+    - "mid"
+    - "bottom"
+
+agents:
+  default_autonomy: "supervised"
+  review_required: true
+  max_concurrent_tasks: 3
+
+submissions:
+  api_key: ""
+  auto_acknowledge: true
+  require_email: true
+
+db_path: "data/weeklyamp.db"

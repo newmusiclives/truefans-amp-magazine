@@ -1,0 +1,23 @@
+<div class="section">
+    <div class="section-title">GUEST COLUMN</div>
+    <div class="section-content">
+        {{ content }}
+        {% if author_name %}
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #e0e0e0;">
+            <div style="font-size: 14px; font-weight: bold; color: #333;">
+                {{ author_name }}
+            </div>
+            {% if author_bio %}
+            <div style="font-size: 13px; color: #666; font-style: italic; margin-top: 4px;">
+                {{ author_bio }}
+            </div>
+            {% endif %}
+            {% if original_url %}
+            <div style="font-size: 12px; margin-top: 4px;">
+                <a href="{{ original_url }}" style="color: #0ea5e9; text-decoration: underline;">Read the original</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>

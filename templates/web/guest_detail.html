@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Guest Article: {{ article.title or 'Detail' }} — TrueFans AMP{% endblock %}
+{% block nav_guests %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ article.title or '(untitled)' }}</h2>
+    <p>By {{ article.author_name or '—' }} — Permission: {{ article.permission_state }}</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Permission</div>
+        <div><span class="badge badge-{{ article.permission_state }}">{{ article.permission_state }}</span></div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Display Mode</div>
+        <div class="value" style="font-size: 16px;">{{ article.display_mode }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Section</div>
+        <div class="value" style="font-size: 16px;">{{ article.target_section_slug or '—' }}</div>
+    </div>
+</div>
+
+{% if article.content_full %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Content</div>
+    <div class="content-preview" style="margin-top: 12px;">{{ article.content_full }}</div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Actions</div>
+    <div class="actions" style="margin-top: 12px; gap: 12px;">
+        {% if article.permission_state not in ('published', 'declined') %}
+        <form method="post" action="/guests/{{ article.id }}/permission" style="display: inline-flex; gap: 8px; align-items: center;">
+            <select name="permission_state" class="select-sm">
+                {% for state in permission_states %}
+                <option value="{{ state }}" {% if state == article.permission_state %}selected{% endif %}>{{ state|title }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-ghost btn-sm">Update Permission</button>
+        </form>
+        {% endif %}
+
+        {% if article.permission_state in ('received', 'approved') and upcoming_issues %}
+        <form method="post" action="/guests/{{ article.id }}/approve" style="display: inline-flex; gap: 8px; align-items: center;">
+            <select name="issue_id" class="select-sm">
+                <option value="0">No issue</option>
+                {% for issue in upcoming_issues %}
+                <option value="{{ issue.id }}">#{{ issue.issue_number }} {{ issue.title }}</option>
+                {% endfor %}
+            </select>
+            <input name="section_slug" value="guest_column" class="select-sm" style="width: 140px;">
+            <button type="submit" class="btn btn-success btn-sm">Approve & Create Draft</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Submissions — TrueFans AMP{% endblock %}
+{% block nav_submissions %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Artist Submissions</h2>
+    <p>Review and manage artist submissions from web forms, email, and API.</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="actions" style="margin-bottom: 24px;">
+    <a href="/submissions?state=" class="btn {% if not filter_state %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">All</a>
+    {% for state in review_states %}
+    <a href="/submissions?state={{ state }}" class="btn {% if filter_state == state %}btn-primary{% else %}btn-ghost{% endif %} btn-sm">{{ state|title }}</a>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Artist</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Method</th>
+                    <th>State</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in submissions %}
+                <tr>
+                    <td><strong>{{ sub.artist_name }}</strong></td>
+                    <td>{{ sub.title or '—' }}</td>
+                    <td>{{ sub.submission_type|replace('_', ' ')|title }}</td>
+                    <td><span class="badge" style="background: var(--blue-bg); color: var(--blue);">{{ sub.intake_method }}</span></td>
+                    <td><span class="badge badge-{{ sub.review_state }}">{{ sub.review_state }}</span></td>
+                    <td style="color: var(--text-dim);">{{ sub.created_at[:10] if sub.created_at else '—' }}</td>
+                    <td><a href="/submissions/{{ sub.id }}" class="btn btn-ghost btn-sm">View</a></td>
+                </tr>
+                {% endfor %}
+                {% if not submissions %}
+                <tr><td colspan="7" style="text-align: center; color: var(--text-dim);">No submissions yet.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

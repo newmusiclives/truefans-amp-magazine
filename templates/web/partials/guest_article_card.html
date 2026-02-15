@@ -1,0 +1,10 @@
+<div class="section-card">
+    <div class="section-name">{{ article.title or '(untitled)' }}</div>
+    <div style="margin-bottom: 8px; font-size: 13px; color: var(--text-dim);">
+        By {{ article.author_name or article.contact_name or '—' }}
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <span class="badge badge-{{ article.permission_state }}">{{ article.permission_state }}</span>
+        <span class="badge" style="background: var(--purple-bg); color: var(--purple);">{{ article.display_mode }}</span>
+    </div>
+</div>

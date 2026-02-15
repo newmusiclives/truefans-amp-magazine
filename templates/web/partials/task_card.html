@@ -1,0 +1,20 @@
+<div class="section-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <strong>{{ task.task_type }}</strong>
+        <span class="badge badge-{{ task.state }}">{{ task.state }}</span>
+    </div>
+    <div style="font-size: 13px; color: var(--text-dim);">
+        <span>Agent: {{ task.agent_name or '—' }}</span>
+        {% if task.section_slug %} | <span>Section: {{ task.section_slug }}</span>{% endif %}
+    </div>
+    {% if task.state == 'review' %}
+    <div class="actions" style="margin-top: 12px;">
+        <form method="post" action="/agents/tasks/{{ task.id }}/approve" style="display:inline;">
+            <button class="btn btn-success btn-sm" type="submit">Approve</button>
+        </form>
+        <form method="post" action="/agents/tasks/{{ task.id }}/reject" style="display:inline;">
+            <button class="btn btn-danger btn-sm" type="submit">Reject</button>
+        </form>
+    </div>
+    {% endif %}
+</div>

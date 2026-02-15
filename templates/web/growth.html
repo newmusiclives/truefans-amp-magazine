@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Growth — TrueFans AMP{% endblock %}
+{% block nav_growth %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Growth Dashboard</h2>
+    <p>Track subscriber metrics, engagement trends, and growth strategies.</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Total Subscribers</div>
+        <div class="value green">{{ subscriber_count }}</div>
+    </div>
+    {% if trend %}
+    <div class="stat-card">
+        <div class="label">Avg Open Rate</div>
+        <div class="value blue">{{ "%.1f"|format(trend[-1].open_rate_avg * 100 if trend[-1].open_rate_avg else 0) }}%</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">New (Latest)</div>
+        <div class="value green">+{{ trend[-1].new_subscribers if trend else 0 }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Churned (Latest)</div>
+        <div class="value red">-{{ trend[-1].churned_subscribers if trend else 0 }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="actions" style="margin-bottom: 24px;">
+    <form method="post" action="/growth/sync" style="display: inline;">
+        <button class="btn btn-primary" type="submit">Sync Metrics</button>
+    </form>
+    <a href="/growth/social" class="btn btn-ghost">Social Posts</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Metrics History</span>
+    </div>
+    {% if metrics %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Subscribers</th>
+                    <th>New</th>
+                    <th>Churned</th>
+                    <th>Open Rate</th>
+                    <th>Click Rate</th>
+                    <th>Referrals</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in metrics %}
+                <tr>
+                    <td>{{ m.metric_date }}</td>
+                    <td><strong>{{ m.total_subscribers }}</strong></td>
+                    <td style="color: var(--green);">+{{ m.new_subscribers }}</td>
+                    <td style="color: var(--red);">-{{ m.churned_subscribers }}</td>
+                    <td>{{ "%.1f"|format(m.open_rate_avg * 100) }}%</td>
+                    <td>{{ "%.1f"|format(m.click_rate_avg * 100) }}%</td>
+                    <td>{{ m.referral_count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">&#128200;</div>
+        <h3>No metrics yet</h3>
+        <p>Click "Sync Metrics" to start tracking.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

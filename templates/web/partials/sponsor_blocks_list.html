@@ -1,0 +1,36 @@
+<div class="card" id="blocks-list">
+    <div class="card-header">
+        <span class="card-title">Current Blocks ({{ blocks | length }})</span>
+    </div>
+    {% if blocks %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>Position</th><th>Sponsor</th><th>Headline</th><th>CTA</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for b in blocks %}
+                <tr>
+                    <td><span class="badge badge-sponsor-{{ b.position }}">{{ b.position | title }}</span></td>
+                    <td>{{ b.sponsor_name }}</td>
+                    <td>{{ b.headline or '—' }}</td>
+                    <td>
+                        {% if b.cta_url %}
+                        <a href="{{ b.cta_url }}" style="color:var(--accent);font-size:13px" target="_blank">{{ b.cta_text }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                hx-post="/sponsor-blocks/delete/{{ b.id }}"
+                                hx-target="#blocks-list"
+                                hx-swap="outerHTML">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);padding:8px 0">No sponsor blocks added yet.</p>
+    {% endif %}
+</div>

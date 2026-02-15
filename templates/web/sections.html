@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Sections — WEEKLYAMP{% endblock %}
+{% block nav_sections %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sections</h2>
+    <p>Configure your newsletter sections</p>
+</div>
+
+<!-- Add section form -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Add New Section</span>
+    </div>
+    <form hx-post="/sections/add" hx-target="#sections-table" hx-swap="outerHTML"
+          style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:12px;align-items:end">
+        <div class="form-group">
+            <label>Slug</label>
+            <input type="text" name="slug" placeholder="my_section" required pattern="[a-z_]+">
+        </div>
+        <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" name="display_name" placeholder="MY SECTION" required>
+        </div>
+        <div class="form-group">
+            <label>Order</label>
+            <input type="number" name="sort_order" value="{{ sections | length + 1 }}" style="width:80px" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Add</button>
+    </form>
+</div>
+
+<!-- Sections table -->
+<div id="sections-table">
+    {% include "partials/sections_table.html" %}
+</div>
+
+<!-- AI Section Suggestions -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">AI Section Suggestions</span>
+        <button class="btn btn-primary btn-sm"
+                hx-post="/sections/suggest"
+                hx-target="#suggestions-list"
+                hx-swap="outerHTML"
+                hx-indicator="#suggest-spinner">
+            Suggest Sections
+            <span id="suggest-spinner" class="htmx-indicator"><span class="spinner"></span></span>
+        </button>
+    </div>
+    {% include "partials/suggestions_list.html" %}
+</div>
+{% endblock %}

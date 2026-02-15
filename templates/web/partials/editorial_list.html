@@ -1,0 +1,23 @@
+<div class="card" id="editorial-list">
+    <div class="card-header">
+        <span class="card-title">Editorial Topics ({{ editorial | length }})</span>
+    </div>
+    {% if editorial %}
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Section</th><th>Topic</th><th>Notes</th></tr></thead>
+            <tbody>
+                {% for e in editorial %}
+                <tr>
+                    <td><span class="badge badge-active">{{ e.section_slug }}</span></td>
+                    <td>{{ e.topic }}</td>
+                    <td style="color:var(--text-dim)">{{ e.notes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);padding:8px 0">No editorial topics added.</p>
+    {% endif %}
+</div>

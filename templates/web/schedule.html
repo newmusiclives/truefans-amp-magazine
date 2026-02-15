@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Schedule — WEEKLYAMP{% endblock %}
+{% block nav_schedule %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Send Schedule</h2>
+    <p>Configure multi-frequency publishing — which days and which sections</p>
+</div>
+
+<!-- Add/edit send day -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Configure Send Day</span>
+    </div>
+    <form hx-post="/schedule/save-day" hx-target="#schedule-table" hx-swap="outerHTML"
+          style="display:grid;grid-template-columns:1fr 1fr 2fr auto;gap:12px;align-items:end">
+        <div class="form-group">
+            <label>Day of Week</label>
+            <select name="day_of_week">
+                {% for d in days %}
+                <option value="{{ d }}">{{ d | title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Label</label>
+            <input type="text" name="label" placeholder="e.g. Main Issue">
+        </div>
+        <div class="form-group">
+            <label>Sections (comma-separated slugs)</label>
+            <input type="text" name="section_slugs"
+                   placeholder="{{ sections | map(attribute='slug') | join(', ') }}">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Save Day</button>
+    </form>
+</div>
+
+<!-- Schedule table + upcoming -->
+<div id="schedule-table">
+    {% include "partials/schedule_table.html" %}
+</div>
+
+<!-- Create week issues -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Create Week Issues</span>
+    </div>
+    <form hx-post="/schedule/create-week-issues" hx-target="#schedule-table" hx-swap="outerHTML"
+          style="display:flex;gap:12px;align-items:end">
+        <div class="form-group">
+            <label>Week ID (leave blank for current week)</label>
+            <input type="text" name="week_id" placeholder="2026-W07" style="width:200px">
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Create Issues</button>
+    </form>
+</div>
+{% endblock %}

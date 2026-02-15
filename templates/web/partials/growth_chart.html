@@ -1,0 +1,9 @@
+<div style="display: flex; gap: 16px; flex-wrap: wrap;">
+    {% for m in trend[-7:] %}
+    <div style="text-align: center; min-width: 80px;">
+        <div style="font-size: 12px; color: var(--text-dim);">{{ m.metric_date[-5:] if m.metric_date else '' }}</div>
+        <div style="font-size: 18px; font-weight: 700; color: var(--accent);">{{ m.total_subscribers }}</div>
+        <div style="font-size: 11px; color: var(--green);">+{{ m.new_subscribers }}</div>
+    </div>
+    {% endfor %}
+</div>

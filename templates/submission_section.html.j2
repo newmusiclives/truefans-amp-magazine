@@ -1,0 +1,23 @@
+<div class="section">
+    <div class="section-title">{{ section_title or 'ARTIST SPOTLIGHT' }}</div>
+    <div class="section-content">
+        {{ content }}
+        {% if artist_name %}
+        <div style="margin-top: 16px; padding: 12px; background: #f0f9ff; border-left: 3px solid #14b8a6; border-radius: 4px;">
+            <div style="font-size: 14px; font-weight: bold; color: #333;">
+                {{ artist_name }}
+            </div>
+            {% if artist_website %}
+            <div style="font-size: 13px; margin-top: 4px;">
+                <a href="{{ artist_website }}" style="color: #0ea5e9; text-decoration: underline;">{{ artist_website }}</a>
+            </div>
+            {% endif %}
+            {% if artist_social %}
+            <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                {{ artist_social }}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>

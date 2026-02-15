@@ -1,0 +1,33 @@
+{% if results %}
+<div class="alert alert-info" style="margin-bottom:16px">
+    {% for r in results %}
+    {% if r.ok %}
+    <span style="color:var(--green)">&#10003;</span> {{ r.slug }} ({{ r.length }} chars)
+    {% else %}
+    <span style="color:var(--red)">&#10007;</span> {{ r.slug }}: {{ r.error }}
+    {% endif %}
+    <br>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="sections-grid">
+    {% for sec in sections %}
+    {% set d = draft_map.get(sec.slug) %}
+    <div class="section-card">
+        <div class="section-name">{{ sec.display_name }}</div>
+        {% if d %}
+        <div class="draft-preview">{{ d.content | truncate_words(30) }}</div>
+        <div class="meta">
+            <span class="badge badge-{{ d.status }}">{{ d.status }}</span>
+            <a href="/drafts/{{ sec.slug }}" class="btn btn-ghost btn-sm">View / Edit</a>
+        </div>
+        {% else %}
+        <div class="draft-preview" style="color:var(--text-muted)">Not yet generated</div>
+        <div class="meta">
+            <span style="color:var(--text-muted);font-size:12px">—</span>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>

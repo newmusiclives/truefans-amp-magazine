@@ -1,0 +1,93 @@
+/* WEEKLYAMP Email Styles — designed for inline embedding */
+body {
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.6;
+    color: #2d2d2d;
+    background-color: #f9f9f9;
+    margin: 0;
+    padding: 0;
+}
+
+.newsletter-wrapper {
+    max-width: 640px;
+    margin: 0 auto;
+    background-color: #ffffff;
+    padding: 20px 30px;
+}
+
+.header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 3px solid #0ea5e9;
+}
+
+.header h1 {
+    font-size: 32px;
+    color: #0ea5e9;
+    margin: 0;
+    letter-spacing: 2px;
+}
+
+.header .tagline {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.section {
+    padding: 20px 0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #0ea5e9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #14b8a6;
+    display: inline-block;
+}
+
+.section-content {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #333;
+}
+
+.section-content p {
+    margin: 0 0 12px 0;
+}
+
+.section-content a {
+    color: #1a73e8;
+    text-decoration: underline;
+}
+
+.section-content blockquote {
+    border-left: 3px solid #14b8a6;
+    margin: 15px 0;
+    padding: 10px 20px;
+    background-color: #fdf6e3;
+    font-style: italic;
+}
+
+.footer {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 12px;
+    color: #999;
+    border-top: 2px solid #0ea5e9;
+    margin-top: 10px;
+}
+
+.footer a {
+    color: #666;
+}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Submission: {{ submission.title or submission.artist_name }} — TrueFans AMP{% endblock %}
+{% block nav_submissions %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ submission.artist_name }}</h2>
+    <p>{{ submission.title }} — {{ submission.submission_type|replace('_', ' ')|title }}</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">State</div>
+        <div><span class="badge badge-{{ submission.review_state }}">{{ submission.review_state }}</span></div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Method</div>
+        <div class="value blue" style="font-size: 16px;">{{ submission.intake_method }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Genre</div>
+        <div class="value" style="font-size: 16px;">{{ submission.genre or '—' }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Release Date</div>
+        <div class="value" style="font-size: 16px;">{{ submission.release_date or '—' }}</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Contact Info</div>
+    <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px;">
+        <div><strong>Email:</strong> {{ submission.artist_email or '—' }}</div>
+        <div><strong>Website:</strong> {{ submission.artist_website or '—' }}</div>
+        <div><strong>Social:</strong> {{ submission.artist_social or '—' }}</div>
+        <div><strong>API Source:</strong> {{ submission.api_source or '—' }}</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Description</div>
+    <div class="content-preview" style="margin-top: 12px;">{{ submission.description or 'No description provided.' }}</div>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Actions</div>
+    <div class="actions" style="margin-top: 12px;">
+        {% if submission.review_state == 'submitted' %}
+        <form method="post" action="/submissions/{{ submission.id }}/review" style="display:inline;">
+            <button class="btn btn-ghost" type="submit">Mark Reviewed</button>
+        </form>
+        {% endif %}
+        {% if submission.review_state in ('submitted', 'reviewed') %}
+        <form method="post" action="/submissions/{{ submission.id }}/approve" style="display:inline;">
+            <button class="btn btn-success" type="submit">Approve</button>
+        </form>
+        <form method="post" action="/submissions/{{ submission.id }}/reject" style="display:inline;">
+            <button class="btn btn-danger" type="submit">Reject</button>
+        </form>
+        {% endif %}
+        {% if submission.review_state == 'approved' and upcoming_issues %}
+        <form method="post" action="/submissions/{{ submission.id }}/schedule" style="display: inline-flex; gap: 8px; align-items: center;">
+            <select name="issue_id" class="select-sm">
+                {% for issue in upcoming_issues %}
+                <option value="{{ issue.id }}">#{{ issue.issue_number }} {{ issue.title }}</option>
+                {% endfor %}
+            </select>
+            <input name="section_slug" value="artist_spotlight" class="select-sm" style="width: 140px;">
+            <button class="btn btn-primary btn-sm" type="submit">Schedule</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ section.display_name }} Draft — WEEKLYAMP{% endblock %}
+{% block nav_drafts %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ section.display_name }}</h2>
+    <p>
+        {% if draft %}Draft v{{ draft.version }} &middot; <span class="badge badge-{{ draft.status }}">{{ draft.status }}</span> &middot; {{ draft.ai_model }}
+        {% else %}No draft yet{% endif %}
+    </p>
+</div>
+
+{% if draft %}
+<div id="save-alert"></div>
+
+<div class="editor-wrap">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Edit (Markdown)</span>
+                <button class="btn btn-primary btn-sm"
+                        hx-post="/drafts/{{ section.slug }}/save"
+                        hx-target="#save-alert"
+                        hx-include="#draft-editor">
+                    Save Changes
+                </button>
+            </div>
+            <textarea id="draft-editor" name="content" style="min-height:500px">{{ draft.content }}</textarea>
+        </div>
+    </div>
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Preview</span>
+            </div>
+            <div class="content-preview">
+                {{ draft.content | markdown | safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="margin-top:16px">
+    <a href="/drafts" class="btn btn-ghost">&larr; Back to Drafts</a>
+    <a href="/review" class="btn btn-ghost">Go to Review &rarr;</a>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">&#9998;</div>
+    <h3>No draft yet</h3>
+    <p>Generate a draft from the <a href="/drafts" style="color:var(--accent)">Drafts page</a>.</p>
+</div>
+{% endif %}
+{% endblock %}

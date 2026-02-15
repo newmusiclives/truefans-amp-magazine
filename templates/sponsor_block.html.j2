@@ -1,0 +1,18 @@
+<div style="margin:24px 0;padding:20px;background:#f8f4ee;border:1px solid #e2d9cc;border-radius:8px;font-family:Arial,sans-serif;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#999;margin-bottom:8px;">Sponsored</div>
+    {% if block.image_url %}
+    <img src="{{ block.image_url }}" alt="{{ block.sponsor_name }}" style="max-width:100%;height:auto;border-radius:6px;margin-bottom:12px;">
+    {% endif %}
+    {% if block.headline %}
+    <div style="font-size:18px;font-weight:bold;color:#222;margin-bottom:8px;">{{ block.headline }}</div>
+    {% endif %}
+    {% if block.body_html %}
+    <div style="font-size:14px;color:#444;line-height:1.6;margin-bottom:12px;">{{ block.body_html }}</div>
+    {% endif %}
+    {% if block.cta_url %}
+    <a href="{{ block.cta_url }}" style="display:inline-block;padding:10px 24px;background:#0ea5e9;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:14px;">{{ block.cta_text or 'Learn More' }}</a>
+    {% endif %}
+    {% if block.sponsor_name %}
+    <div style="font-size:11px;color:#999;margin-top:10px;">Brought to you by {{ block.sponsor_name }}</div>
+    {% endif %}
+</div>

@@ -1,0 +1,22 @@
+<div class="calendar-grid">
+    {% for entry in calendar %}
+    <div class="calendar-cell">
+        <div class="calendar-issue">
+            <strong>
+                {% if entry.issue_number %}
+                #{{ entry.issue_number }} {{ entry.issue_title or '' }}
+                {% else %}
+                Unlinked
+                {% endif %}
+            </strong>
+            <span class="badge badge-{{ entry.status }}">{{ entry.status }}</span>
+        </div>
+        {% if entry.planned_date %}
+        <div style="font-size: 12px; color: var(--text-dim);">{{ entry.planned_date }}</div>
+        {% endif %}
+        {% if entry.theme %}
+        <div style="font-size: 14px; margin-top: 6px; color: var(--accent);">{{ entry.theme }}</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
