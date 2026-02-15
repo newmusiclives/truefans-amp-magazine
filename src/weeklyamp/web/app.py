@@ -7,6 +7,8 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
+from weeklyamp.core.config import load_config
+from weeklyamp.core.database import init_db
 from weeklyamp.web.routes import (
     dashboard,
     drafts,
@@ -32,6 +34,12 @@ _STATIC_DIR = _TEMPLATES_DIR / "web" / "static"
 
 def create_app() -> FastAPI:
     app = FastAPI(title="TrueFans AMP Magazine", docs_url=None, redoc_url=None)
+
+    # Auto-initialize database on startup
+    @app.on_event("startup")
+    def startup_init_db():
+        config = load_config()
+        init_db(config.db_path)
 
     # Static files
     if _STATIC_DIR.exists():
