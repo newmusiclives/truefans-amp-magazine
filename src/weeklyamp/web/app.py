@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from weeklyamp.core.config import load_config
-from weeklyamp.core.database import init_db
+from weeklyamp.core.database import init_database
 from weeklyamp.web.routes import (
     dashboard,
     drafts,
@@ -39,7 +39,7 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def startup_init_db():
         config = load_config()
-        init_db(config.db_path)
+        init_database(config.db_path)
 
     # Static files
     if _STATIC_DIR.exists():
