@@ -23,15 +23,18 @@ def build_prompt(
         # Fallback generic prompt
         template = _fallback_prompt(section_slug)
 
-    # Replace template variables
-    prompt = template.replace("{{topic}}", topic)
-    prompt = prompt.replace("{{notes}}", notes)
-    prompt = prompt.replace("{{reference_content}}", reference_content)
+    # Replace template variables — provide sensible defaults when empty
+    prompt = template.replace("{{topic}}", topic if topic else "(Choose an engaging topic appropriate for this section)")
+    prompt = prompt.replace("{{notes}}", notes if notes else "(No specific notes — use your best judgment)")
+    prompt = prompt.replace("{{reference_content}}", reference_content if reference_content else "(No reference material provided — draw on your own knowledge)")
     prompt = prompt.replace("{{newsletter_name}}", newsletter_name)
 
     # Append word count instruction
     if target_word_count and word_count_label:
         prompt += f"\n\nIMPORTANT: Target length is {target_word_count} words ({word_count_label}). Stay within this range."
+
+    # Ensure the AI always generates content, never asks for input
+    prompt += "\n\nCRITICAL: You must write the actual section content now. Do NOT ask for more information, request clarification, or output a template. Generate the finished article directly."
 
     return prompt.strip()
 
