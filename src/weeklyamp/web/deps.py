@@ -32,8 +32,15 @@ def get_config() -> AppConfig:
 
 
 def get_repo() -> Repository:
+    import os
     cfg = get_config()
-    return Repository(cfg.db_path)
+    db_path = cfg.db_path
+    if not os.path.isabs(db_path):
+        if os.path.exists("/app"):
+            db_path = os.path.join("/app", db_path)
+        else:
+            db_path = os.path.abspath(db_path)
+    return Repository(db_path)
 
 
 def render(template_name: str, **ctx) -> str:
