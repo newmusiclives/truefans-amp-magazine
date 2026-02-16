@@ -78,7 +78,7 @@ DEFAULT_SECTIONS = [
     ("diy_marketing", "DIY MARKETING", 44, "rotating", "medium", 400, "business", "ongoing", 0, "Marketing tactics for independent artists"),
     # Inspiration (sort 50-59)
     ("mondegreen", "MONDEGREEN", 50, "core", "medium", 300, "inspiration", "ongoing", 0, "Misheard lyrics and song meaning deep-dives"),
-    ("ps_from_ps", "PS FROM PS", 51, "core", "short", 125, "inspiration", "ongoing", 0, "Personal sign-off and reflection"),
+    ("ps_from_ps", "PS FROM PS", 999, "core", "short", 125, "inspiration", "ongoing", 0, "Personal sign-off and reflection"),
     ("creative_fuel", "CREATIVE FUEL", 52, "rotating", "short", 150, "inspiration", "ongoing", 0, "Quick creative prompts and inspiration"),
     ("vinyl_vault", "VINYL VAULT", 53, "rotating", "medium", 400, "inspiration", "ongoing", 0, "Classic album retrospectives and hidden gems"),
     ("the_muse", "THE MUSE", 54, "rotating", "medium", 400, "inspiration", "short", 3, "Stories of creative breakthroughs and inspiration"),

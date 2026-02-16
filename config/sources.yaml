@@ -1,37 +1,127 @@
 sources:
-  # RSS Feeds
+  # ── Music Industry News ──
   - name: "Hypebot"
     type: "rss"
     url: "https://www.hypebot.com/feed/"
-    target_sections: "tech_talk,recommends"
+    target_sections: "tech_talk,recommends,industry_pulse"
 
   - name: "Digital Music News"
     type: "rss"
     url: "https://www.digitalmusicnews.com/feed/"
-    target_sections: "tech_talk,backstage_pass"
+    target_sections: "tech_talk,backstage_pass,industry_pulse,streaming_dashboard"
 
   - name: "Music Business Worldwide"
     type: "rss"
     url: "https://www.musicbusinessworldwide.com/feed/"
-    target_sections: "backstage_pass,recommends"
+    target_sections: "backstage_pass,recommends,industry_pulse,deal_or_no_deal"
 
+  - name: "Music Ally"
+    type: "rss"
+    url: "https://musically.com/feed/"
+    target_sections: "industry_pulse,streaming_dashboard,tech_talk"
+
+  - name: "The Music Network"
+    type: "rss"
+    url: "https://themusicnetwork.com/feed/"
+    target_sections: "industry_pulse,backstage_pass"
+
+  - name: "Variety Music"
+    type: "rss"
+    url: "https://variety.com/v/music/feed/"
+    target_sections: "backstage_pass,industry_pulse,deal_or_no_deal"
+
+  # ── Artist Development & Coaching ──
   - name: "DIY Musician Blog (CD Baby)"
     type: "rss"
     url: "https://diymusician.cdbaby.com/feed/"
-    target_sections: "tech_talk,coaching"
+    target_sections: "tech_talk,coaching,diy_marketing,money_moves"
 
   - name: "Ari's Take"
     type: "rss"
     url: "https://aristake.com/feed/"
-    target_sections: "tech_talk,coaching,recommends"
+    target_sections: "tech_talk,coaching,recommends,money_moves"
 
-  # Blog / Scrape targets
+  - name: "Bandzoogle Blog"
+    type: "rss"
+    url: "https://bandzoogle.com/blog/rss.xml"
+    target_sections: "coaching,diy_marketing,brand_building,social_playbook"
+
+  - name: "TuneCore Blog"
+    type: "rss"
+    url: "https://www.tunecore.com/blog/feed"
+    target_sections: "money_moves,rights_and_royalties,coaching"
+
+  - name: "DistroKid Blog"
+    type: "rss"
+    url: "https://news.distrokid.com/feed"
+    target_sections: "tech_talk,money_moves,streaming_dashboard"
+
+  # ── Songwriting & Creativity ──
+  - name: "Songwriting Magazine"
+    type: "rss"
+    url: "https://www.songwritingmagazine.co.uk/feed"
+    target_sections: "songcraft,greatest_songwriters,creative_fuel"
+
+  - name: "The Songwriting Podcast Blog"
+    type: "rss"
+    url: "https://thesongwritingpodcast.com/feed/"
+    target_sections: "songcraft,creative_fuel,coaching"
+
+  # ── Music Tech & Gear ──
+  - name: "Ask.Audio"
+    type: "rss"
+    url: "https://ask.audio/articles/rss"
+    target_sections: "tech_talk,gear_garage,production_notes,ai_music_lab"
+
+  - name: "MusicRadar"
+    type: "rss"
+    url: "https://www.musicradar.com/rss"
+    target_sections: "gear_garage,production_notes,tech_talk"
+
+  - name: "Produce Like A Pro"
+    type: "rss"
+    url: "https://producelikeapro.com/blog/feed/"
+    target_sections: "production_notes,gear_garage,tech_talk"
+
+  # ── Music Business & Rights ──
+  - name: "Musically Blog"
+    type: "rss"
+    url: "https://www.musically.com/feed/"
+    target_sections: "rights_and_royalties,deal_or_no_deal,money_moves"
+
+  - name: "Royalty Exchange Blog"
+    type: "rss"
+    url: "https://www.royaltyexchange.com/blog/feed"
+    target_sections: "rights_and_royalties,money_moves,deal_or_no_deal"
+
+  # ── Inspiration & Culture ──
+  - name: "Pitchfork"
+    type: "rss"
+    url: "https://pitchfork.com/feed/feed-news/rss"
+    target_sections: "backstage_pass,vinyl_vault,artist_spotlight"
+
+  - name: "NPR Music"
+    type: "rss"
+    url: "https://feeds.npr.org/10001/rss.xml"
+    target_sections: "backstage_pass,vinyl_vault,artist_spotlight,lyrics_unpacked"
+
+  - name: "Stereogum"
+    type: "rss"
+    url: "https://www.stereogum.com/feed/"
+    target_sections: "backstage_pass,vinyl_vault,artist_spotlight"
+
+  # ── Blog / Scrape targets ──
   - name: "Song Exploder"
     type: "scrape"
     url: "https://songexploder.net"
-    target_sections: "backstage_pass,mondegreen"
+    target_sections: "backstage_pass,mondegreen,lyrics_unpacked"
 
   - name: "American Songwriter"
     type: "scrape"
     url: "https://americansongwriter.com"
-    target_sections: "greatest_songwriters,mondegreen,backstage_pass"
+    target_sections: "greatest_songwriters,mondegreen,backstage_pass,songcraft"
+
+  - name: "Genius Lyrics Blog"
+    type: "scrape"
+    url: "https://genius.com/news"
+    target_sections: "lyrics_unpacked,mondegreen,greatest_songwriters"
