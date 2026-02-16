@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 
 from weeklyamp.core.config import load_config
 from weeklyamp.core.database import init_database, seed_sections
+from weeklyamp.research.sources import sync_sources_from_config
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,12 @@ def create_app() -> FastAPI:
                     db_path = os.path.abspath(db_path)
             init_database(db_path)
             seed_sections(db_path)
+            # Sync any new sources from sources.yaml into DB
+            from weeklyamp.db.repository import Repository
+            repo = Repository(db_path)
+            added = sync_sources_from_config(repo)
+            if added:
+                logger.info("Synced %d new sources from sources.yaml", added)
             logger.info("Database initialized at %s", db_path)
         except Exception:
             logger.exception("Failed to initialize database")
