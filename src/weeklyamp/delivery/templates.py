@@ -43,6 +43,9 @@ def render_newsletter(
     title: str,
     sections: list[dict],
     css: str = "",
+    header_image_url: str = "",
+    intro_copy: str = "",
+    footer_html: str = "",
 ) -> str:
     """Render the full newsletter HTML.
 
@@ -63,6 +66,9 @@ def render_newsletter(
         title=title,
         sections=sections,
         css=css,
+        header_image_url=header_image_url,
+        intro_copy=intro_copy,
+        footer_html=footer_html,
     )
 
 

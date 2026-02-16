@@ -110,6 +110,9 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
         issue_number=issue["issue_number"],
         title=issue.get("title", ""),
         sections=sections_html,
+        header_image_url=config.newsletter.header_image_url,
+        intro_copy=config.newsletter.intro_copy,
+        footer_html=config.newsletter.footer_html,
     )
 
     plain_text = "\n\n".join(plain_parts)

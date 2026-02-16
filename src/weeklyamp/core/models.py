@@ -553,6 +553,9 @@ class NewsletterConfig(BaseModel):
     tagline: str = "Amplifying Independent Artists & Songwriters"
     from_name: str = "PS"
     reply_to: str = ""
+    header_image_url: str = ""
+    intro_copy: str = ""
+    footer_html: str = ""
 
 
 class ScheduleConfig(BaseModel):

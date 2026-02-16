@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
+from weeklyamp.content.sections import build_week_section_plan
 from weeklyamp.web.deps import get_config, get_repo, render
 
 router = APIRouter()
@@ -32,11 +33,14 @@ async def schedule_page():
 
 
 @router.post("/save-day", response_class=HTMLResponse)
-async def save_day(
-    day_of_week: str = Form(...),
-    label: str = Form(""),
-    section_slugs: str = Form(""),
-):
+async def save_day(request: Request):
+    form = await request.form()
+    day_of_week = form.get("day_of_week", "")
+    label = form.get("label", "")
+    # Checkboxes send multiple values for the same name
+    slugs = form.getlist("section_slugs")
+    section_slugs = ", ".join(slugs) if slugs else ""
+
     repo = get_repo()
     repo.upsert_send_schedule(day_of_week, label, section_slugs)
 
@@ -92,3 +96,32 @@ async def create_week_issues(week_id: str = Form("")):
     return render("partials/schedule_table.html",
         schedules=schedules, sections=repo.get_active_sections(),
         days=DAYS, upcoming=upcoming, message=message, level=level)
+
+
+@router.post("/auto-plan-week", response_class=HTMLResponse)
+async def auto_plan_week():
+    """Apply category rotation to fill gaps in the week's schedule."""
+    repo = get_repo()
+    schedules = repo.get_send_schedules()
+
+    plan = build_week_section_plan(repo, schedules)
+
+    # Update each schedule's section_slugs with the planned slugs
+    updated = 0
+    for day, slugs in plan.items():
+        new_slugs = ", ".join(slugs)
+        # Find the matching schedule to preserve its label
+        label = ""
+        for s in schedules:
+            if s["day_of_week"] == day:
+                label = s.get("label", "")
+                break
+        repo.upsert_send_schedule(day, label, new_slugs)
+        updated += 1
+
+    schedules = repo.get_send_schedules()
+    sections = repo.get_active_sections()
+    message = f"Auto-planned {updated} days with category rotation coverage"
+    return render("partials/schedule_table.html",
+        schedules=schedules, sections=sections, days=DAYS,
+        message=message, level="success")

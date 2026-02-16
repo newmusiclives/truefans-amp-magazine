@@ -3,6 +3,9 @@ newsletter:
   tagline: "AI Magazine for Independent Artists & Songwriters"
   from_name: "PS"
   reply_to: ""
+  header_image_url: ""
+  intro_copy: ""
+  footer_html: ""
 
 ai:
   provider: "anthropic"

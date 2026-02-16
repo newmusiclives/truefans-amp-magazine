@@ -13,26 +13,48 @@
     <div class="card-header">
         <span class="card-title">Configure Send Day</span>
     </div>
-    <form hx-post="/schedule/save-day" hx-target="#schedule-table" hx-swap="outerHTML"
-          style="display:grid;grid-template-columns:1fr 1fr 2fr auto;gap:12px;align-items:end">
+    <form hx-post="/schedule/save-day" hx-target="#schedule-table" hx-swap="outerHTML">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+                <label>Day of Week</label>
+                <select name="day_of_week">
+                    {% for d in days %}
+                    <option value="{{ d }}">{{ d | title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Label</label>
+                <input type="text" name="label" placeholder="e.g. Main Issue">
+            </div>
+        </div>
         <div class="form-group">
-            <label>Day of Week</label>
-            <select name="day_of_week">
-                {% for d in days %}
-                <option value="{{ d }}">{{ d | title }}</option>
+            <label>Sections</label>
+            <div class="section-picker">
+                {% set cats = {} %}
+                {% for s in sections %}
+                    {% set cat = s.category or 'uncategorized' %}
+                    {% if cat not in cats %}
+                        {% if cats.update({cat: []}) %}{% endif %}
+                    {% endif %}
+                    {% if cats[cat].append(s) %}{% endif %}
                 {% endfor %}
-            </select>
+                {% for cat, cat_sections in cats.items() %}
+                <div class="section-category-group">
+                    <div class="section-category-label">{{ cat | replace('_', ' ') | title }}</div>
+                    <div class="section-checkboxes">
+                        {% for s in cat_sections %}
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="section_slugs" value="{{ s.slug }}">
+                            {{ s.display_name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        <div class="form-group">
-            <label>Label</label>
-            <input type="text" name="label" placeholder="e.g. Main Issue">
-        </div>
-        <div class="form-group">
-            <label>Sections (comma-separated slugs)</label>
-            <input type="text" name="section_slugs"
-                   placeholder="{{ sections | map(attribute='slug') | join(', ') }}">
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Save Day</button>
+        <button type="submit" class="btn btn-primary" style="margin-top:8px">Save Day</button>
     </form>
 </div>
 
@@ -41,18 +63,48 @@
     {% include "partials/schedule_table.html" %}
 </div>
 
-<!-- Create week issues -->
+<!-- Create week issues + auto-plan -->
 <div class="card">
     <div class="card-header">
         <span class="card-title">Create Week Issues</span>
     </div>
-    <form hx-post="/schedule/create-week-issues" hx-target="#schedule-table" hx-swap="outerHTML"
-          style="display:flex;gap:12px;align-items:end">
-        <div class="form-group">
-            <label>Week ID (leave blank for current week)</label>
-            <input type="text" name="week_id" placeholder="2026-W07" style="width:200px">
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Create Issues</button>
-    </form>
+    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+        <form hx-post="/schedule/create-week-issues" hx-target="#schedule-table" hx-swap="outerHTML"
+              style="display:flex;gap:12px;align-items:end">
+            <div class="form-group">
+                <label>Week ID (leave blank for current week)</label>
+                <input type="text" name="week_id" placeholder="2026-W07" style="width:200px">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Create Issues</button>
+        </form>
+        <form hx-post="/schedule/auto-plan-week" hx-target="#schedule-table" hx-swap="outerHTML"
+              style="display:flex;align-items:end">
+            <button type="submit" class="btn btn-primary" style="margin-bottom:16px"
+                    title="Fill in missing category coverage across all send days">Auto-Plan Categories</button>
+        </form>
+    </div>
 </div>
+
+<style>
+.section-picker {
+    display:flex;flex-wrap:wrap;gap:16px;
+}
+.section-category-group {
+    flex:1 1 200px;min-width:180px;
+    border:1px solid var(--border);border-radius:6px;padding:10px;
+}
+.section-category-label {
+    font-weight:600;font-size:12px;text-transform:uppercase;
+    letter-spacing:0.5px;color:var(--primary);margin-bottom:6px;
+}
+.section-checkboxes {
+    display:flex;flex-direction:column;gap:4px;
+}
+.checkbox-label {
+    display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;
+}
+.checkbox-label input[type="checkbox"] {
+    margin:0;
+}
+</style>
 {% endblock %}

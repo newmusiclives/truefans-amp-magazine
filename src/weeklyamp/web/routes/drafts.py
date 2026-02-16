@@ -46,15 +46,36 @@ async def generate(section_slug: str = Form("")):
 
     repo.update_issue_status(issue_id, "drafting")
 
-    slugs = [section_slug] if section_slug else get_section_slugs(repo)
+    if section_slug:
+        slugs = [section_slug]
+    elif issue.get("issue_template"):
+        slugs = [s.strip() for s in issue["issue_template"].split(",") if s.strip()]
+    else:
+        slugs = get_section_slugs(repo)
+    # Always include ps_from_ps
+    if "ps_from_ps" not in slugs:
+        slugs.append("ps_from_ps")
+    # Ensure ps_from_ps is always generated last so it can reference the edition
+    if len(slugs) > 1 and "ps_from_ps" in slugs:
+        slugs.remove("ps_from_ps")
+        slugs.append("ps_from_ps")
     results = []
 
     for slug in slugs:
         inputs = repo.get_editorial_inputs(issue_id, slug)
         topic = inputs[0].get("topic", "") if inputs else ""
         notes = inputs[0].get("notes", "") if inputs else ""
-        raw_items = repo.get_unused_content(section_slug=slug, limit=3)
-        reference = "\n\n".join(f"- {i['title']}: {i['summary']}" for i in raw_items[:3]) if raw_items else ""
+
+        # For ps_from_ps, use this edition's drafts as reference instead of raw content
+        if slug == "ps_from_ps":
+            edition_drafts = repo.get_drafts_for_issue(issue_id)
+            reference = "\n\n".join(
+                f"**{d['section_slug'].replace('_', ' ').upper()}**: {d['content'][:200]}..."
+                for d in edition_drafts if d["section_slug"] != "ps_from_ps"
+            )
+        else:
+            raw_items = repo.get_unused_content(section_slug=slug, limit=3)
+            reference = "\n\n".join(f"- {i['title']}: {i['summary']}" for i in raw_items[:3]) if raw_items else ""
 
         # Look up word count settings for this section
         section = repo.get_section(slug)
