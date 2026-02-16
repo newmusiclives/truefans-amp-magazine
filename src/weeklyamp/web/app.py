@@ -2,31 +2,17 @@
 
 from __future__ import annotations
 
+import logging
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from weeklyamp.core.config import load_config
-from weeklyamp.core.database import init_database
-from weeklyamp.web.routes import (
-    dashboard,
-    drafts,
-    publish,
-    research,
-    review,
-    schedule,
-    sections,
-    sponsor_blocks,
-    sponsors,
-    subscribers,
-)
-from weeklyamp.web.routes import agents as agents_routes
-from weeklyamp.web.routes import calendar as calendar_routes
-from weeklyamp.web.routes import growth as growth_routes
-from weeklyamp.web.routes import guests as guests_routes
-from weeklyamp.web.routes import submissions as submissions_routes
-from weeklyamp.web.routes import submit as submit_routes
+from weeklyamp.core.database import init_database, seed_sections
+
+logger = logging.getLogger(__name__)
 
 _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates"
 _STATIC_DIR = _TEMPLATES_DIR / "web" / "static"
@@ -38,12 +24,46 @@ def create_app() -> FastAPI:
     # Auto-initialize database on startup
     @app.on_event("startup")
     def startup_init_db():
-        config = load_config()
-        init_database(config.db_path)
+        try:
+            config = load_config()
+            db_path = config.db_path
+            # Use absolute path on Railway
+            if not os.path.isabs(db_path):
+                db_path = os.path.join("/app", db_path)
+            init_database(db_path)
+            seed_sections(db_path)
+            logger.info("Database initialized at %s", db_path)
+        except Exception:
+            logger.exception("Failed to initialize database")
+
+    # Health check
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
 
     # Static files
     if _STATIC_DIR.exists():
         app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
+    # Import routes here to avoid circular imports at module level
+    from weeklyamp.web.routes import (
+        dashboard,
+        drafts,
+        publish,
+        research,
+        review,
+        schedule,
+        sections,
+        sponsor_blocks,
+        sponsors,
+        subscribers,
+    )
+    from weeklyamp.web.routes import agents as agents_routes
+    from weeklyamp.web.routes import calendar as calendar_routes
+    from weeklyamp.web.routes import growth as growth_routes
+    from weeklyamp.web.routes import guests as guests_routes
+    from weeklyamp.web.routes import submissions as submissions_routes
+    from weeklyamp.web.routes import submit as submit_routes
 
     # Routes
     app.include_router(dashboard.router)
