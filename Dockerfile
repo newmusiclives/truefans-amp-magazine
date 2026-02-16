@@ -9,8 +9,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project files
 COPY . .
 
-# Verify key files exist
-RUN ls -la /app/config/default.yaml /app/src/weeklyamp/db/schema.sql /app/templates/web/base.html
+# Verify key files exist at build time
+RUN python -c "from pathlib import Path; assert Path('/app/config/default.yaml').exists(); assert Path('/app/src/weeklyamp/db/schema.sql').exists(); assert Path('/app/templates/web/base.html').exists(); print('All files OK')"
+
+# Verify imports work at build time
+RUN PYTHONPATH=/app/src python -c "from weeklyamp.web.app import create_app; print('Import OK')"
 
 # Set Python path so src layout works
 ENV PYTHONPATH=/app/src
@@ -19,5 +22,5 @@ ENV PYTHONUNBUFFERED=1
 # Create data directory
 RUN mkdir -p /app/data
 
-# Railway sets PORT dynamically
-CMD python -m uvicorn weeklyamp.web.app:create_app --host 0.0.0.0 --port ${PORT:-8000} --factory --log-level info
+# Use Python entrypoint for reliable PORT handling
+CMD ["python", "/app/start.py"]
