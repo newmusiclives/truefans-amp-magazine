@@ -18,9 +18,11 @@ beehiiv:
   publication_id: ""
 
 schedule:
-  frequency: 1
+  frequency: 3
   send_days:
-    - "tuesday"
+    - "monday"
+    - "wednesday"
+    - "friday"
 
 sponsor_slots:
   max_per_issue: 2
