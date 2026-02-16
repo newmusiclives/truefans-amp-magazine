@@ -5,6 +5,7 @@ from __future__ import annotations
 import markdown
 
 from weeklyamp.content.sections import get_section_map
+from weeklyamp.web.sanitize import sanitize_html
 from weeklyamp.core.models import AppConfig
 from weeklyamp.db.repository import Repository
 from weeklyamp.delivery.templates import (
@@ -47,8 +48,8 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
         sec = section_map.get(slug, {})
         display_name = sec.get("display_name", slug.upper())
 
-        # Convert markdown content to HTML
-        content_html = markdown.markdown(draft["content"], extensions=["extra"])
+        # Convert markdown content to HTML (sanitized against XSS)
+        content_html = sanitize_html(markdown.markdown(draft["content"], extensions=["extra"]))
 
         # Check if this draft came from a guest article or artist submission
         guest = repo.get_guest_article_by_draft(draft["id"])

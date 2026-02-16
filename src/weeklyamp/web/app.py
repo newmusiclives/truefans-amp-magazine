@@ -12,6 +12,14 @@ from fastapi.staticfiles import StaticFiles
 from weeklyamp.core.config import load_config
 from weeklyamp.core.database import init_database, seed_sections
 from weeklyamp.research.sources import sync_sources_from_config
+from weeklyamp.web.security import (
+    AuthMiddleware,
+    CSRFMiddleware,
+    SecurityHeadersMiddleware,
+    login_page,
+    login_submit,
+    logout,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +29,16 @@ _STATIC_DIR = _TEMPLATES_DIR / "web" / "static"
 
 def create_app() -> FastAPI:
     app = FastAPI(title="TrueFans AMP Magazine", docs_url=None, redoc_url=None)
+
+    # Security middleware (order matters: outermost runs first)
+    app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(CSRFMiddleware)
+    app.add_middleware(AuthMiddleware)
+
+    # Auth routes
+    app.add_api_route("/login", login_page, methods=["GET"])
+    app.add_api_route("/login", login_submit, methods=["POST"])
+    app.add_api_route("/logout", logout, methods=["GET"])
 
     # Auto-initialize database on startup
     @app.on_event("startup")

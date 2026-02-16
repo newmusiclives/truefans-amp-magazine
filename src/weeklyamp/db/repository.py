@@ -12,6 +12,58 @@ from weeklyamp.core.database import get_connection
 class Repository:
     """Central data-access layer for the WEEKLYAMP database."""
 
+    # Column whitelist for generic update methods — prevents SQL injection
+    # via f-string column name interpolation.
+    _ALLOWED_COLUMNS: dict[str, set[str]] = {
+        "section_definitions": {
+            "display_name", "sort_order", "is_active", "section_type",
+            "target_word_count", "word_count_label", "prompt_template",
+            "category", "series_type", "series_length", "series_current",
+            "description", "suggested_reason", "last_used_issue_id", "suggested_at",
+        },
+        "sponsor_blocks": {
+            "position", "sponsor_name", "headline", "body_html",
+            "cta_url", "cta_text", "image_url", "is_active",
+        },
+        "sponsors": {
+            "name", "contact_name", "contact_email", "website", "notes", "is_active",
+        },
+        "ai_agents": {
+            "agent_type", "name", "persona", "system_prompt",
+            "autonomy_level", "config_json", "is_active",
+        },
+        "guest_contacts": {
+            "name", "email", "organization", "role", "website", "notes",
+        },
+        "guest_articles": {
+            "contact_id", "title", "author_name", "author_bio", "original_url",
+            "content_full", "content_summary", "display_mode", "permission_state",
+            "target_issue_id", "target_section_slug", "draft_id",
+        },
+        "artist_submissions": {
+            "artist_name", "artist_email", "artist_website", "artist_social",
+            "submission_type", "title", "description", "release_date", "genre",
+            "links_json", "attachments_json", "review_state",
+            "target_issue_id", "target_section_slug", "draft_id", "api_source",
+        },
+        "editorial_calendar": {
+            "issue_id", "planned_date", "theme", "notes",
+            "section_assignments", "agent_assignments", "status",
+        },
+        "social_posts": {
+            "platform", "content", "issue_id", "status",
+            "scheduled_at", "posted_at", "agent_task_id",
+        },
+    }
+
+    @staticmethod
+    def _validate_columns(table: str, columns: dict) -> None:
+        """Raise ValueError if any column names are not in the whitelist."""
+        allowed = Repository._ALLOWED_COLUMNS.get(table, set())
+        bad = set(columns.keys()) - allowed
+        if bad:
+            raise ValueError(f"Invalid columns for {table}: {bad}")
+
     def __init__(self, db_path: str) -> None:
         self.db_path = db_path
 
@@ -122,6 +174,7 @@ class Repository:
     def update_section(self, slug: str, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("section_definitions", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [slug]
         conn = self._conn()
@@ -564,6 +617,7 @@ class Repository:
     def update_sponsor_block(self, block_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("sponsor_blocks", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [block_id]
         conn = self._conn()
@@ -611,6 +665,7 @@ class Repository:
     def update_sponsor(self, sponsor_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("sponsors", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [sponsor_id]
         conn = self._conn()
@@ -741,6 +796,7 @@ class Repository:
     def update_agent(self, agent_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("ai_agents", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [agent_id]
         conn = self._conn()
@@ -879,6 +935,7 @@ class Repository:
     def update_guest_contact(self, contact_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("guest_contacts", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [contact_id]
         conn = self._conn()
@@ -953,6 +1010,7 @@ class Repository:
     def update_guest_article(self, article_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("guest_articles", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [article_id]
         conn = self._conn()
@@ -1050,6 +1108,7 @@ class Repository:
     def update_submission(self, submission_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("artist_submissions", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [submission_id]
         conn = self._conn()
@@ -1106,6 +1165,7 @@ class Repository:
     def update_calendar_entry(self, entry_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("editorial_calendar", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [entry_id]
         conn = self._conn()
@@ -1190,6 +1250,7 @@ class Repository:
     def update_social_post(self, post_id: int, **kwargs) -> None:
         if not kwargs:
             return
+        self._validate_columns("social_posts", kwargs)
         sets = ", ".join(f"{k} = ?" for k in kwargs)
         vals = list(kwargs.values()) + [post_id]
         conn = self._conn()

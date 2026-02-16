@@ -17,11 +17,16 @@ _env = Environment(
     autoescape=True,
 )
 
-# Add markdown filter
+# Add markdown filter with XSS sanitization
 import markdown as _md
+from markupsafe import Markup
+
+from weeklyamp.web.sanitize import sanitize_html
+
 
 def _md_filter(text: str) -> str:
-    return _md.markdown(text or "", extensions=["extra"])
+    raw = _md.markdown(text or "", extensions=["extra"])
+    return Markup(sanitize_html(raw))
 
 _env.filters["markdown"] = _md_filter
 _env.filters["truncate_words"] = lambda s, n=20: " ".join((s or "").split()[:n]) + ("..." if len((s or "").split()) > n else "")

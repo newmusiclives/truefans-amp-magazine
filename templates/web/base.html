@@ -8,6 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script>
+    // CSRF: read _csrf cookie and send as X-CSRF-Token header on every htmx request
+    document.addEventListener('htmx:configRequest', function(event) {
+        var match = document.cookie.match(/(?:^|;\s*)_csrf=([^;]*)/);
+        if (match) {
+            event.detail.headers['X-CSRF-Token'] = match[1];
+        }
+    });
+    </script>
 </head>
 <body>
     <div class="layout">
@@ -62,6 +71,11 @@
                 <a href="/growth" class="{% block nav_growth %}{% endblock %}">
                     <span class="icon">&#128200;</span> Growth
                 </a>
+                <div style="border-top: 1px solid var(--border, #e2e4ea); margin-top: 16px; padding-top: 12px;">
+                    <a href="/logout">
+                        <span class="icon">&#10140;</span> Logout
+                    </a>
+                </div>
             </nav>
         </aside>
 
