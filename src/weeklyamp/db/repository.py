@@ -1258,6 +1258,38 @@ class Repository:
         conn.commit()
         conn.close()
 
+    # ---- Security Log ----
+
+    def log_security_event(self, event_type: str, ip_address: str = "",
+                           user_agent: str = "", detail: str = "") -> int:
+        """Insert a security event into the audit log."""
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO security_log (event_type, ip_address, user_agent, detail)
+               VALUES (?, ?, ?, ?)""",
+            (event_type, ip_address, user_agent, detail),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_security_log(self, limit: int = 50, event_type: str | None = None) -> list[dict]:
+        """Retrieve recent security events."""
+        conn = self._conn()
+        if event_type:
+            rows = conn.execute(
+                "SELECT * FROM security_log WHERE event_type = ? ORDER BY created_at DESC LIMIT ?",
+                (event_type, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM security_log ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
     # ---- Stats ----
 
     def get_table_counts(self) -> dict[str, int]:

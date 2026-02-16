@@ -15,6 +15,7 @@ from weeklyamp.cli.research import research_app
 from weeklyamp.cli.review import review_app
 from weeklyamp.cli.subscribers import subs_app
 from weeklyamp.cli.agents import agent_app
+from weeklyamp.cli.security import security_app
 from weeklyamp.cli.submissions import submissions_app
 from weeklyamp.core.config import load_config
 from weeklyamp.core.database import get_schema_version, init_database, seed_sections
@@ -36,6 +37,7 @@ app.add_typer(subs_app)
 app.add_typer(config_app)
 app.add_typer(agent_app)
 app.add_typer(submissions_app)
+app.add_typer(security_app)
 
 
 @app.command()

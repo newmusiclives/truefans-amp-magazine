@@ -259,6 +259,21 @@ CREATE INDEX IF NOT EXISTS idx_social_posts_issue ON social_posts(issue_id);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (10);
 """,
+    11: """
+-- v11: Security audit log
+CREATE TABLE IF NOT EXISTS security_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    detail TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_security_log_event ON security_log(event_type);
+CREATE INDEX IF NOT EXISTS idx_security_log_created ON security_log(created_at);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (11);
+""",
 }
 
 

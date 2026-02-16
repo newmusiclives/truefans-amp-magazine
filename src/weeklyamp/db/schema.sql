@@ -315,6 +315,16 @@ CREATE TABLE IF NOT EXISTS social_posts (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Security audit log
+CREATE TABLE IF NOT EXISTS security_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    detail TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_drafts_issue_section ON drafts(issue_id, section_slug);
 CREATE INDEX IF NOT EXISTS idx_raw_content_source ON raw_content(source_id);
@@ -334,6 +344,8 @@ CREATE INDEX IF NOT EXISTS idx_submissions_state ON artist_submissions(review_st
 CREATE INDEX IF NOT EXISTS idx_calendar_issue ON editorial_calendar(issue_id);
 CREATE INDEX IF NOT EXISTS idx_growth_date ON growth_metrics(metric_date);
 CREATE INDEX IF NOT EXISTS idx_social_posts_issue ON social_posts(issue_id);
+CREATE INDEX IF NOT EXISTS idx_security_log_event ON security_log(event_type);
+CREATE INDEX IF NOT EXISTS idx_security_log_created ON security_log(created_at);
 
 -- Schema version
 INSERT OR IGNORE INTO schema_version (version) VALUES (1);
@@ -346,3 +358,4 @@ INSERT OR IGNORE INTO schema_version (version) VALUES (7);
 INSERT OR IGNORE INTO schema_version (version) VALUES (8);
 INSERT OR IGNORE INTO schema_version (version) VALUES (9);
 INSERT OR IGNORE INTO schema_version (version) VALUES (10);
+INSERT OR IGNORE INTO schema_version (version) VALUES (11);

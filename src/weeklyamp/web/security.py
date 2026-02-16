@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import secrets
+import time
 from pathlib import Path
 
 import bcrypt
@@ -59,6 +60,48 @@ _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web
 _login_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
 
 
+# ---- Rate limiting ----
+
+_login_attempts: dict[str, list[float]] = {}  # ip -> [timestamps]
+_MAX_ATTEMPTS = 5
+_WINDOW_SECONDS = 900  # 15 minutes
+
+
+def _get_client_ip(request: Request) -> str:
+    """Extract client IP from X-Forwarded-For (Railway/proxy) or direct connection."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _is_rate_limited(ip: str) -> bool:
+    """Check if an IP has exceeded the login attempt limit."""
+    now = time.time()
+    attempts = _login_attempts.get(ip, [])
+    # Prune old entries outside the window
+    attempts = [t for t in attempts if now - t < _WINDOW_SECONDS]
+    _login_attempts[ip] = attempts
+    return len(attempts) >= _MAX_ATTEMPTS
+
+
+def _record_attempt(ip: str) -> None:
+    """Record a failed login attempt for an IP."""
+    _login_attempts.setdefault(ip, []).append(time.time())
+
+
+def _clear_attempts(ip: str) -> None:
+    """Clear login attempts for an IP after successful login."""
+    _login_attempts.pop(ip, None)
+
+
+# ---- Secure cookie helpers ----
+
+def _is_secure(request: Request) -> bool:
+    """Check if the request arrived over HTTPS (via proxy header)."""
+    return request.headers.get("X-Forwarded-Proto") == "https"
+
+
 # ---- Password helpers ----
 
 def hash_password(password: str) -> str:
@@ -87,16 +130,18 @@ def _get_signer() -> TimestampSigner:
     return TimestampSigner(key)
 
 
-def create_session(response: Response) -> Response:
+def create_session(response: Response, request: Request | None = None) -> Response:
     """Sign and set the session cookie on a response."""
     signer = _get_signer()
     signed = signer.sign(_SESSION_VALUE).decode()
+    secure = _is_secure(request) if request else False
     response.set_cookie(
         _SESSION_COOKIE,
         signed,
         max_age=_SESSION_MAX_AGE,
         httponly=True,
         samesite="lax",
+        secure=secure,
     )
     return response
 
@@ -129,6 +174,23 @@ def _is_public(path: str) -> bool:
     return any(path.startswith(p) for p in _PUBLIC_PREFIXES)
 
 
+# ---- Audit logging helper ----
+
+def _log_security_event(request: Request, event_type: str, detail: str = "") -> None:
+    """Log a security event to the database (best-effort)."""
+    try:
+        from weeklyamp.web.deps import get_repo
+        repo = get_repo()
+        repo.log_security_event(
+            event_type=event_type,
+            ip_address=_get_client_ip(request),
+            user_agent=request.headers.get("User-Agent", "")[:500],
+            detail=detail,
+        )
+    except Exception:
+        logger.warning("Failed to write security log event: %s", event_type, exc_info=True)
+
+
 # ---- Login / Logout route handlers ----
 
 async def login_page(request: Request) -> Response:
@@ -141,26 +203,56 @@ async def login_page(request: Request) -> Response:
 
 async def login_submit(request: Request) -> Response:
     """POST /login — validate password and set session."""
+    ip = _get_client_ip(request)
+
+    # Rate limit check
+    if _is_rate_limited(ip):
+        _log_security_event(request, "login_rate_limited")
+        tpl = _login_env.get_template("login.html")
+        return HTMLResponse(
+            tpl.render(error="Too many login attempts. Please try again later."),
+            status_code=429,
+        )
+
     form = await request.form()
     password = form.get("password", "")
 
     if verify_password(password, _get_admin_hash()):
+        _clear_attempts(ip)
+        _log_security_event(request, "login_success")
         response = RedirectResponse("/", status_code=302)
-        create_session(response)
+        create_session(response, request)
         return response
 
+    _record_attempt(ip)
+    _log_security_event(request, "login_failure")
     tpl = _login_env.get_template("login.html")
     return HTMLResponse(tpl.render(error="Invalid password"), status_code=401)
 
 
 async def logout(request: Request) -> Response:
     """GET /logout — clear session and redirect to login."""
+    _log_security_event(request, "logout")
     response = RedirectResponse("/login", status_code=302)
     clear_session(response)
     return response
 
 
 # ---- Middleware ----
+
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "connect-src 'self'; "
+    "img-src 'self' data: https:; "
+    "frame-ancestors 'none'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'"
+)
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to every response."""
@@ -171,6 +263,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-XSS-Protection"] = "0"
+        response.headers["Content-Security-Policy"] = _CSP
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # HSTS only over HTTPS
+        if request.headers.get("X-Forwarded-Proto") == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         return response
 
 
@@ -211,12 +308,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         if is_authenticated(request) and not _is_public(request.url.path):
             if _CSRF_COOKIE not in request.cookies:
                 csrf_token = secrets.token_hex(32)
+                secure = _is_secure(request)
                 response.set_cookie(
                     _CSRF_COOKIE,
                     csrf_token,
                     httponly=False,  # JS needs to read this
                     samesite="lax",
                     max_age=_SESSION_MAX_AGE,
+                    secure=secure,
                 )
 
         return response
