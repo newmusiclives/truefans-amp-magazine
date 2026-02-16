@@ -1,1 +1,1 @@
-web: python -m uvicorn weeklyamp.web.app:create_app --host 0.0.0.0 --port ${PORT:-8000} --factory
+web: PYTHONPATH=/app/src python -m uvicorn weeklyamp.web.app:create_app --host 0.0.0.0 --port ${PORT:-8000} --factory
