@@ -672,8 +672,8 @@ class Repository:
         row = conn.execute(
             """SELECT
                 COUNT(*) as total_bookings,
-                SUM(CASE WHEN status = 'paid' THEN rate_cents ELSE 0 END) as paid_cents,
-                SUM(CASE WHEN status IN ('booked','confirmed','delivered','invoiced') THEN rate_cents ELSE 0 END) as pipeline_cents,
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN rate_cents ELSE 0 END), 0) as paid_cents,
+                COALESCE(SUM(CASE WHEN status IN ('booked','confirmed','delivered','invoiced') THEN rate_cents ELSE 0 END), 0) as pipeline_cents,
                 COUNT(CASE WHEN status = 'paid' THEN 1 END) as paid_count
                FROM sponsor_bookings"""
         ).fetchone()

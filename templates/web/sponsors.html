@@ -16,11 +16,11 @@
     </div>
     <div class="stat-card">
         <div class="label">Revenue (Paid)</div>
-        <div class="value green">${{ "%.2f" | format(revenue.paid_cents / 100) }}</div>
+        <div class="value green">${{ "%.2f" | format((revenue.paid_cents or 0) / 100) }}</div>
     </div>
     <div class="stat-card">
         <div class="label">Pipeline</div>
-        <div class="value blue">${{ "%.2f" | format(revenue.pipeline_cents / 100) }}</div>
+        <div class="value blue">${{ "%.2f" | format((revenue.pipeline_cents or 0) / 100) }}</div>
     </div>
     <div class="stat-card">
         <div class="label">Paid Bookings</div>
