@@ -27,9 +27,12 @@ def create_app() -> FastAPI:
         try:
             config = load_config()
             db_path = config.db_path
-            # Use absolute path on Railway
+            # Use absolute path on Railway, relative to cwd locally
             if not os.path.isabs(db_path):
-                db_path = os.path.join("/app", db_path)
+                if os.path.exists("/app"):
+                    db_path = os.path.join("/app", db_path)
+                else:
+                    db_path = os.path.abspath(db_path)
             init_database(db_path)
             seed_sections(db_path)
             logger.info("Database initialized at %s", db_path)
