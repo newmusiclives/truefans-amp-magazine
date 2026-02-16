@@ -111,4 +111,38 @@ def create_app() -> FastAPI:
     app.include_router(calendar_routes.router, prefix="/calendar")
     app.include_router(growth_routes.router, prefix="/growth")
 
+    # Security logs (authenticated, inline)
+    from fastapi.responses import HTMLResponse
+
+    @app.get("/security/logs")
+    def security_logs():
+        from weeklyamp.web.deps import get_repo
+        repo = get_repo()
+        events = repo.get_security_log(limit=50)
+        rows = ""
+        for ev in events:
+            rows += (
+                f"<tr><td>{ev.get('created_at','')}</td>"
+                f"<td>{ev.get('event_type','')}</td>"
+                f"<td>{ev.get('ip_address','')}</td>"
+                f"<td>{ev.get('user_agent','')[:80]}</td>"
+                f"<td>{ev.get('detail','')}</td></tr>"
+            )
+        if not rows:
+            rows = '<tr><td colspan="5" style="text-align:center;color:#888">No events yet</td></tr>'
+        html = (
+            '<!DOCTYPE html><html><head><title>Security Logs</title>'
+            '<link rel="stylesheet" href="/static/style.css">'
+            '<style>table{width:100%;border-collapse:collapse;font-size:13px}'
+            'th,td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left}'
+            'th{font-weight:600;color:var(--text-dim)}</style></head>'
+            '<body style="padding:32px;max-width:1200px;margin:0 auto">'
+            '<h2>Security Audit Log</h2>'
+            '<p><a href="/">&larr; Dashboard</a></p>'
+            '<table><thead><tr><th>Time</th><th>Event</th><th>IP</th>'
+            '<th>User Agent</th><th>Detail</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table></body></html>'
+        )
+        return HTMLResponse(html)
+
     return app
