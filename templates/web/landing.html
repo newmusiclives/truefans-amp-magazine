@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeeklyAMP — AI-Powered Magazine for Independent Artists</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --purple-glow: rgba(124, 92, 252, 0.3);
+            --gold: #f59e0b;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 80px 24px 120px;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124, 92, 252, 0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232, 100, 90, 0.1) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .hero-content { position: relative; max-width: 800px; }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(124, 92, 252, 0.12);
+            border: 1px solid rgba(124, 92, 252, 0.25);
+            color: #a78bfa;
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 32px;
+        }
+        .hero h1 {
+            font-size: clamp(42px, 7vw, 72px);
+            font-weight: 900;
+            line-height: 1.08;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 20px;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), #d4524a);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(232, 100, 90, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(232, 100, 90, 0.4);
+        }
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        /* Nav */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .nav-brand span { color: var(--accent); }
+        nav a.nav-link {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        nav a.nav-link:hover {
+            color: var(--text);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        /* Features */
+        .features {
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .features-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+        .features-header h2 {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .features-header p {
+            font-size: 18px;
+            color: var(--text-dim);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+        .feature-card:hover {
+            border-color: rgba(124, 92, 252, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .feature-card p {
+            color: var(--text-dim);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 100px 24px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+        .how-it-works-inner {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .how-it-works h2 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 64px;
+        }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+        .step {
+            text-align: center;
+            position: relative;
+        }
+        .step-num {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple), var(--accent));
+            color: #fff;
+            font-weight: 800;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .step h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .step p {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+
+        /* Sections showcase */
+        .sections-showcase {
+            padding: 100px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .sections-showcase h2 {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .sections-showcase .subtitle {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 18px;
+            margin-bottom: 48px;
+        }
+        .section-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+        .section-tag {
+            background: rgba(124, 92, 252, 0.08);
+            border: 1px solid rgba(124, 92, 252, 0.2);
+            color: #c4b5fd;
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .section-tag:hover {
+            background: rgba(124, 92, 252, 0.15);
+            border-color: rgba(124, 92, 252, 0.4);
+        }
+        .section-tag.alt {
+            background: rgba(232, 100, 90, 0.08);
+            border-color: rgba(232, 100, 90, 0.2);
+            color: #fca5a1;
+        }
+        .section-tag.alt:hover {
+            background: rgba(232, 100, 90, 0.15);
+            border-color: rgba(232, 100, 90, 0.4);
+        }
+
+        /* CTA */
+        .cta {
+            padding: 120px 24px;
+            text-align: center;
+        }
+        .cta h2 {
+            font-size: 40px;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .cta p {
+            font-size: 18px;
+            color: var(--text-dim);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 24px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            .steps { grid-template-columns: repeat(2, 1fr); }
+            .features-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 480px) {
+            .steps { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">Weekly<span>AMP</span></a>
+        <a href="/login" class="nav-link">Sign In</a>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">AI-Powered Music Newsletter Platform</div>
+            <h1>The independent artist's <span class="highlight">unfair advantage.</span></h1>
+            <p>WeeklyAMP is an AI-powered magazine platform that researches, writes, and publishes professional music industry newsletters — so independent artists and songwriters get the edge they deserve.</p>
+            <div class="hero-cta">
+                <a href="/submit" class="btn btn-primary">Submit Your Music</a>
+                <a href="#features" class="btn btn-outline">See How It Works</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="features-header">
+            <h2>Everything you need, automated.</h2>
+            <p>From research to publish, AI handles the heavy lifting.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(124, 92, 252, 0.12); color: #a78bfa;">&#128270;</div>
+                <h3>AI-Powered Research</h3>
+                <p>Automatically scrapes 50+ music industry sources — blogs, RSS feeds, news outlets — to surface the stories that matter to independent artists.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(232, 100, 90, 0.12); color: #fca5a1;">&#9998;</div>
+                <h3>Intelligent Drafting</h3>
+                <p>AI writes each newsletter section with a distinct voice and tone — from industry analysis to songwriting tips — guided by custom editorial prompts.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(22, 163, 74, 0.12); color: #4ade80;">&#10003;</div>
+                <h3>Editorial Review Pipeline</h3>
+                <p>A four-step workflow — Research, Draft, Review, Publish — gives you full control. Approve, revise, or regenerate any section before it ships.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">&#128197;</div>
+                <h3>Scheduled Publishing</h3>
+                <p>Set your cadence — 3x weekly, weekly, whatever works. WeeklyAMP assembles and delivers finished newsletters on your schedule via Beehiiv.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(8, 145, 178, 0.12); color: #22d3ee;">&#127925;</div>
+                <h3>Artist Submissions</h3>
+                <p>Independent artists can submit their music, stories, and guest articles directly — creating a community-driven pipeline of fresh content every issue.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: rgba(234, 88, 12, 0.12); color: #fb923c;">&#127919;</div>
+                <h3>Sponsor Management</h3>
+                <p>Built-in CRM for sponsors with booking slots, revenue tracking, and ad inventory management. Monetize your newsletter from day one.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works">
+        <div class="how-it-works-inner">
+            <h2>How It Works</h2>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <h3>Research</h3>
+                    <p>AI scans 50+ music industry sources and surfaces trending stories, tools, and opportunities.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <h3>Draft</h3>
+                    <p>Each of 30 newsletter sections is written by AI with a unique editorial voice and style.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <h3>Review</h3>
+                    <p>Editors approve, revise, or regenerate sections. Full control before anything goes live.</p>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <h3>Publish</h3>
+                    <p>The newsletter is assembled, styled, and delivered straight to subscriber inboxes.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="sections-showcase">
+        <h2>30 Curated Sections</h2>
+        <p class="subtitle">Every issue features a rotating mix of industry intelligence and creative strategy.</p>
+        <div class="section-tags">
+            <span class="section-tag">Backstage Pass</span>
+            <span class="section-tag alt">Industry Pulse</span>
+            <span class="section-tag">Streaming Dashboard</span>
+            <span class="section-tag alt">Money Moves</span>
+            <span class="section-tag">Songcraft</span>
+            <span class="section-tag alt">Deal or No Deal</span>
+            <span class="section-tag">Vocal Booth</span>
+            <span class="section-tag alt">AI Music Lab</span>
+            <span class="section-tag">Social Playbook</span>
+            <span class="section-tag alt">Gear Garage</span>
+            <span class="section-tag">Rights &amp; Royalties</span>
+            <span class="section-tag alt">Creative Fuel</span>
+            <span class="section-tag">Tech Talk</span>
+            <span class="section-tag alt">Community Wins</span>
+            <span class="section-tag">Artist Spotlight</span>
+            <span class="section-tag alt">Production Notes</span>
+            <span class="section-tag">Stage Ready</span>
+            <span class="section-tag alt">DIY Marketing</span>
+            <span class="section-tag">Brand Building</span>
+            <span class="section-tag alt">PS from PS</span>
+        </div>
+    </section>
+
+    <section class="cta">
+        <h2>Ready to amplify your career?</h2>
+        <p>Submit your music, share your story, or subscribe to get the independent artist's edge delivered to your inbox.</p>
+        <div class="hero-cta">
+            <a href="/submit" class="btn btn-primary">Submit Your Music</a>
+            <a href="/login" class="btn btn-outline">Editor Login</a>
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 WeeklyAMP — TrueFans AMP Magazine. Built for independent artists, powered by AI.</p>
+    </footer>
+</body>
+</html>

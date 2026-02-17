@@ -55,6 +55,7 @@ _CSRF_COOKIE = "_csrf"
 
 # Routes that don't require authentication
 _PUBLIC_PREFIXES = ("/health", "/login", "/static", "/submit", "/api/")
+_PUBLIC_EXACT = frozenset({"/"})
 
 _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web"
 _login_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
@@ -171,6 +172,8 @@ def is_authenticated(request: Request) -> bool:
 
 def _is_public(path: str) -> bool:
     """Check if a path is publicly accessible without auth."""
+    if path in _PUBLIC_EXACT:
+        return True
     return any(path.startswith(p) for p in _PUBLIC_PREFIXES)
 
 
@@ -196,7 +199,7 @@ def _log_security_event(request: Request, event_type: str, detail: str = "") -> 
 async def login_page(request: Request) -> Response:
     """GET /login — render login form."""
     if is_authenticated(request):
-        return RedirectResponse("/", status_code=302)
+        return RedirectResponse("/dashboard", status_code=302)
     tpl = _login_env.get_template("login.html")
     return HTMLResponse(tpl.render())
 
@@ -220,7 +223,7 @@ async def login_submit(request: Request) -> Response:
     if verify_password(password, _get_admin_hash()):
         _clear_attempts(ip)
         _log_security_event(request, "login_success")
-        response = RedirectResponse("/", status_code=302)
+        response = RedirectResponse("/dashboard", status_code=302)
         create_session(response, request)
         return response
 

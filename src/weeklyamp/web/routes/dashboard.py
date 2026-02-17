@@ -10,7 +10,7 @@ from weeklyamp.web.deps import get_config, get_repo, render
 router = APIRouter()
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard():
     cfg = get_config()
     repo = get_repo()

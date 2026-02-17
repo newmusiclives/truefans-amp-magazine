@@ -6,7 +6,7 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from weeklyamp.core.config import load_config
@@ -63,6 +63,19 @@ def create_app() -> FastAPI:
             logger.info("Database initialized at %s", db_path)
         except Exception:
             logger.exception("Failed to initialize database")
+
+    # Public landing page
+    @app.get("/")
+    def landing(request: Request):
+        from fastapi.responses import HTMLResponse as HR
+        from fastapi.responses import RedirectResponse as RR
+        from weeklyamp.web.security import is_authenticated
+        if is_authenticated(request):
+            return RR("/dashboard", status_code=302)
+        from jinja2 import Environment, FileSystemLoader
+        env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR / "web")), autoescape=True)
+        tpl = env.get_template("landing.html")
+        return HR(tpl.render())
 
     # Health check
     @app.get("/health")
@@ -138,7 +151,7 @@ def create_app() -> FastAPI:
             'th{font-weight:600;color:var(--text-dim)}</style></head>'
             '<body style="padding:32px;max-width:1200px;margin:0 auto">'
             '<h2>Security Audit Log</h2>'
-            '<p><a href="/">&larr; Dashboard</a></p>'
+            '<p><a href="/dashboard">&larr; Dashboard</a></p>'
             '<table><thead><tr><th>Time</th><th>Event</th><th>IP</th>'
             '<th>User Agent</th><th>Detail</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></body></html>'
