@@ -362,7 +362,11 @@
 <body>
     <nav>
         <a href="/" class="nav-brand">Weekly<span>AMP</span></a>
+        {% if authenticated %}
+        <a href="/dashboard" class="nav-link">Dashboard</a>
+        {% else %}
         <a href="/login" class="nav-link">Sign In</a>
+        {% endif %}
     </nav>
 
     <section class="hero">

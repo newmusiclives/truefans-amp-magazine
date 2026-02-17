@@ -68,14 +68,12 @@ def create_app() -> FastAPI:
     @app.get("/")
     def landing(request: Request):
         from fastapi.responses import HTMLResponse as HR
-        from fastapi.responses import RedirectResponse as RR
         from weeklyamp.web.security import is_authenticated
-        if is_authenticated(request):
-            return RR("/dashboard", status_code=302)
         from jinja2 import Environment, FileSystemLoader
         env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR / "web")), autoescape=True)
         tpl = env.get_template("landing.html")
-        return HR(tpl.render())
+        authenticated = is_authenticated(request)
+        return HR(tpl.render(authenticated=authenticated))
 
     # Health check
     @app.get("/health")
