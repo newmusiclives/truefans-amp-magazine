@@ -729,6 +729,55 @@ textarea {
 }
 
 /* Responsive */
+/* Sidebar divider (logout section) */
+.sidebar-divider {
+    border-top: 1px solid var(--border, #e2e4ea);
+    margin-top: 16px;
+    padding-top: 12px;
+}
+
+/* Section picker (schedule page) */
+.section-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.section-category-group {
+    flex: 1 1 200px;
+    min-width: 180px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.section-category-label {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    margin-bottom: 6px;
+}
+
+.section-checkboxes {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin: 0;
+}
+
 @media (max-width: 768px) {
     .sidebar { display: none; }
     .main { margin-left: 0; padding: 20px; }

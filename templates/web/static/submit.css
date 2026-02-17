@@ -1,0 +1,105 @@
+:root {
+    --accent: #0ea5e9;
+    --teal: #14b8a6;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Inter', sans-serif;
+    background: #0f1117;
+    color: #e4e6ed;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+}
+.container { max-width: 640px; width: 100%; }
+.brand {
+    text-align: center;
+    margin-bottom: 32px;
+}
+.brand h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 2px;
+}
+.brand p {
+    color: #8b8fa3;
+    font-size: 14px;
+    margin-top: 4px;
+}
+.card {
+    background: #1a1d27;
+    border: 1px solid #2e3241;
+    border-radius: 12px;
+    padding: 32px;
+}
+h2 {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+.subtitle {
+    color: #8b8fa3;
+    font-size: 14px;
+    margin-bottom: 28px;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b8fa3;
+    margin-bottom: 6px;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 10px 14px;
+    background: #252836;
+    border: 1px solid #2e3241;
+    border-radius: 6px;
+    color: #e4e6ed;
+    font-size: 14px;
+    font-family: inherit;
+}
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+textarea { min-height: 120px; resize: vertical; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 32px;
+    background: var(--accent);
+    color: #0f1117;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-family: inherit;
+}
+.btn:hover { background: #38bdf8; }
+.alert {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+.alert-success {
+    background: rgba(74,222,128,0.12);
+    color: #4ade80;
+    border: 1px solid rgba(74,222,128,0.2);
+}
+.alert-error {
+    background: rgba(248,113,113,0.12);
+    color: #f87171;
+    border: 1px solid rgba(248,113,113,0.2);
+}
+.required::after { content: ' *'; color: #f87171; }

@@ -242,7 +242,7 @@ async def logout(request: Request) -> Response:
 
 _CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://unpkg.com; "
+    "script-src 'self' https://unpkg.com; "
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "font-src 'self' https://fonts.gstatic.com; "
     "connect-src 'self'; "
