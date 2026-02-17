@@ -362,125 +362,126 @@
 <body>
     <nav>
         <a href="/" class="nav-brand">Weekly<span>AMP</span></a>
-        {% if authenticated %}
-        <a href="/dashboard" class="nav-link">Dashboard</a>
-        {% else %}
-        <a href="/login" class="nav-link">Sign In</a>
-        {% endif %}
+        <div style="display:flex;gap:12px;align-items:center">
+            {% if authenticated %}
+            <a href="/dashboard" class="nav-link">Dashboard</a>
+            {% else %}
+            <a href="/login" class="nav-link">Editor Login</a>
+            {% endif %}
+        </div>
     </nav>
 
     <section class="hero">
         <div class="hero-content">
-            <div class="hero-badge">AI-Powered Music Newsletter Platform</div>
-            <h1>The independent artist's <span class="highlight">unfair advantage.</span></h1>
-            <p>WeeklyAMP is an AI-powered magazine platform that researches, writes, and publishes professional music industry newsletters — so independent artists and songwriters get the edge they deserve.</p>
+            <div class="hero-badge">Free Submissions Now Open</div>
+            <h1>Get your music in front of <span class="highlight">thousands of fans.</span></h1>
+            <p>WeeklyAMP is a curated music newsletter that spotlights independent artists and songwriters. Submit your new release, your story, or a guest article — and get featured in our next issue.</p>
             <div class="hero-cta">
                 <a href="/submit" class="btn btn-primary">Submit Your Music</a>
-                <a href="#features" class="btn btn-outline">See How It Works</a>
+                <a href="#how-it-works" class="btn btn-outline">How It Works</a>
             </div>
         </div>
     </section>
 
     <section class="features" id="features">
         <div class="features-header">
-            <h2>Everything you need, automated.</h2>
-            <p>From research to publish, AI handles the heavy lifting.</p>
+            <h2>Why artists submit to WeeklyAMP</h2>
+            <p>Real exposure to real listeners — not algorithms.</p>
         </div>
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(124, 92, 252, 0.12); color: #a78bfa;">&#128270;</div>
-                <h3>AI-Powered Research</h3>
-                <p>Automatically scrapes 50+ music industry sources — blogs, RSS feeds, news outlets — to surface the stories that matter to independent artists.</p>
+                <div class="feature-icon" style="background: rgba(124, 92, 252, 0.12); color: #a78bfa;">&#127911;</div>
+                <h3>Get Featured</h3>
+                <p>Your music, your story, front and center. Selected submissions are featured in dedicated sections read by music fans, industry pros, and fellow artists.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(232, 100, 90, 0.12); color: #fca5a1;">&#9998;</div>
-                <h3>Intelligent Drafting</h3>
-                <p>AI writes each newsletter section with a distinct voice and tone — from industry analysis to songwriting tips — guided by custom editorial prompts.</p>
+                <div class="feature-icon" style="background: rgba(232, 100, 90, 0.12); color: #fca5a1;">&#128240;</div>
+                <h3>30 Newsletter Sections</h3>
+                <p>From Artist Spotlight to Community Wins, Songcraft to New Releases — there are multiple ways your work can be included in every issue.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(22, 163, 74, 0.12); color: #4ade80;">&#10003;</div>
-                <h3>Editorial Review Pipeline</h3>
-                <p>A four-step workflow — Research, Draft, Review, Publish — gives you full control. Approve, revise, or regenerate any section before it ships.</p>
+                <div class="feature-icon" style="background: rgba(22, 163, 74, 0.12); color: #4ade80;">&#128176;</div>
+                <h3>100% Free to Submit</h3>
+                <p>No pay-to-play, no hidden fees. We believe great music deserves great exposure — regardless of your budget or label status.</p>
             </div>
             <div class="feature-card">
                 <div class="feature-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">&#128197;</div>
-                <h3>Scheduled Publishing</h3>
-                <p>Set your cadence — 3x weekly, weekly, whatever works. WeeklyAMP assembles and delivers finished newsletters on your schedule via Beehiiv.</p>
+                <h3>3x Weekly Issues</h3>
+                <p>We publish Monday, Wednesday, and Friday — which means more chances for your music to land in front of new listeners every single week.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(8, 145, 178, 0.12); color: #22d3ee;">&#127925;</div>
-                <h3>Artist Submissions</h3>
-                <p>Independent artists can submit their music, stories, and guest articles directly — creating a community-driven pipeline of fresh content every issue.</p>
+                <div class="feature-icon" style="background: rgba(8, 145, 178, 0.12); color: #22d3ee;">&#9998;</div>
+                <h3>Write a Guest Article</h3>
+                <p>Have something to say? Submit a guest column about your creative process, industry insights, or lessons learned on your journey as an independent artist.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(234, 88, 12, 0.12); color: #fb923c;">&#127919;</div>
-                <h3>Sponsor Management</h3>
-                <p>Built-in CRM for sponsors with booking slots, revenue tracking, and ad inventory management. Monetize your newsletter from day one.</p>
+                <div class="feature-icon" style="background: rgba(234, 88, 12, 0.12); color: #fb923c;">&#128101;</div>
+                <h3>Join a Community</h3>
+                <p>WeeklyAMP readers are independent artists, songwriters, producers, and music fans. Get your name in a newsletter built by and for the indie music community.</p>
             </div>
         </div>
     </section>
 
-    <section class="how-it-works">
+    <section class="how-it-works" id="how-it-works">
         <div class="how-it-works-inner">
-            <h2>How It Works</h2>
+            <h2>How Submissions Work</h2>
             <div class="steps">
                 <div class="step">
                     <div class="step-num">1</div>
-                    <h3>Research</h3>
-                    <p>AI scans 50+ music industry sources and surfaces trending stories, tools, and opportunities.</p>
+                    <h3>Submit</h3>
+                    <p>Fill out the form with your artist info, links, genre, and a short description of your music or story.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">2</div>
-                    <h3>Draft</h3>
-                    <p>Each of 30 newsletter sections is written by AI with a unique editorial voice and style.</p>
+                    <h3>Review</h3>
+                    <p>Our editorial team reviews every submission. We look for quality, originality, and relevance to our readers.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">3</div>
-                    <h3>Review</h3>
-                    <p>Editors approve, revise, or regenerate sections. Full control before anything goes live.</p>
+                    <h3>Feature</h3>
+                    <p>Selected artists are written into upcoming newsletter sections — with links, context, and a genuine spotlight.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">4</div>
-                    <h3>Publish</h3>
-                    <p>The newsletter is assembled, styled, and delivered straight to subscriber inboxes.</p>
+                    <h3>Reach</h3>
+                    <p>Your feature goes out to our full subscriber list. New fans discover your music in their inbox.</p>
                 </div>
             </div>
         </div>
     </section>
 
     <section class="sections-showcase">
-        <h2>30 Curated Sections</h2>
-        <p class="subtitle">Every issue features a rotating mix of industry intelligence and creative strategy.</p>
+        <h2>Where your music could appear</h2>
+        <p class="subtitle">Every issue features a rotating mix of these sections — multiple chances to get featured.</p>
         <div class="section-tags">
-            <span class="section-tag">Backstage Pass</span>
-            <span class="section-tag alt">Industry Pulse</span>
-            <span class="section-tag">Streaming Dashboard</span>
-            <span class="section-tag alt">Money Moves</span>
+            <span class="section-tag alt">Artist Spotlight</span>
+            <span class="section-tag">Community Wins</span>
+            <span class="section-tag alt">Backstage Pass</span>
             <span class="section-tag">Songcraft</span>
-            <span class="section-tag alt">Deal or No Deal</span>
-            <span class="section-tag">Vocal Booth</span>
-            <span class="section-tag alt">AI Music Lab</span>
+            <span class="section-tag alt">Vocal Booth</span>
+            <span class="section-tag">Production Notes</span>
+            <span class="section-tag alt">Creative Fuel</span>
+            <span class="section-tag">Stage Ready</span>
+            <span class="section-tag alt">Guest Column</span>
+            <span class="section-tag">Industry Pulse</span>
+            <span class="section-tag alt">Streaming Dashboard</span>
+            <span class="section-tag">AI Music Lab</span>
+            <span class="section-tag alt">Money Moves</span>
             <span class="section-tag">Social Playbook</span>
             <span class="section-tag alt">Gear Garage</span>
             <span class="section-tag">Rights &amp; Royalties</span>
-            <span class="section-tag alt">Creative Fuel</span>
-            <span class="section-tag">Tech Talk</span>
-            <span class="section-tag alt">Community Wins</span>
-            <span class="section-tag">Artist Spotlight</span>
-            <span class="section-tag alt">Production Notes</span>
-            <span class="section-tag">Stage Ready</span>
             <span class="section-tag alt">DIY Marketing</span>
             <span class="section-tag">Brand Building</span>
-            <span class="section-tag alt">PS from PS</span>
+            <span class="section-tag alt">Tech Talk</span>
+            <span class="section-tag">PS from PS</span>
         </div>
     </section>
 
     <section class="cta">
-        <h2>Ready to amplify your career?</h2>
-        <p>Submit your music, share your story, or subscribe to get the independent artist's edge delivered to your inbox.</p>
+        <h2>Your next fans are waiting.</h2>
+        <p>Submit your music today — it only takes a minute, and it's completely free.</p>
         <div class="hero-cta">
-            <a href="/submit" class="btn btn-primary">Submit Your Music</a>
-            <a href="/login" class="btn btn-outline">Editor Login</a>
+            <a href="/submit" class="btn btn-primary">Submit Your Music Now</a>
         </div>
     </section>
 
