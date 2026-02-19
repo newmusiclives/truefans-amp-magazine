@@ -3,7 +3,7 @@ newsletter:
   tagline: "AI Magazine for Independent Artists & Songwriters"
   from_name: "PS"
   reply_to: ""
-  header_image_url: ""  # TODO: Add your header banner image URL here
+  header_image_url: "https://web-production-88ebc.up.railway.app/static/header-logo.png"
   intro_copy: "<p style='font-size:18px;font-weight:600;color:#0ea5e9;margin:0'>The independent artist's edge — music industry intelligence, creative strategy, and the tools to build your career on your own terms.</p>"
   footer_html: "<p><strong>TrueFans AMP Magazine</strong> — Amplifying Independent Artists &amp; Songwriters</p><p style='margin:8px 0'>&copy; 2026 TrueFans AMP. All rights reserved.</p><p style='margin:8px 0'><a href='#'>Twitter</a> &nbsp;|&nbsp; <a href='#'>Instagram</a> &nbsp;|&nbsp; <a href='#'>LinkedIn</a></p><p style='font-size:11px;color:#aaa;margin-top:10px'>Built by artists, for artists. Every issue is crafted to help you own your career.</p>"
 
