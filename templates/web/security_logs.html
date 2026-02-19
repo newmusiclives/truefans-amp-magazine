@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Security Logs — TrueFans AMP{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Security Audit Log</h2>
+    <p><a href="/dashboard">&larr; Dashboard</a></p>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Event</th>
+                    <th>IP</th>
+                    <th>User Agent</th>
+                    <th>Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in events %}
+                <tr>
+                    <td>{{ ev.get('created_at', '') }}</td>
+                    <td>{{ ev.get('event_type', '') }}</td>
+                    <td>{{ ev.get('ip_address', '') }}</td>
+                    <td>{{ ev.get('user_agent', '')[:80] }}</td>
+                    <td>{{ ev.get('detail', '') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align:center;color:#888">No events yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

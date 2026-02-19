@@ -7,7 +7,9 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from weeklyamp.core.config import load_config
 from weeklyamp.core.database import init_database, seed_sections
@@ -39,6 +41,23 @@ def create_app() -> FastAPI:
     app.add_api_route("/login", login_page, methods=["GET"])
     app.add_api_route("/login", login_submit, methods=["POST"])
     app.add_api_route("/logout", logout, methods=["GET"])
+
+    # Custom error pages
+    _error_404 = (_TEMPLATES_DIR / "web" / "404.html").read_text()
+    _error_500 = (_TEMPLATES_DIR / "web" / "500.html").read_text()
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+        if exc.status_code == 404:
+            return HTMLResponse(_error_404, status_code=404)
+        if exc.status_code == 500:
+            return HTMLResponse(_error_500, status_code=500)
+        return HTMLResponse(str(exc.detail), status_code=exc.status_code)
+
+    @app.exception_handler(Exception)
+    async def unhandled_exception_handler(request: Request, exc: Exception):
+        logger.exception("Unhandled server error")
+        return HTMLResponse(_error_500, status_code=500)
 
     # Auto-initialize database on startup
     @app.on_event("startup")
@@ -122,38 +141,19 @@ def create_app() -> FastAPI:
     app.include_router(calendar_routes.router, prefix="/calendar")
     app.include_router(growth_routes.router, prefix="/growth")
 
-    # Security logs (authenticated, inline)
-    from fastapi.responses import HTMLResponse
+    # Security logs (authenticated, uses Jinja2 template with autoescape)
+    from jinja2 import Environment, FileSystemLoader
+
+    _sec_env = Environment(
+        loader=FileSystemLoader(str(_TEMPLATES_DIR / "web")), autoescape=True
+    )
 
     @app.get("/security/logs")
     def security_logs():
         from weeklyamp.web.deps import get_repo
         repo = get_repo()
         events = repo.get_security_log(limit=50)
-        rows = ""
-        for ev in events:
-            rows += (
-                f"<tr><td>{ev.get('created_at','')}</td>"
-                f"<td>{ev.get('event_type','')}</td>"
-                f"<td>{ev.get('ip_address','')}</td>"
-                f"<td>{ev.get('user_agent','')[:80]}</td>"
-                f"<td>{ev.get('detail','')}</td></tr>"
-            )
-        if not rows:
-            rows = '<tr><td colspan="5" style="text-align:center;color:#888">No events yet</td></tr>'
-        html = (
-            '<!DOCTYPE html><html><head><title>Security Logs</title>'
-            '<link rel="stylesheet" href="/static/style.css">'
-            '<style>table{width:100%;border-collapse:collapse;font-size:13px}'
-            'th,td{padding:8px 12px;border-bottom:1px solid var(--border);text-align:left}'
-            'th{font-weight:600;color:var(--text-dim)}</style></head>'
-            '<body style="padding:32px;max-width:1200px;margin:0 auto">'
-            '<h2>Security Audit Log</h2>'
-            '<p><a href="/dashboard">&larr; Dashboard</a></p>'
-            '<table><thead><tr><th>Time</th><th>Event</th><th>IP</th>'
-            '<th>User Agent</th><th>Detail</th></tr></thead>'
-            f'<tbody>{rows}</tbody></table></body></html>'
-        )
-        return HTMLResponse(html)
+        tpl = _sec_env.get_template("security_logs.html")
+        return HTMLResponse(tpl.render(events=events))
 
     return app

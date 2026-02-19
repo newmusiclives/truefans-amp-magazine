@@ -14,7 +14,11 @@
 </head>
 <body>
     <div class="layout">
-        <aside class="sidebar">
+        <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-brand">
                 <h1>TrueFans AMP</h1>
                 <div class="tagline">AI Magazine for Independent Artists</div>
@@ -78,5 +82,28 @@
             {% block content %}{% endblock %}
         </main>
     </div>
+    <script>
+    (function() {
+        var btn = document.getElementById('hamburger');
+        var sidebar = document.getElementById('sidebar');
+        var overlay = document.getElementById('sidebar-overlay');
+        function toggle() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('open');
+            btn.classList.toggle('active');
+        }
+        function close() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('open');
+            btn.classList.remove('active');
+        }
+        btn.addEventListener('click', toggle);
+        overlay.addEventListener('click', close);
+        // Close sidebar when a nav link is clicked on mobile
+        sidebar.querySelectorAll('nav a').forEach(function(a) {
+            a.addEventListener('click', close);
+        });
+    })();
+    </script>
 </body>
 </html>
