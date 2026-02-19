@@ -13,11 +13,8 @@
         <div class="header">
             {% if header_image_url %}
             <img src="{{ header_image_url }}" alt="{{ newsletter_name }}" class="header-image">
-            {% endif %}
+            {% else %}
             <h1>{{ newsletter_name }}</h1>
-            <div class="tagline">{{ tagline }}</div>
-            {% if title %}
-            <div style="margin-top: 10px; font-size: 14px; color: #444;">Issue #{{ issue_number }}{% if title %} — {{ title }}{% endif %}</div>
             {% endif %}
         </div>
 

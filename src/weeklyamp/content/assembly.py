@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 import markdown
 
 from weeklyamp.content.sections import get_section_map
@@ -50,6 +52,8 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
 
         # Convert markdown content to HTML (sanitized against XSS)
         content_html = sanitize_html(markdown.markdown(draft["content"], extensions=["extra"]))
+        # Strip the first heading if it duplicates the section title
+        content_html = re.sub(r"^\s*<h[1-3][^>]*>.*?</h[1-3]>\s*", "", content_html, count=1)
 
         # Check if this draft came from a guest article or artist submission
         guest = repo.get_guest_article_by_draft(draft["id"])
