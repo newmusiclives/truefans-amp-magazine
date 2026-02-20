@@ -22,7 +22,7 @@ schedule:
   send_days:
     - "monday"
     - "wednesday"
-    - "friday"
+    - "saturday"
 
 sponsor_slots:
   max_per_issue: 2
