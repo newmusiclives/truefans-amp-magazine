@@ -102,8 +102,8 @@ DEFAULT_GUEST_CONTACTS = [
     ("Wendy Day", "", "Rap Coalition", "Artist Advocate", "Music Business & Strategy", "https://rapcoalition.org", "Artist rights & deal negotiation. Sections: deal_or_no_deal, rights_and_royalties, guest_column"),
     ("Jeff Price", "", "Audiam", "Founder / Music Exec", "Music Business & Strategy", "https://www.audiam.com", "Digital distribution pioneer. Sections: money_moves, rights_and_royalties, guest_column"),
     ("Amber Horsburgh", "", "Independent", "Music Marketing Strategist", "Music Business & Strategy", "https://amberhorsburgh.com", "Music marketing strategy. Sections: diy_marketing, brand_building, guest_column"),
-    ("Jay Gilbert", "", "Independent", "A&R Consultant", "Music Business & Strategy", "", "A&R and artist development. Sections: deal_or_no_deal, artist_spotlight, guest_column"),
-    ("Larry Miller", "", "Musonomics", "Music Business Professor", "Music Business & Strategy", "", "NYU music business professor. Sections: industry_pulse, streaming_dashboard, guest_column"),
+    ("Jay Gilbert", "", "Independent", "A&R Consultant", "Music Business & Strategy", "http://www.jaygilbertconsulting.com", "A&R and artist development. Sections: deal_or_no_deal, artist_spotlight, guest_column"),
+    ("Larry Miller", "", "Musonomics", "Music Business Professor", "Music Business & Strategy", "https://musonomics.com", "NYU music business professor. Sections: industry_pulse, streaming_dashboard, guest_column"),
     ("Vickie Nauman", "", "CrossBorderWorks", "Music Tech Consultant", "Music Business & Strategy", "https://crossborderworks.com", "Music licensing & tech strategy. Sections: industry_pulse, tech_talk, guest_column"),
     ("Mark Mulligan", "", "MIDiA Research", "Music Industry Analyst", "Music Business & Strategy", "https://midiaresearch.com", "Streaming & market analysis. Sections: streaming_dashboard, industry_pulse, guest_column"),
 
@@ -113,7 +113,7 @@ DEFAULT_GUEST_CONTACTS = [
     ("Pat Pattison", "", "Berklee College of Music", "Songwriting Professor", "Songwriting & Composition", "https://www.patpattison.com", "Lyric writing authority. Sections: songcraft, lyrics_unpacked, guest_column"),
     ("Fiona Bevan", "", "Independent", "Songwriter", "Songwriting & Composition", "https://fionabevan.com", "Co-writer for major artists. Sections: songcraft, backstage_pass, guest_column"),
     ("Erin McKeown", "", "Berklee College of Music", "Musician / Professor", "Songwriting & Composition", "https://erinmckeown.com", "Songwriting & artist rights. Sections: songcraft, rights_and_royalties, guest_column"),
-    ("Ralph Murphy", "", "ASCAP", "Songwriter / Educator", "Songwriting & Composition", "", "Hit songwriting craft & structure. Sections: songcraft, coaching, guest_column"),
+    ("Ralph Murphy", "", "ASCAP", "Songwriter / Educator", "Songwriting & Composition", "https://murphyslawsofsongwriting.com", "Hit songwriting craft & structure. Sections: songcraft, coaching, guest_column"),
     ("Mary Gauthier", "", "Independent", "Singer-Songwriter", "Songwriting & Composition", "https://marygauthier.com", "Songwriting for healing & storytelling. Sections: songcraft, the_muse, guest_column"),
     ("Jason Blume", "", "Independent", "Songwriter / Author", "Songwriting & Composition", "https://jasonblume.com", "Hit songwriting techniques. Sections: songcraft, lyrics_unpacked, guest_column"),
 
@@ -127,37 +127,33 @@ DEFAULT_GUEST_CONTACTS = [
     ("Matthew Weiss", "", "Mixer / Educator", "Mix Engineer", "Recording & Production", "https://theproaudiofiles.com", "Mixing techniques & audio education. Sections: production_notes, gear_garage, guest_column"),
 
     # ── Music Journalism & Criticism (7) ──
-    ("Jewly Hight", "", "NPR / Nashville Scene", "Music Journalist", "Music Journalism & Criticism", "", "Country & Americana coverage. Sections: backstage_pass, artist_spotlight, guest_column"),
     ("Jeff Weiss", "", "Passion of the Weiss", "Music Journalist", "Music Journalism & Criticism", "https://www.passionweiss.com", "Hip hop criticism. Sections: backstage_pass, lyrics_unpacked, guest_column"),
-    ("Philip Sherburne", "", "Pitchfork / Resident Advisor", "Music Journalist", "Music Journalism & Criticism", "", "Electronic music criticism. Sections: backstage_pass, production_notes, guest_column"),
+    ("Philip Sherburne", "", "Pitchfork / Resident Advisor", "Music Journalist", "Music Journalism & Criticism", "http://www.philipsherburne.com", "Electronic music criticism. Sections: backstage_pass, production_notes, guest_column"),
     ("Nate Chinen", "", "WBGO / Author", "Jazz Journalist", "Music Journalism & Criticism", "https://natechinen.com", "Jazz criticism & reporting. Sections: backstage_pass, artist_spotlight, guest_column"),
-    ("Kim Kelly", "", "Independent", "Music Journalist", "Music Journalism & Criticism", "", "Metal & punk coverage. Sections: backstage_pass, artist_spotlight, guest_column"),
+    ("Kim Kelly", "", "Independent", "Music Journalist", "Music Journalism & Criticism", "https://www.kim-kelly.com", "Metal & punk coverage. Sections: backstage_pass, artist_spotlight, guest_column"),
     ("Hanif Abdurraqib", "", "Independent", "Author / Poet / Critic", "Music Journalism & Criticism", "https://hanifabdurraqib.com", "Music & culture essays. Sections: backstage_pass, lyrics_unpacked, guest_column"),
-    ("Lindsay Zoladz", "", "NY Times / Vulture", "Music Critic", "Music Journalism & Criticism", "", "Pop & indie music criticism. Sections: backstage_pass, vinyl_vault, guest_column"),
+    ("Lindsay Zoladz", "", "NY Times / Vulture", "Music Critic", "Music Journalism & Criticism", "https://lindsayzoladz.com", "Pop & indie music criticism. Sections: backstage_pass, vinyl_vault, guest_column"),
 
     # ── Touring & Live Performance (5) ──
     ("Martin Atkins", "", "Millikin University", "Author / Touring Expert", "Touring & Live Performance", "https://martinatkins.com", "Tour:Smart author. Sections: stage_ready, coaching, guest_column"),
-    ("Ari Nisman", "", "Independent", "Booking Agent", "Touring & Live Performance", "", "Live music booking. Sections: stage_ready, money_moves, guest_column"),
+    ("Ari Nisman", "", "Independent", "Booking Agent", "Touring & Live Performance", "https://www.degy.com", "Live music booking. Sections: stage_ready, money_moves, guest_column"),
     ("Chris Robley", "", "CD Baby / Independent", "Musician / Writer", "Touring & Live Performance", "https://chrisrobley.com", "DIY music career. Sections: coaching, diy_marketing, guest_column"),
     ("Tom Jackson", "", "Onstage Success", "Live Show Producer", "Touring & Live Performance", "https://onstagesuccess.com", "Live performance coaching. Sections: stage_ready, coaching, guest_column"),
-    ("Jenn Schott", "", "Independent", "Tour Manager", "Touring & Live Performance", "", "Tour logistics & management. Sections: stage_ready, money_moves, guest_column"),
+    ("Jenn Schott", "", "Independent", "Tour Manager", "Touring & Live Performance", "https://jennschott.com", "Tour logistics & management. Sections: stage_ready, money_moves, guest_column"),
 
     # ── Music Technology & AI (7) ──
     ("Dmitri Vietze", "", "Rock Paper Scissors", "Music Tech PR", "Music Technology & AI", "https://rockpaperscissors.biz", "Music tech publicity & trends. Sections: tech_talk, ai_music_lab, guest_column"),
     ("Cherie Hu", "", "Water & Music", "Music Tech Researcher", "Music Technology & AI", "https://waterandmusic.com", "Music industry & tech research. Sections: tech_talk, ai_music_lab, guest_column"),
     ("Bas Grasmayer", "", "MUSIC x", "Music Tech Strategist", "Music Technology & AI", "https://musicxtechxfuture.com", "Music-tech futures. Sections: tech_talk, ai_music_lab, guest_column"),
-    ("Tatiana Cirisano", "", "MIDiA Research", "Music Analyst", "Music Technology & AI", "", "Gen Z listening habits & social audio. Sections: social_playbook, streaming_dashboard, guest_column"),
-    ("Sam Barker", "", "Independent", "Artist / Technologist", "Music Technology & AI", "", "Generative music & creative AI. Sections: ai_music_lab, production_notes, guest_column"),
-    ("Panos Panay", "", "Berklee / Splice", "Music Innovation Leader", "Music Technology & AI", "", "Music education & platform innovation. Sections: tech_talk, industry_pulse, guest_column"),
+    ("Tatiana Cirisano", "", "MIDiA Research", "Music Analyst", "Music Technology & AI", "http://www.tatianacirisano.com", "Gen Z listening habits & social audio. Sections: social_playbook, streaming_dashboard, guest_column"),
     ("Hypebot Editorial", "", "Hypebot", "Music Tech Publication", "Music Technology & AI", "https://hypebot.com", "Music tech news & analysis. Sections: tech_talk, social_playbook, guest_column"),
 
     # ── Rights, Licensing & Legal (6) ──
     ("Dina LaPolt", "", "LaPolt Law", "Entertainment Attorney", "Rights, Licensing & Legal", "https://lapoltlaw.com", "Music copyright & deals. Sections: rights_and_royalties, deal_or_no_deal, guest_column"),
     ("Erin Jacobson", "", "Indie Artist Resource", "Music Attorney", "Rights, Licensing & Legal", "https://erinmjacobson.com", "Music law for indie artists. Sections: rights_and_royalties, money_moves, guest_column"),
-    ("Jeff Brabec", "", "Independent", "Music Licensing Author", "Rights, Licensing & Legal", "", "Sync licensing expert. Sections: rights_and_royalties, money_moves, guest_column"),
-    ("Ciara Torres-Spelliscy", "", "Stetson Law", "Law Professor", "Rights, Licensing & Legal", "", "Copyright & First Amendment. Sections: rights_and_royalties, industry_pulse, guest_column"),
-    ("John Simson", "", "SoundExchange (Former)", "Royalty Collection Expert", "Rights, Licensing & Legal", "", "Digital performance royalties. Sections: rights_and_royalties, streaming_dashboard, guest_column"),
-    ("Mita Carriman", "", "Carriman Consulting", "Music Business Consultant", "Rights, Licensing & Legal", "", "International licensing & publishing. Sections: rights_and_royalties, deal_or_no_deal, guest_column"),
+    ("Jeff Brabec", "", "Independent", "Music Licensing Author", "Rights, Licensing & Legal", "https://musicandmoney.com", "Sync licensing expert. Sections: rights_and_royalties, money_moves, guest_column"),
+    ("Ciara Torres-Spelliscy", "", "Stetson Law", "Law Professor", "Rights, Licensing & Legal", "https://www.cskllc.net", "Copyright & First Amendment. Sections: rights_and_royalties, industry_pulse, guest_column"),
+    ("Mita Carriman", "", "Carriman Consulting", "Music Business Consultant", "Rights, Licensing & Legal", "https://www.mitacarriman.com", "International licensing & publishing. Sections: rights_and_royalties, deal_or_no_deal, guest_column"),
 ]
 
 
@@ -172,11 +168,16 @@ def seed_guest_contacts(db_path: str) -> int:
             "SELECT id FROM guest_contacts WHERE name = ?", (name,)
         ).fetchone()
         if existing:
-            # Update category on existing contacts if empty
+            # Sync category and website on existing contacts
             conn.execute(
                 "UPDATE guest_contacts SET category = ? WHERE name = ? AND (category IS NULL OR category = '')",
                 (category, name),
             )
+            if website:
+                conn.execute(
+                    "UPDATE guest_contacts SET website = ? WHERE name = ? AND (website IS NULL OR website = '')",
+                    (website, name),
+                )
             continue
         try:
             conn.execute(

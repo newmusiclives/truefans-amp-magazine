@@ -109,6 +109,16 @@ def scrape_article_content(url: str) -> Optional[ScrapedArticle]:
         paragraphs = content_tag.find_all("p")
         full_text = "\n\n".join(p.get_text(strip=True) for p in paragraphs if p.get_text(strip=True))
 
+        # Fallback: if no paragraphs, get all text from content tag
+        if not full_text.strip():
+            full_text = content_tag.get_text(separator="\n\n", strip=True)
+
+    # Last resort: try meta description
+    if not full_text.strip():
+        meta_desc = soup.find("meta", attrs={"name": "description"})
+        if meta_desc and meta_desc.get("content"):
+            full_text = meta_desc["content"]
+
     summary = truncate(full_text, 500) if full_text else ""
 
     return ScrapedArticle(

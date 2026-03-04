@@ -19,8 +19,8 @@ from weeklyamp.utils.text import truncate
 log = logging.getLogger(__name__)
 
 MAX_ARTICLES_PER_CONTACT = 2
-MAX_ARTICLE_AGE_DAYS = 90  # ~3 months
-MIN_ARTICLE_WORDS = 200  # skip thin content
+MAX_ARTICLE_AGE_DAYS = 365  # 1 year — much music content is evergreen
+MIN_ARTICLE_WORDS = 150  # skip thin content
 
 
 @dataclass
@@ -61,7 +61,7 @@ def _find_blog_url(base_url: str, soup: BeautifulSoup) -> Optional[str]:
 
     # Try common blog paths directly
     parsed = urlparse(base_url)
-    for path in ("/blog", "/blog/", "/articles", "/posts", "/news"):
+    for path in ("/blog", "/blog/", "/articles", "/posts", "/news", "/wordpress", "/journal"):
         try:
             test_url = f"{parsed.scheme}://{parsed.netloc}{path}"
             resp = fetch_url(test_url)
@@ -206,9 +206,9 @@ def _scrape_blog_articles(base_url: str) -> list[ScrapedArticle]:
                     title=title, url=url, author="", summary="", full_text="",
                 ))
 
-    # Priority 2: h2/h3 links (common blog listing pattern)
+    # Priority 2: h2/h3 links and .entry-title (common blog listing patterns)
     if len(candidates) < 10:
-        for tag in soup.select("h2 a[href], h3 a[href]"):
+        for tag in soup.select("h2 a[href], h3 a[href], .entry-title a[href]"):
             href = tag.get("href", "")
             if not href or href.startswith("#"):
                 continue
