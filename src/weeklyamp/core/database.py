@@ -92,6 +92,167 @@ DEFAULT_SECTIONS = [
 ]
 
 
+# Default guest contacts to seed on init
+# (name, email, organization, role, category, website, notes)
+DEFAULT_GUEST_CONTACTS = [
+    # ── Music Business & Strategy (10) ──
+    ("Bob Lefsetz", "", "The Lefsetz Letter", "Music Industry Analyst", "Music Business & Strategy", "https://lefsetz.com", "Music biz commentary. Sections: industry_pulse, coaching, guest_column"),
+    ("Ari Herstand", "", "Ari's Take", "Author / Musician", "Music Business & Strategy", "https://aristake.com", "DIY artist strategy. Sections: coaching, money_moves, guest_column"),
+    ("Emily White", "", "Collective Entertainment", "Artist Manager", "Music Business & Strategy", "https://www.collectiveentertainment.com", "Artist management & touring. Sections: stage_ready, money_moves, guest_column"),
+    ("Wendy Day", "", "Rap Coalition", "Artist Advocate", "Music Business & Strategy", "https://rapcoalition.org", "Artist rights & deal negotiation. Sections: deal_or_no_deal, rights_and_royalties, guest_column"),
+    ("Jeff Price", "", "Audiam", "Founder / Music Exec", "Music Business & Strategy", "https://www.audiam.com", "Digital distribution pioneer. Sections: money_moves, rights_and_royalties, guest_column"),
+    ("Amber Horsburgh", "", "Independent", "Music Marketing Strategist", "Music Business & Strategy", "https://amberhorsburgh.com", "Music marketing strategy. Sections: diy_marketing, brand_building, guest_column"),
+    ("Jay Gilbert", "", "Independent", "A&R Consultant", "Music Business & Strategy", "", "A&R and artist development. Sections: deal_or_no_deal, artist_spotlight, guest_column"),
+    ("Larry Miller", "", "Musonomics", "Music Business Professor", "Music Business & Strategy", "", "NYU music business professor. Sections: industry_pulse, streaming_dashboard, guest_column"),
+    ("Vickie Nauman", "", "CrossBorderWorks", "Music Tech Consultant", "Music Business & Strategy", "https://crossborderworks.com", "Music licensing & tech strategy. Sections: industry_pulse, tech_talk, guest_column"),
+    ("Mark Mulligan", "", "MIDiA Research", "Music Industry Analyst", "Music Business & Strategy", "https://midiaresearch.com", "Streaming & market analysis. Sections: streaming_dashboard, industry_pulse, guest_column"),
+
+    # ── Songwriting & Composition (8) ──
+    ("Andrea Stolpe", "", "Berklee Online", "Songwriting Professor", "Songwriting & Composition", "https://andreastolpe.com", "Songwriting education. Sections: songcraft, coaching, guest_column"),
+    ("Cliff Goldmacher", "", "Independent", "Songwriter / Educator", "Songwriting & Composition", "https://cliffgoldmacher.com", "Songwriting craft & business. Sections: songcraft, money_moves, guest_column"),
+    ("Pat Pattison", "", "Berklee College of Music", "Songwriting Professor", "Songwriting & Composition", "https://www.patpattison.com", "Lyric writing authority. Sections: songcraft, lyrics_unpacked, guest_column"),
+    ("Fiona Bevan", "", "Independent", "Songwriter", "Songwriting & Composition", "https://fionabevan.com", "Co-writer for major artists. Sections: songcraft, backstage_pass, guest_column"),
+    ("Erin McKeown", "", "Berklee College of Music", "Musician / Professor", "Songwriting & Composition", "https://erinmckeown.com", "Songwriting & artist rights. Sections: songcraft, rights_and_royalties, guest_column"),
+    ("Ralph Murphy", "", "ASCAP", "Songwriter / Educator", "Songwriting & Composition", "", "Hit songwriting craft & structure. Sections: songcraft, coaching, guest_column"),
+    ("Mary Gauthier", "", "Independent", "Singer-Songwriter", "Songwriting & Composition", "https://marygauthier.com", "Songwriting for healing & storytelling. Sections: songcraft, the_muse, guest_column"),
+    ("Jason Blume", "", "Independent", "Songwriter / Author", "Songwriting & Composition", "https://jasonblume.com", "Hit songwriting techniques. Sections: songcraft, lyrics_unpacked, guest_column"),
+
+    # ── Recording & Production (7) ──
+    ("Bobby Owsinski", "", "Bobby Owsinski Media Group", "Author / Producer", "Recording & Production", "https://bobbyowsinski.com", "Music production & business books. Sections: production_notes, coaching, guest_column"),
+    ("Warren Huart", "", "Produce Like A Pro", "Producer / Educator", "Recording & Production", "https://producelikeapro.com", "Recording & mixing education. Sections: production_notes, gear_garage, guest_column"),
+    ("Dave Pensado", "", "Pensado's Place", "Mix Engineer", "Recording & Production", "https://pensadosplace.tv", "Legendary mixing engineer. Sections: production_notes, backstage_pass, guest_column"),
+    ("Joe Gilder", "", "Home Studio Corner", "Producer / Educator", "Recording & Production", "https://www.homestudiocorner.com", "Home recording expertise. Sections: production_notes, gear_garage, guest_column"),
+    ("Graham Cochrane", "", "The Recording Revolution", "Producer / Educator", "Recording & Production", "https://therecordingrevolution.com", "Budget recording techniques. Sections: production_notes, gear_garage, guest_column"),
+    ("Sylvia Massy", "", "Independent", "Producer / Engineer", "Recording & Production", "https://sylviamassy.com", "Unconventional recording techniques. Sections: production_notes, creative_fuel, guest_column"),
+    ("Matthew Weiss", "", "Mixer / Educator", "Mix Engineer", "Recording & Production", "https://theproaudiofiles.com", "Mixing techniques & audio education. Sections: production_notes, gear_garage, guest_column"),
+
+    # ── Music Journalism & Criticism (7) ──
+    ("Jewly Hight", "", "NPR / Nashville Scene", "Music Journalist", "Music Journalism & Criticism", "", "Country & Americana coverage. Sections: backstage_pass, artist_spotlight, guest_column"),
+    ("Jeff Weiss", "", "Passion of the Weiss", "Music Journalist", "Music Journalism & Criticism", "https://www.passionweiss.com", "Hip hop criticism. Sections: backstage_pass, lyrics_unpacked, guest_column"),
+    ("Philip Sherburne", "", "Pitchfork / Resident Advisor", "Music Journalist", "Music Journalism & Criticism", "", "Electronic music criticism. Sections: backstage_pass, production_notes, guest_column"),
+    ("Nate Chinen", "", "WBGO / Author", "Jazz Journalist", "Music Journalism & Criticism", "https://natechinen.com", "Jazz criticism & reporting. Sections: backstage_pass, artist_spotlight, guest_column"),
+    ("Kim Kelly", "", "Independent", "Music Journalist", "Music Journalism & Criticism", "", "Metal & punk coverage. Sections: backstage_pass, artist_spotlight, guest_column"),
+    ("Hanif Abdurraqib", "", "Independent", "Author / Poet / Critic", "Music Journalism & Criticism", "https://hanifabdurraqib.com", "Music & culture essays. Sections: backstage_pass, lyrics_unpacked, guest_column"),
+    ("Lindsay Zoladz", "", "NY Times / Vulture", "Music Critic", "Music Journalism & Criticism", "", "Pop & indie music criticism. Sections: backstage_pass, vinyl_vault, guest_column"),
+
+    # ── Touring & Live Performance (5) ──
+    ("Martin Atkins", "", "Millikin University", "Author / Touring Expert", "Touring & Live Performance", "https://martinatkins.com", "Tour:Smart author. Sections: stage_ready, coaching, guest_column"),
+    ("Ari Nisman", "", "Independent", "Booking Agent", "Touring & Live Performance", "", "Live music booking. Sections: stage_ready, money_moves, guest_column"),
+    ("Chris Robley", "", "CD Baby / Independent", "Musician / Writer", "Touring & Live Performance", "https://chrisrobley.com", "DIY music career. Sections: coaching, diy_marketing, guest_column"),
+    ("Tom Jackson", "", "Onstage Success", "Live Show Producer", "Touring & Live Performance", "https://onstagesuccess.com", "Live performance coaching. Sections: stage_ready, coaching, guest_column"),
+    ("Jenn Schott", "", "Independent", "Tour Manager", "Touring & Live Performance", "", "Tour logistics & management. Sections: stage_ready, money_moves, guest_column"),
+
+    # ── Music Technology & AI (7) ──
+    ("Dmitri Vietze", "", "Rock Paper Scissors", "Music Tech PR", "Music Technology & AI", "https://rockpaperscissors.biz", "Music tech publicity & trends. Sections: tech_talk, ai_music_lab, guest_column"),
+    ("Cherie Hu", "", "Water & Music", "Music Tech Researcher", "Music Technology & AI", "https://waterandmusic.com", "Music industry & tech research. Sections: tech_talk, ai_music_lab, guest_column"),
+    ("Bas Grasmayer", "", "MUSIC x", "Music Tech Strategist", "Music Technology & AI", "https://musicxtechxfuture.com", "Music-tech futures. Sections: tech_talk, ai_music_lab, guest_column"),
+    ("Tatiana Cirisano", "", "MIDiA Research", "Music Analyst", "Music Technology & AI", "", "Gen Z listening habits & social audio. Sections: social_playbook, streaming_dashboard, guest_column"),
+    ("Sam Barker", "", "Independent", "Artist / Technologist", "Music Technology & AI", "", "Generative music & creative AI. Sections: ai_music_lab, production_notes, guest_column"),
+    ("Panos Panay", "", "Berklee / Splice", "Music Innovation Leader", "Music Technology & AI", "", "Music education & platform innovation. Sections: tech_talk, industry_pulse, guest_column"),
+    ("Hypebot Editorial", "", "Hypebot", "Music Tech Publication", "Music Technology & AI", "https://hypebot.com", "Music tech news & analysis. Sections: tech_talk, social_playbook, guest_column"),
+
+    # ── Rights, Licensing & Legal (6) ──
+    ("Dina LaPolt", "", "LaPolt Law", "Entertainment Attorney", "Rights, Licensing & Legal", "https://lapoltlaw.com", "Music copyright & deals. Sections: rights_and_royalties, deal_or_no_deal, guest_column"),
+    ("Erin Jacobson", "", "Indie Artist Resource", "Music Attorney", "Rights, Licensing & Legal", "https://erinmjacobson.com", "Music law for indie artists. Sections: rights_and_royalties, money_moves, guest_column"),
+    ("Jeff Brabec", "", "Independent", "Music Licensing Author", "Rights, Licensing & Legal", "", "Sync licensing expert. Sections: rights_and_royalties, money_moves, guest_column"),
+    ("Ciara Torres-Spelliscy", "", "Stetson Law", "Law Professor", "Rights, Licensing & Legal", "", "Copyright & First Amendment. Sections: rights_and_royalties, industry_pulse, guest_column"),
+    ("John Simson", "", "SoundExchange (Former)", "Royalty Collection Expert", "Rights, Licensing & Legal", "", "Digital performance royalties. Sections: rights_and_royalties, streaming_dashboard, guest_column"),
+    ("Mita Carriman", "", "Carriman Consulting", "Music Business Consultant", "Rights, Licensing & Legal", "", "International licensing & publishing. Sections: rights_and_royalties, deal_or_no_deal, guest_column"),
+]
+
+
+def seed_guest_contacts(db_path: str) -> int:
+    """Insert default guest contacts. Returns count of newly inserted."""
+    conn = get_connection(db_path)
+    inserted = 0
+    for entry in DEFAULT_GUEST_CONTACTS:
+        name, email, organization, role, category, website, notes = entry
+        # Skip if contact with same name already exists
+        existing = conn.execute(
+            "SELECT id FROM guest_contacts WHERE name = ?", (name,)
+        ).fetchone()
+        if existing:
+            # Update category on existing contacts if empty
+            conn.execute(
+                "UPDATE guest_contacts SET category = ? WHERE name = ? AND (category IS NULL OR category = '')",
+                (category, name),
+            )
+            continue
+        try:
+            conn.execute(
+                """INSERT INTO guest_contacts
+                   (name, email, organization, role, category, website, notes)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (name, email, organization, role, category, website, notes),
+            )
+            inserted += 1
+        except sqlite3.IntegrityError:
+            pass
+    conn.commit()
+    conn.close()
+    return inserted
+
+
+# Default newsletter editions to seed on init
+# (slug, name, tagline, description, audience, color, icon, section_slugs, sort_order)
+DEFAULT_EDITIONS = [
+    (
+        "fan",
+        "Fan Edition",
+        "The insider scoop for music lovers",
+        "Backstage stories, classic album deep-dives, lyric breakdowns, and creative inspiration — delivered to your inbox three times a week.",
+        "Music fans and casual listeners",
+        "#e8645a",
+        "&#127911;",
+        "backstage_pass,vinyl_vault,artist_spotlight,lyrics_unpacked,mondegreen,creative_fuel,the_muse",
+        1,
+    ),
+    (
+        "artist",
+        "Artist Edition",
+        "Level up your music career",
+        "Songwriting techniques, vocal coaching, gear reviews, production tips, social media strategy, and DIY marketing — everything independent artists need to grow.",
+        "Independent artists and songwriters",
+        "#7c5cfc",
+        "&#127928;",
+        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight",
+        2,
+    ),
+    (
+        "industry",
+        "Industry Edition",
+        "Data and deals that move the needle",
+        "Industry news, deal analysis, streaming data, revenue strategies, rights and royalties explainers, music tech, and AI developments — for professionals who need to stay ahead.",
+        "Industry professionals and music business",
+        "#f59e0b",
+        "&#128200;",
+        "industry_pulse,deal_or_no_deal,streaming_dashboard,money_moves,rights_and_royalties,tech_talk,ai_music_lab,guest_column",
+        3,
+    ),
+]
+
+
+def seed_editions(db_path: str) -> int:
+    """Insert default newsletter editions. Returns count of newly inserted."""
+    conn = get_connection(db_path)
+    inserted = 0
+    for entry in DEFAULT_EDITIONS:
+        slug, name, tagline, description, audience, color, icon, section_slugs, sort_order = entry
+        try:
+            conn.execute(
+                """INSERT INTO newsletter_editions
+                   (slug, name, tagline, description, audience, color, icon, section_slugs, sort_order)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (slug, name, tagline, description, audience, color, icon, section_slugs, sort_order),
+            )
+            inserted += 1
+        except sqlite3.IntegrityError:
+            pass  # already exists
+    conn.commit()
+    conn.close()
+    return inserted
+
+
 def seed_sections(db_path: str) -> int:
     """Insert default section definitions. Returns count of newly inserted."""
     conn = get_connection(db_path)

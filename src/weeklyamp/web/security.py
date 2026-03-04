@@ -54,7 +54,7 @@ _SESSION_MAX_AGE = 86400  # 24 hours
 _CSRF_COOKIE = "_csrf"
 
 # Routes that don't require authentication
-_PUBLIC_PREFIXES = ("/health", "/login", "/static", "/submit", "/api/")
+_PUBLIC_PREFIXES = ("/health", "/login", "/static", "/submit", "/subscribe", "/newsletters", "/api/")
 _PUBLIC_EXACT = frozenset({"/"})
 
 _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web"
@@ -260,14 +260,27 @@ _CSP = (
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Add security headers to every response."""
 
+    # Routes that need to be loaded in a same-origin iframe
+    _FRAMEABLE_PATHS = {"/publish/preview"}
+
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["X-XSS-Protection"] = "0"
-        response.headers["Content-Security-Policy"] = _CSP
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        # Prevent browser caching of HTML pages (not static assets)
+        if not request.url.path.startswith("/static"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+
+        if request.url.path in self._FRAMEABLE_PATHS:
+            response.headers["X-Frame-Options"] = "SAMEORIGIN"
+            response.headers["Content-Security-Policy"] = _CSP.replace(
+                "frame-ancestors 'none'", "frame-ancestors 'self'"
+            )
+        else:
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Content-Security-Policy"] = _CSP
         # HSTS only over HTTPS
         if request.headers.get("X-Forwarded-Proto") == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"

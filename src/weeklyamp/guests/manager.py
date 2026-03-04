@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from weeklyamp.content.generator import generate_draft
 from weeklyamp.core.config import load_config
 from weeklyamp.core.models import AppConfig
 from weeklyamp.db.repository import Repository
+from weeklyamp.notifications.email import send_usage_notification
+
+log = logging.getLogger(__name__)
 
 
 class GuestArticleManager:
@@ -68,6 +72,17 @@ class GuestArticleManager:
             updates["target_section_slug"] = section_slug
         if updates:
             self.repo.update_guest_article(article_id, **updates)
+
+        # Send usage notification email if contact has email
+        article = self.repo.get_guest_article(article_id)
+        if article and article.get("contact_email"):
+            send_usage_notification(
+                self.config,
+                contact_name=article.get("contact_name", article.get("author_name", "")),
+                contact_email=article["contact_email"],
+                article_title=article.get("title", ""),
+                article_url=article.get("original_url", ""),
+            )
 
     def create_draft_from_guest(self, article_id: int) -> int:
         """Create a draft record from guest article content."""

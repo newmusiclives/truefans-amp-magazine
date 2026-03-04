@@ -2,28 +2,75 @@
 <div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
 {% endif %}
 
+{% set grouped = {} %}
+{% for c in contacts %}
+    {% set cat = c.category or 'Uncategorized' %}
+    {% if cat not in grouped %}
+        {% set _ = grouped.update({cat: []}) %}
+    {% endif %}
+    {% set _ = grouped[cat].append(c) %}
+{% endfor %}
+
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+        {% for category, members in grouped.items() %}
+        <a href="#cat-{{ category | replace(' ', '-') | replace('&', '') | lower }}"
+           style="display: inline-block; padding: 4px 10px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); border-radius: 4px; color: var(--text); text-decoration: none; background: var(--card-bg);">
+            {{ category }} <span style="color: var(--text-dim); font-weight: 400;">({{ members|length }})</span>
+        </a>
+        {% endfor %}
+    </div>
+    <form hx-post="/guests/contacts/research-all" hx-target="#contacts-table" hx-swap="innerHTML" style="display: inline; flex-shrink: 0;">
+        <button type="submit" class="btn btn-sm" title="Research all contacts with websites">Research All Websites</button>
+    </form>
+</div>
+
+{% for category, members in grouped.items() %}
+<div id="cat-{{ category | replace(' ', '-') | replace('&', '') | lower }}" style="margin-bottom: 20px;">
+    <div style="font-size: 13px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0 6px; border-bottom: 1px solid var(--border); margin-bottom: 0;">
+        {{ category }} <span style="color: var(--text-dim); font-weight: 500;">({{ members|length }})</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Organization</th>
+                    <th>Role</th>
+                    <th>Articles</th>
+                    <th>Notes</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in members %}
+                <tr>
+                    <td><strong>{{ c.name }}</strong></td>
+                    <td>{{ c.organization or '—' }}</td>
+                    <td>{{ c.role or '—' }}</td>
+                    <td>{{ c.article_count or 0 }}</td>
+                    <td style="font-size: 12px; color: var(--text-dim); max-width: 260px;">{{ c.notes or '—' }}</td>
+                    <td>
+                        {% if c.website %}
+                        <form hx-post="/guests/contacts/{{ c.id }}/research" hx-target="#contacts-table" hx-swap="innerHTML" style="display: inline;">
+                            <button type="submit" class="btn btn-xs" title="Research {{ c.website }}">Research</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+{% if not contacts %}
 <div class="table-wrap">
     <table>
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Organization</th>
-                <th>Role</th>
-            </tr>
-        </thead>
         <tbody>
-            {% for c in contacts %}
-            <tr>
-                <td><strong>{{ c.name }}</strong></td>
-                <td>{{ c.email or '—' }}</td>
-                <td>{{ c.organization or '—' }}</td>
-                <td>{{ c.role or '—' }}</td>
-            </tr>
-            {% endfor %}
-            {% if not contacts %}
-            <tr><td colspan="4" style="text-align: center; color: var(--text-dim);">No contacts yet.</td></tr>
-            {% endif %}
+            <tr><td colspan="6" style="text-align: center; color: var(--text-dim);">No contacts yet.</td></tr>
         </tbody>
     </table>
 </div>
+{% endif %}

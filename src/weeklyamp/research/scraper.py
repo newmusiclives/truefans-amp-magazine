@@ -19,6 +19,7 @@ class ScrapedArticle:
     author: str
     summary: str
     full_text: str
+    published_date: str = ""  # ISO date string if found
 
 
 def scrape_articles(base_url: str, max_articles: int = 10) -> list[ScrapedArticle]:
@@ -83,6 +84,18 @@ def scrape_article_content(url: str) -> Optional[ScrapedArticle]:
     if author_tag:
         author = author_tag.get_text(strip=True)
 
+    # Published date — check meta tags and time elements
+    published_date = ""
+    for meta_name in ("article:published_time", "datePublished", "date", "DC.date"):
+        meta = soup.find("meta", attrs={"property": meta_name}) or soup.find("meta", attrs={"name": meta_name})
+        if meta and meta.get("content"):
+            published_date = meta["content"][:10]  # YYYY-MM-DD
+            break
+    if not published_date:
+        time_tag = soup.find("time", attrs={"datetime": True})
+        if time_tag:
+            published_date = time_tag["datetime"][:10]
+
     # Main content
     content_tag = (
         soup.find("article")
@@ -104,4 +117,5 @@ def scrape_article_content(url: str) -> Optional[ScrapedArticle]:
         author=author,
         summary=summary,
         full_text=full_text[:5000],
+        published_date=published_date,
     )

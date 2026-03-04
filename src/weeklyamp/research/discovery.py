@@ -10,6 +10,10 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
     "backstage_pass": [
         "story", "interview", "behind the scenes", "making of", "recording",
         "studio", "biography", "career", "journey", "legend", "iconic",
+        "jazz", "hip hop", "country", "americana", "folk", "blues", "soul",
+        "r&b", "punk", "metal", "electronic", "reggae", "latin", "gospel",
+        "classical", "bluegrass", "indie", "alternative", "pop", "rock",
+        "funk", "world music", "experimental",
     ],
     "industry_pulse": [
         "music industry", "record label", "music business", "streaming",
@@ -39,6 +43,8 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
         "live performance", "stage presence", "concert", "tour",
         "setlist", "soundcheck", "venue", "audience", "performer",
         "stage fright", "showmanship", "live show",
+        "booking", "gig", "festival", "rider", "merch table",
+        "touring", "road", "promoter", "headline", "opening act",
     ],
     "songcraft": [
         "songwriting", "melody", "chord progression", "verse", "chorus",
@@ -54,6 +60,8 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
         "independent artist", "emerging", "debut", "breakout", "unsigned",
         "indie artist", "rising star", "new release", "feature",
         "spotlight", "profile", "interview",
+        "newcomer", "MC", "DJ", "producer", "up-and-coming", "freshman",
+        "ones to watch", "discovery", "new talent",
     ],
     # Technology
     "tech_talk": [
@@ -70,6 +78,9 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
         "guitar", "keyboard", "microphone", "interface", "monitors",
         "headphones", "pedal", "amp", "instrument", "gear review",
         "equipment", "budget gear", "home studio",
+        "synthesizer", "turntable", "banjo", "fiddle", "mandolin",
+        "drum machine", "sampler", "MIDI controller", "modular synth",
+        "pedalboard", "upright bass",
     ],
     "social_playbook": [
         "social media", "instagram", "tiktok", "youtube", "content strategy",
@@ -80,6 +91,9 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
         "recording", "mixing", "mastering", "production", "DAW",
         "EQ", "compression", "reverb", "arrangement", "session",
         "producer", "beat", "sample",
+        "beat making", "sampling", "sound design", "drum programming",
+        "vocal production", "analog recording", "digital audio",
+        "mix engineer", "stem",
     ],
     # Business
     "recommends": [
@@ -121,6 +135,8 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
     "vinyl_vault": [
         "classic album", "vinyl", "retrospective", "reissue", "hidden gem",
         "underrated", "anniversary", "catalog", "deep cut", "music history",
+        "golden era", "seminal", "landmark", "definitive", "canon",
+        "influential album", "masterpiece", "discography",
     ],
     "the_muse": [
         "breakthrough", "eureka", "inspiration story", "creative moment",
@@ -129,6 +145,8 @@ SECTION_KEYWORDS: dict[str, list[str]] = {
     "lyrics_unpacked": [
         "lyrics", "lyric analysis", "meaning", "metaphor", "symbolism",
         "poetry", "wordplay", "storytelling", "verse", "interpretation",
+        "bars", "flow", "protest song", "rhyme scheme", "narrative",
+        "confessional", "spoken word", "lyricism",
     ],
     # Community
     "fan_mail": [

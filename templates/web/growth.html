@@ -33,10 +33,15 @@
     {% endif %}
 </div>
 
+<div id="sync-alerts"></div>
 <div class="actions" style="margin-bottom: 24px;">
-    <form method="post" action="/growth/sync" style="display: inline;">
-        <button class="btn btn-primary" type="submit">Sync Metrics</button>
-    </form>
+    <button class="btn btn-primary"
+            hx-post="/growth/sync"
+            hx-target="#sync-alerts"
+            hx-indicator="#sync-spinner">
+        <span class="spinner htmx-indicator" id="sync-spinner"></span>
+        Sync Metrics
+    </button>
     <a href="/growth/social" class="btn btn-ghost">Social Posts</a>
 </div>
 

@@ -4,3 +4,11 @@ document.addEventListener('change', function(event) {
         event.target.form.requestSubmit();
     }
 });
+
+// Toggle expand/collapse for post content cells
+document.addEventListener('click', function(event) {
+    var td = event.target.closest('.post-toggle');
+    if (td) {
+        td.classList.toggle('expanded');
+    }
+});

@@ -33,7 +33,7 @@ class Repository:
             "autonomy_level", "config_json", "is_active",
         },
         "guest_contacts": {
-            "name", "email", "organization", "role", "website", "notes",
+            "name", "email", "organization", "role", "category", "website", "notes",
         },
         "guest_articles": {
             "contact_id", "title", "author_name", "author_bio", "original_url",
@@ -518,6 +518,82 @@ class Repository:
         ).fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    # ---- Newsletter Editions ----
+
+    def get_editions(self, active_only: bool = True) -> list[dict]:
+        conn = self._conn()
+        sql = "SELECT * FROM newsletter_editions"
+        if active_only:
+            sql += " WHERE is_active = 1"
+        sql += " ORDER BY sort_order"
+        rows = conn.execute(sql).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_edition_by_slug(self, slug: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM newsletter_editions WHERE slug = ?", (slug,)
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def subscribe_to_editions(
+        self,
+        email: str,
+        edition_slugs: list[str],
+        first_name: str = "",
+        source_channel: str = "website",
+        edition_days: Optional[dict[str, list[str]]] = None,
+    ) -> int:
+        """Upsert subscriber and link to editions. Returns subscriber id.
+
+        Args:
+            edition_days: optional mapping of edition slug to list of day names,
+                e.g. {"fan": ["monday", "saturday"]}. Defaults to all 3 days.
+        """
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO subscribers (email, first_name, source_channel, status, subscribed_at)
+               VALUES (?, ?, ?, 'active', CURRENT_TIMESTAMP)
+               ON CONFLICT(email) DO UPDATE SET
+                   first_name = CASE WHEN excluded.first_name != '' THEN excluded.first_name ELSE subscribers.first_name END,
+                   source_channel = CASE WHEN excluded.source_channel != '' THEN excluded.source_channel ELSE subscribers.source_channel END,
+                   status = 'active',
+                   synced_at = CURRENT_TIMESTAMP""",
+            (email, first_name, source_channel),
+        )
+        row = conn.execute("SELECT id FROM subscribers WHERE email = ?", (email,)).fetchone()
+        sub_id = row["id"]
+        default_days = "monday,wednesday,saturday"
+        for slug in edition_slugs:
+            edition = conn.execute(
+                "SELECT id FROM newsletter_editions WHERE slug = ?", (slug,)
+            ).fetchone()
+            if edition:
+                send_days = default_days
+                if edition_days and slug in edition_days:
+                    send_days = ",".join(edition_days[slug])
+                conn.execute(
+                    """INSERT INTO subscriber_editions (subscriber_id, edition_id, send_days)
+                       VALUES (?, ?, ?)
+                       ON CONFLICT(subscriber_id, edition_id) DO UPDATE SET
+                           send_days = excluded.send_days""",
+                    (sub_id, edition["id"], send_days),
+                )
+        conn.commit()
+        conn.close()
+        return sub_id
+
+    def get_edition_subscriber_count(self, edition_id: int) -> int:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT COUNT(*) as c FROM subscriber_editions WHERE edition_id = ?",
+            (edition_id,),
+        ).fetchone()
+        conn.close()
+        return row["c"]
 
     # ---- Engagement Metrics ----
 
@@ -1028,6 +1104,26 @@ class Repository:
         ).fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    def count_guest_articles_for_contact(self, contact_id: int) -> int:
+        """Count guest articles linked to a contact."""
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT COUNT(*) FROM guest_articles WHERE contact_id = ?",
+            (contact_id,),
+        ).fetchone()
+        conn.close()
+        return row[0] if row else 0
+
+    def guest_article_url_exists(self, original_url: str) -> bool:
+        """Check if a guest article with this URL already exists."""
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT 1 FROM guest_articles WHERE original_url = ? LIMIT 1",
+            (original_url,),
+        ).fetchone()
+        conn.close()
+        return row is not None
 
     def get_guest_article_by_draft(self, draft_id: int) -> Optional[dict]:
         conn = self._conn()

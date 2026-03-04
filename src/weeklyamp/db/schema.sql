@@ -100,8 +100,10 @@ CREATE TABLE IF NOT EXISTS assembled_issues (
 CREATE TABLE IF NOT EXISTS subscribers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
+    first_name TEXT DEFAULT '',
     beehiiv_id TEXT DEFAULT '',
     status TEXT DEFAULT 'active',
+    source_channel TEXT DEFAULT '',
     subscribed_at TIMESTAMP,
     synced_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -226,6 +228,7 @@ CREATE TABLE IF NOT EXISTS guest_contacts (
     email TEXT DEFAULT '',
     organization TEXT DEFAULT '',
     role TEXT DEFAULT '',
+    category TEXT DEFAULT '',
     website TEXT DEFAULT '',
     notes TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -325,6 +328,32 @@ CREATE TABLE IF NOT EXISTS security_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Newsletter editions
+CREATE TABLE IF NOT EXISTS newsletter_editions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    tagline TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    audience TEXT DEFAULT '',
+    color TEXT DEFAULT '#e8645a',
+    icon TEXT DEFAULT '',
+    section_slugs TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Subscriber-edition link
+CREATE TABLE IF NOT EXISTS subscriber_editions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    edition_id INTEGER NOT NULL REFERENCES newsletter_editions(id),
+    send_days TEXT DEFAULT 'monday,wednesday,saturday',
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id, edition_id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_drafts_issue_section ON drafts(issue_id, section_slug);
 CREATE INDEX IF NOT EXISTS idx_raw_content_source ON raw_content(source_id);
@@ -346,6 +375,9 @@ CREATE INDEX IF NOT EXISTS idx_growth_date ON growth_metrics(metric_date);
 CREATE INDEX IF NOT EXISTS idx_social_posts_issue ON social_posts(issue_id);
 CREATE INDEX IF NOT EXISTS idx_security_log_event ON security_log(event_type);
 CREATE INDEX IF NOT EXISTS idx_security_log_created ON security_log(created_at);
+CREATE INDEX IF NOT EXISTS idx_editions_slug ON newsletter_editions(slug);
+CREATE INDEX IF NOT EXISTS idx_sub_editions_subscriber ON subscriber_editions(subscriber_id);
+CREATE INDEX IF NOT EXISTS idx_sub_editions_edition ON subscriber_editions(edition_id);
 
 -- Schema version
 INSERT OR IGNORE INTO schema_version (version) VALUES (1);
@@ -359,3 +391,6 @@ INSERT OR IGNORE INTO schema_version (version) VALUES (8);
 INSERT OR IGNORE INTO schema_version (version) VALUES (9);
 INSERT OR IGNORE INTO schema_version (version) VALUES (10);
 INSERT OR IGNORE INTO schema_version (version) VALUES (11);
+INSERT OR IGNORE INTO schema_version (version) VALUES (12);
+INSERT OR IGNORE INTO schema_version (version) VALUES (13);
+INSERT OR IGNORE INTO schema_version (version) VALUES (14);

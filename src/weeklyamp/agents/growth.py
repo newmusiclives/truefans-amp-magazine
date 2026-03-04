@@ -109,13 +109,14 @@ class GrowthAgent(AgentBase):
 
         posts_text, model = generate_draft(prompt, self.config, max_tokens_override=1000)
 
-        # Save posts
-        platforms = ["twitter", "instagram", "linkedin", "threads"]
+        # Parse AI response into per-platform sections
+        parsed = self._parse_platform_posts(posts_text)
+
         created_ids = []
-        for platform in platforms:
+        for platform, content in parsed.items():
             post_id = self.repo.create_social_post(
                 platform=platform,
-                content=posts_text,
+                content=content.strip(),
                 issue_id=issue_id,
                 agent_task_id=task_id,
             )
@@ -123,6 +124,50 @@ class GrowthAgent(AgentBase):
 
         self.log_output(task_id, "social_posts", posts_text)
         return {"posts_created": len(created_ids), "content": posts_text}
+
+    @staticmethod
+    def _parse_platform_posts(text: str) -> dict[str, str]:
+        """Split a multi-platform AI response into per-platform content."""
+        import re
+
+        platform_aliases = {
+            "twitter": "twitter", "x": "twitter", "twitter (280 characters)": "twitter",
+            "instagram": "instagram", "instagram (caption)": "instagram",
+            "linkedin": "linkedin", "linkedin (professional)": "linkedin",
+            "threads": "threads", "threads (conversational)": "threads",
+            "bluesky": "bluesky",
+        }
+
+        # Match markdown headers like ## Twitter, ## LinkedIn (Professional), etc.
+        header_pattern = re.compile(
+            r"^#{1,3}\s+(.+)$", re.MULTILINE
+        )
+        headers = list(header_pattern.finditer(text))
+
+        if not headers:
+            # Can't parse — return whole text as twitter
+            return {"twitter": text}
+
+        result: dict[str, str] = {}
+        for i, match in enumerate(headers):
+            label = match.group(1).strip().lower().rstrip(":")
+            # Strip trailing markdown formatting like **
+            label = re.sub(r"\*+$", "", label).strip()
+            platform = platform_aliases.get(label)
+            if not platform:
+                # Try partial match
+                for alias, plat in platform_aliases.items():
+                    if alias in label:
+                        platform = plat
+                        break
+            if not platform:
+                continue
+
+            start = match.end()
+            end = headers[i + 1].start() if i + 1 < len(headers) else len(text)
+            result[platform] = text[start:end].strip()
+
+        return result or {"twitter": text}
 
     def plan_referral(self, task_id: int) -> dict:
         """Design referral campaign ideas."""

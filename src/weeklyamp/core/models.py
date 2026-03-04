@@ -580,6 +580,16 @@ class SubmissionsConfig(BaseModel):
     require_email: bool = True
 
 
+class EmailConfig(BaseModel):
+    enabled: bool = False
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    from_address: str = ""
+    from_name: str = "TrueFans AMP"
+
+
 class AppConfig(BaseModel):
     newsletter: NewsletterConfig = Field(default_factory=NewsletterConfig)
     ai: AIConfig = Field(default_factory=AIConfig)
@@ -588,4 +598,5 @@ class AppConfig(BaseModel):
     sponsor_slots: SponsorSlotsConfig = Field(default_factory=SponsorSlotsConfig)
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     submissions: SubmissionsConfig = Field(default_factory=SubmissionsConfig)
+    email: EmailConfig = Field(default_factory=EmailConfig)
     db_path: str = "data/weeklyamp.db"

@@ -3,6 +3,11 @@
 {% block nav_growth %}active{% endblock %}
 
 {% block content %}
+<style>
+    td.expanded .post-content-preview { display: none; }
+    td.expanded .post-content-full { display: block !important; }
+    .post-content-preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
 <div class="page-header">
     <h2>Social Posts</h2>
     <p>AI-generated social media posts for promoting issues.</p>
@@ -12,17 +17,21 @@
 <div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
 {% endif %}
 
+<div id="social-alerts"></div>
 <div class="card" style="margin-bottom: 24px;">
     <div class="card-header">
         <span class="card-title">Generate Posts</span>
     </div>
-    <form method="post" action="/growth/social/generate">
+    <form hx-post="/growth/social/generate" hx-target="#social-alerts" hx-indicator="#gen-spinner">
         <div style="display: flex; gap: 12px; align-items: flex-end;">
             <div class="form-group" style="margin-bottom: 0;">
                 <label>Issue ID</label>
                 <input name="issue_id" type="number" required placeholder="Issue ID" style="width: 120px;">
             </div>
-            <button type="submit" class="btn btn-primary btn-sm">Generate Social Posts</button>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <span class="spinner htmx-indicator" id="gen-spinner"></span>
+                Generate Social Posts
+            </button>
         </div>
     </form>
 </div>
@@ -47,7 +56,10 @@
                 {% for post in posts %}
                 <tr>
                     <td><span class="badge" style="background: var(--blue-bg); color: var(--blue);">{{ post.platform }}</span></td>
-                    <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ post.content[:100] }}</td>
+                    <td class="post-toggle" style="max-width: 400px; cursor: pointer;">
+                        <div class="post-content-preview">{{ post.content[:100] }}{% if post.content|length > 100 %}…{% endif %}</div>
+                        <div class="post-content-full" style="display:none; white-space: pre-wrap;">{{ post.content }}</div>
+                    </td>
                     <td><span class="badge badge-{{ post.status }}">{{ post.status }}</span></td>
                     <td>{{ post.issue_id or '—' }}</td>
                     <td style="color: var(--text-dim);">{{ post.created_at[:10] if post.created_at else '—' }}</td>

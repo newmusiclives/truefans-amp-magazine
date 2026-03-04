@@ -6,6 +6,7 @@ from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse
 
 from weeklyamp.guests.manager import GuestArticleManager
+from weeklyamp.guests.researcher import research_all_contacts, research_contact_website
 from weeklyamp.web.deps import get_config, get_repo, render
 
 router = APIRouter()
@@ -18,6 +19,8 @@ async def guests_page():
     repo = get_repo()
     articles = repo.get_guest_articles()
     contacts = repo.get_guest_contacts()
+    for c in contacts:
+        c["article_count"] = repo.count_guest_articles_for_contact(c["id"])
     return render("guests.html",
         articles=articles, contacts=contacts,
         permission_states=PERMISSION_STATES,
@@ -43,6 +46,8 @@ async def add_contact(
         level = "error"
 
     contacts = repo.get_guest_contacts()
+    for c in contacts:
+        c["article_count"] = repo.count_guest_articles_for_contact(c["id"])
     return render("partials/guest_contacts_table.html",
         contacts=contacts, message=message, level=level)
 
@@ -136,3 +141,41 @@ async def approve_article(
         permission_states=PERMISSION_STATES,
         message=message, level=level,
     )
+
+
+@router.post("/contacts/{contact_id}/research", response_class=HTMLResponse)
+async def research_contact(contact_id: int):
+    repo = get_repo()
+    try:
+        result = research_contact_website(repo, contact_id)
+        message = f"Researched {result.contact_name}: found {result.articles_found} articles, added {result.articles_added} new."
+        level = "success"
+    except Exception as e:
+        message = f"Research failed: {e}"
+        level = "error"
+
+    contacts = repo.get_guest_contacts()
+    for c in contacts:
+        c["article_count"] = repo.count_guest_articles_for_contact(c["id"])
+    return render("partials/guest_contacts_table.html",
+        contacts=contacts, message=message, level=level)
+
+
+@router.post("/contacts/research-all", response_class=HTMLResponse)
+async def research_all():
+    repo = get_repo()
+    try:
+        results = research_all_contacts(repo)
+        total_found = sum(r.articles_found for r in results)
+        total_added = sum(r.articles_added for r in results)
+        message = f"Researched {len(results)} contacts: found {total_found} articles, added {total_added} new."
+        level = "success"
+    except Exception as e:
+        message = f"Research failed: {e}"
+        level = "error"
+
+    contacts = repo.get_guest_contacts()
+    for c in contacts:
+        c["article_count"] = repo.count_guest_articles_for_contact(c["id"])
+    return render("partials/guest_contacts_table.html",
+        contacts=contacts, message=message, level=level)

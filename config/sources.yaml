@@ -125,3 +125,135 @@ sources:
     type: "scrape"
     url: "https://genius.com/news"
     target_sections: "lyrics_unpacked,mondegreen,greatest_songwriters"
+
+  # ── Genre Sources ──
+  - name: "No Depression"
+    type: "rss"
+    url: "https://www.nodepression.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "JazzTimes"
+    type: "rss"
+    url: "https://jazztimes.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "Consequence of Sound"
+    type: "rss"
+    url: "https://consequence.net/feed/"
+    target_sections: "backstage_pass,artist_spotlight,gear_garage"
+
+  - name: "BrooklynVegan"
+    type: "rss"
+    url: "https://www.brooklynvegan.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  - name: "Resident Advisor"
+    type: "rss"
+    url: "https://ra.co/xml/news.xml"
+    target_sections: "backstage_pass,artist_spotlight,production_notes"
+
+  - name: "DJ Mag"
+    type: "rss"
+    url: "https://djmag.com/feed"
+    target_sections: "backstage_pass,gear_garage,production_notes"
+
+  - name: "Metal Injection"
+    type: "rss"
+    url: "https://metalinjection.net/feed"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  - name: "HipHopDX"
+    type: "rss"
+    url: "https://hiphopdx.com/feed"
+    target_sections: "backstage_pass,artist_spotlight,lyrics_unpacked"
+
+  - name: "The FADER"
+    type: "scrape"
+    url: "https://www.thefader.com"
+    target_sections: "backstage_pass,artist_spotlight,industry_pulse"
+
+  - name: "Saving Country Music"
+    type: "rss"
+    url: "https://www.savingcountrymusic.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "Soulbounce"
+    type: "scrape"
+    url: "https://www.soulbounce.com"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "Remezcla"
+    type: "rss"
+    url: "https://remezcla.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,industry_pulse"
+
+  - name: "The Quietus"
+    type: "rss"
+    url: "https://thequietus.com/feed"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "PopMatters"
+    type: "rss"
+    url: "https://www.popmatters.com/feed"
+    target_sections: "backstage_pass,vinyl_vault,lyrics_unpacked"
+
+  - name: "Bluegrass Today"
+    type: "rss"
+    url: "https://bluegrasstoday.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  - name: "The Strad"
+    type: "rss"
+    url: "https://www.thestrad.com/feed"
+    target_sections: "backstage_pass,gear_garage,artist_spotlight"
+
+  - name: "Reggaeville"
+    type: "rss"
+    url: "https://www.reggaeville.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  # ── Topic Sources ──
+  - name: "Songwriter Universe"
+    type: "scrape"
+    url: "https://www.songwriteruniverse.com"
+    target_sections: "songcraft,greatest_songwriters,lyrics_unpacked"
+
+  - name: "TAXI Music"
+    type: "rss"
+    url: "https://www.taxi.com/transmitter/feed/"
+    target_sections: "money_moves,coaching,deal_or_no_deal"
+
+  - name: "Tape Op"
+    type: "rss"
+    url: "https://tapeop.com/feed/"
+    target_sections: "production_notes,gear_garage,backstage_pass"
+
+  - name: "Sound On Sound"
+    type: "rss"
+    url: "https://www.soundonsound.com/feed/all"
+    target_sections: "production_notes,gear_garage,tech_talk"
+
+  - name: "Pollstar"
+    type: "scrape"
+    url: "https://www.pollstar.com"
+    target_sections: "stage_ready,industry_pulse,money_moves"
+
+  - name: "Sonicbids Blog"
+    type: "rss"
+    url: "https://blog.sonicbids.com/rss.xml"
+    target_sections: "stage_ready,coaching,diy_marketing"
+
+  - name: "Music Think Tank"
+    type: "rss"
+    url: "https://www.musicthinktank.com/feed/"
+    target_sections: "coaching,money_moves,diy_marketing"
+
+  - name: "Synth History"
+    type: "scrape"
+    url: "https://synthhistory.com"
+    target_sections: "gear_garage,vinyl_vault,production_notes"
+
+  - name: "Music Connection"
+    type: "rss"
+    url: "https://www.musicconnection.com/feed/"
+    target_sections: "songcraft,money_moves,coaching,deal_or_no_deal"

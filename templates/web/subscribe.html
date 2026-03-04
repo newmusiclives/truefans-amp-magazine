@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscribe — WeeklyAMP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --gold: #f59e0b;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+        .nav-brand span { color: var(--accent); }
+        .nav-link {
+            color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500;
+            padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        .nav-link-cta { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .nav-link-cta:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+
+        /* Main */
+        .subscribe-page {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 120px 24px 80px;
+        }
+        .subscribe-page h1 {
+            font-size: 40px; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 12px;
+        }
+        .subscribe-page .subtitle {
+            font-size: 18px; color: var(--text-dim); margin-bottom: 40px; line-height: 1.7;
+        }
+
+        /* Error alert */
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        /* Form */
+        .form-group { margin-bottom: 24px; }
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text);
+        }
+        .form-input {
+            width: 100%; padding: 14px 16px; border-radius: 10px;
+            border: 1px solid var(--border); background: var(--bg-card);
+            color: var(--text); font-size: 16px; font-family: var(--font);
+            transition: border-color 0.2s;
+        }
+        .form-input:focus { outline: none; border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text-dim); }
+
+        /* Edition cards as checkboxes */
+        .editions-label { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+        .editions-grid { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+        .edition-card {
+            position: relative; display: flex; gap: 16px; align-items: flex-start;
+            background: var(--bg-card); border: 2px solid var(--border);
+            border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.2s;
+        }
+        .edition-card:hover { border-color: rgba(255,255,255,0.15); }
+        .edition-card.checked { border-color: var(--card-color); background: rgba(255,255,255,0.02); }
+        .edition-card input[type="checkbox"] {
+            position: absolute; opacity: 0; width: 0; height: 0;
+        }
+        .edition-check {
+            flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+            border: 2px solid var(--border); display: flex; align-items: center;
+            justify-content: center; transition: all 0.2s; margin-top: 2px;
+        }
+        .edition-card.checked .edition-check {
+            background: var(--card-color); border-color: var(--card-color);
+        }
+        .edition-check svg { opacity: 0; transition: opacity 0.15s; }
+        .edition-card.checked .edition-check svg { opacity: 1; }
+        .edition-info { flex: 1; }
+        .edition-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+        .edition-info .tagline { font-size: 14px; color: var(--text-dim); }
+        .edition-icon {
+            flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+
+        /* Day picker pills */
+        .day-picker {
+            display: none; gap: 8px; margin-top: 12px; padding-top: 12px;
+            border-top: 1px solid var(--border); flex-wrap: wrap;
+        }
+        .edition-card.checked .day-picker { display: flex; }
+        .day-picker-label {
+            font-size: 12px; font-weight: 600; color: var(--text-dim);
+            width: 100%; margin-bottom: -4px;
+        }
+        .day-pill {
+            position: relative; cursor: pointer;
+        }
+        .day-pill input {
+            position: absolute; opacity: 0; width: 0; height: 0;
+        }
+        .day-pill-label {
+            display: inline-block; padding: 6px 16px; border-radius: 100px;
+            font-size: 13px; font-weight: 600; border: 1.5px solid var(--border);
+            color: var(--text-dim); transition: all 0.15s; user-select: none;
+        }
+        .day-pill input:checked + .day-pill-label {
+            border-color: var(--card-color);
+            background: var(--card-color);
+            color: #fff;
+        }
+
+        /* Submit button */
+        .btn-subscribe {
+            width: 100%; padding: 16px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #d4524a);
+            color: #fff; font-size: 16px; font-weight: 700; font-family: var(--font);
+            cursor: pointer; transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(232, 100, 90, 0.3);
+        }
+        .btn-subscribe:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(232, 100, 90, 0.4);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 24px; text-align: center;
+            border-top: 1px solid var(--border); color: var(--text-dim); font-size: 14px;
+        }
+        .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 16px; }
+        .footer-links a { color: var(--text-dim); text-decoration: none; font-size: 13px; }
+        .footer-links a:hover { color: var(--text); }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            .subscribe-page h1 { font-size: 32px; }
+        }
+    </style>
+</head>
+<body>
+    {% include "partials/public_nav.html" %}
+
+    <div class="subscribe-page">
+        <h1>Subscribe to WeeklyAMP</h1>
+        <p class="subtitle">Choose the editions that match your interests. Free, delivered three times a week.</p>
+
+        {% if error %}
+        <div class="alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="/subscribe">
+            <div class="form-group">
+                <label for="email">Email address</label>
+                <input type="email" name="email" id="email" class="form-input" placeholder="you@example.com" required value="{{ email|default('', true) }}">
+            </div>
+            <div class="form-group">
+                <label for="first_name">First name <span style="color:var(--text-dim);font-weight:400">(optional)</span></label>
+                <input type="text" name="first_name" id="first_name" class="form-input" placeholder="Your first name" value="{{ first_name|default('', true) }}">
+            </div>
+
+            <p class="editions-label">Pick your editions</p>
+            <div class="editions-grid">
+                {% for ed in editions %}
+                <label class="edition-card{% if selected and ed.slug in selected %} checked{% endif %}" style="--card-color: {{ ed.color }}">
+                    <input type="checkbox" name="editions" value="{{ ed.slug }}" {% if selected and ed.slug in selected %}checked{% endif %}>
+                    <div class="edition-check">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </div>
+                    <div class="edition-info">
+                        <h3 style="color: {{ ed.color }}">{{ ed.name }}</h3>
+                        <span class="tagline">{{ ed.tagline }}</span>
+                        <div class="day-picker">
+                            <span class="day-picker-label">Deliver on</span>
+                            {% for day, label in [('monday','Mon'), ('wednesday','Wed'), ('saturday','Sat')] %}
+                            <label class="day-pill" onclick="event.stopPropagation()">
+                                <input type="checkbox" name="days_{{ ed.slug }}" value="{{ day }}" checked>
+                                <span class="day-pill-label">{{ label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="edition-icon" style="background: {{ ed.color }}15">{{ ed.icon | safe }}</div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn-subscribe">Subscribe — It's Free</button>
+        </form>
+    </div>
+
+    {% include "partials/public_footer.html" %}
+
+    <script>
+    document.querySelectorAll('.edition-card').forEach(card => {
+        const cb = card.querySelector('input[name="editions"]');
+        const dayBoxes = card.querySelectorAll('.day-pill input');
+
+        cb.addEventListener('change', () => {
+            card.classList.toggle('checked', cb.checked);
+            // When edition toggled on, check all days; when off, uncheck all
+            dayBoxes.forEach(d => d.checked = cb.checked);
+        });
+
+        // Ensure at least 1 day stays checked per selected edition
+        dayBoxes.forEach(d => {
+            d.addEventListener('change', () => {
+                const anyChecked = Array.from(dayBoxes).some(x => x.checked);
+                if (!anyChecked) d.checked = true; // revert — need at least one
+            });
+        });
+    });
+    </script>
+</body>
+</html>

@@ -274,6 +274,51 @@ CREATE INDEX IF NOT EXISTS idx_security_log_created ON security_log(created_at);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (11);
 """,
+    12: """
+-- v12: Newsletter editions + subscriber editions + subscriber fields
+CREATE TABLE IF NOT EXISTS newsletter_editions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    tagline TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    audience TEXT DEFAULT '',
+    color TEXT DEFAULT '#e8645a',
+    icon TEXT DEFAULT '',
+    section_slugs TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_editions_slug ON newsletter_editions(slug);
+
+CREATE TABLE IF NOT EXISTS subscriber_editions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    edition_id INTEGER NOT NULL REFERENCES newsletter_editions(id),
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id, edition_id)
+);
+CREATE INDEX IF NOT EXISTS idx_sub_editions_subscriber ON subscriber_editions(subscriber_id);
+CREATE INDEX IF NOT EXISTS idx_sub_editions_edition ON subscriber_editions(edition_id);
+
+ALTER TABLE subscribers ADD COLUMN first_name TEXT DEFAULT '';
+ALTER TABLE subscribers ADD COLUMN source_channel TEXT DEFAULT '';
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (12);
+""",
+    13: """
+-- v13: Add send_days to subscriber_editions for per-edition day-of-week frequency
+ALTER TABLE subscriber_editions ADD COLUMN send_days TEXT DEFAULT 'monday,wednesday,saturday';
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (13);
+""",
+    14: """
+-- v14: Add category column to guest_contacts
+ALTER TABLE guest_contacts ADD COLUMN category TEXT DEFAULT '';
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (14);
+""",
 }
 
 

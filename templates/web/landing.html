@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WeeklyAMP — AI-Powered Magazine for Independent Artists</title>
+    <title>WeeklyAMP — The Music Newsletter for Fans, Artists & Industry</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
@@ -30,20 +30,34 @@
             overflow-x: hidden;
         }
 
+        /* Nav */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+        .nav-brand span { color: var(--accent); }
+        .nav-links { display: flex; gap: 12px; align-items: center; }
+        .nav-link {
+            color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500;
+            padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        .nav-link-cta { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .nav-link-cta:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+
         /* Hero */
         .hero {
-            position: relative;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 80px 24px 120px;
+            position: relative; min-height: 90vh;
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; padding: 100px 24px 80px;
         }
         .hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
+            content: ''; position: absolute; inset: 0;
             background:
                 radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124, 92, 252, 0.15) 0%, transparent 70%),
                 radial-gradient(ellipse 60% 50% at 80% 20%, rgba(232, 100, 90, 0.1) 0%, transparent 60%);
@@ -51,174 +65,93 @@
         }
         .hero-content { position: relative; max-width: 800px; }
         .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            display: inline-flex; align-items: center; gap: 8px;
             background: rgba(124, 92, 252, 0.12);
             border: 1px solid rgba(124, 92, 252, 0.25);
-            color: #a78bfa;
-            padding: 6px 16px;
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            margin-bottom: 32px;
+            color: #a78bfa; padding: 6px 16px; border-radius: 100px;
+            font-size: 13px; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 32px;
         }
         .hero h1 {
-            font-size: clamp(42px, 7vw, 72px);
-            font-weight: 900;
-            line-height: 1.08;
-            letter-spacing: -2px;
-            margin-bottom: 24px;
+            font-size: clamp(42px, 7vw, 72px); font-weight: 900;
+            line-height: 1.08; letter-spacing: -2px; margin-bottom: 24px;
         }
         .hero h1 .highlight {
             background: linear-gradient(135deg, var(--accent), var(--purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
         }
         .hero p {
-            font-size: 20px;
-            color: var(--text-dim);
-            max-width: 600px;
-            margin: 0 auto 40px;
-            line-height: 1.7;
+            font-size: 20px; color: var(--text-dim);
+            max-width: 600px; margin: 0 auto 40px; line-height: 1.7;
         }
-        .hero-cta {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
+        .hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 14px 32px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-            border: none;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 32px; border-radius: 10px; font-size: 16px;
+            font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none;
         }
         .btn-primary {
             background: linear-gradient(135deg, var(--accent), #d4524a);
-            color: #fff;
-            box-shadow: 0 4px 20px rgba(232, 100, 90, 0.3);
+            color: #fff; box-shadow: 0 4px 20px rgba(232, 100, 90, 0.3);
         }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(232, 100, 90, 0.4);
-        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(232, 100, 90, 0.4); }
         .btn-outline {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
+            background: transparent; color: var(--text); border: 1px solid var(--border);
         }
-        .btn-outline:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: rgba(255,255,255,0.2);
-        }
+        .btn-outline:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
 
-        /* Nav */
-        nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 100;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(10, 10, 18, 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
+        /* Editions */
+        .editions {
+            padding: 80px 24px 100px;
+            max-width: 1200px; margin: 0 auto;
         }
-        .nav-brand {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            color: var(--text);
-            text-decoration: none;
+        .editions-header {
+            text-align: center; margin-bottom: 56px;
         }
-        .nav-brand span { color: var(--accent); }
-        nav a.nav-link {
-            color: var(--text-dim);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            padding: 8px 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            transition: all 0.2s;
+        .editions-header h2 {
+            font-size: 36px; font-weight: 800; letter-spacing: -1px; margin-bottom: 16px;
         }
-        nav a.nav-link:hover {
-            color: var(--text);
-            border-color: rgba(255,255,255,0.2);
+        .editions-header p {
+            font-size: 18px; color: var(--text-dim); max-width: 560px; margin: 0 auto;
         }
-
-        /* Features */
-        .features {
-            padding: 100px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        .features-header {
-            text-align: center;
-            margin-bottom: 64px;
-        }
-        .features-header h2 {
-            font-size: 36px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-        }
-        .features-header p {
-            font-size: 18px;
-            color: var(--text-dim);
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .features-grid {
+        .editions-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 24px;
         }
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 32px;
-            transition: all 0.3s;
+        .edition-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px; transition: all 0.3s;
+            display: flex; flex-direction: column;
         }
-        .feature-card:hover {
-            border-color: rgba(124, 92, 252, 0.3);
+        .edition-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 40px rgba(0,0,0,0.3);
         }
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 20px;
+        .edition-icon-wrap {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin-bottom: 20px;
         }
-        .feature-card h3 {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 10px;
+        .edition-card h3 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+        .edition-card .tagline {
+            font-size: 14px; font-weight: 500; margin-bottom: 12px;
         }
-        .feature-card p {
-            color: var(--text-dim);
-            font-size: 15px;
-            line-height: 1.7;
+        .edition-card p {
+            color: var(--text-dim); font-size: 15px; line-height: 1.7; flex: 1; margin-bottom: 20px;
         }
+        .edition-sections {
+            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px;
+        }
+        .edition-sections span {
+            font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+            padding: 4px 10px; border-radius: 100px;
+        }
+        .edition-cta {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 20px; border-radius: 8px; font-size: 14px;
+            font-weight: 600; text-decoration: none; transition: all 0.2s; color: #fff;
+        }
+        .edition-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
         /* How It Works */
         .how-it-works {
@@ -227,133 +160,52 @@
             border-top: 1px solid var(--border);
             border-bottom: 1px solid var(--border);
         }
-        .how-it-works-inner {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        .how-it-works-inner { max-width: 1000px; margin: 0 auto; }
         .how-it-works h2 {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 64px;
+            text-align: center; font-size: 36px; font-weight: 800;
+            letter-spacing: -1px; margin-bottom: 64px;
         }
         .steps {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 32px;
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px;
         }
-        .step {
-            text-align: center;
-            position: relative;
-        }
+        .step { text-align: center; }
         .step-num {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
+            width: 48px; height: 48px; border-radius: 50%;
             background: linear-gradient(135deg, var(--purple), var(--accent));
-            color: #fff;
-            font-weight: 800;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: #fff; font-weight: 800; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
             margin: 0 auto 16px;
         }
-        .step h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .step p {
-            font-size: 14px;
-            color: var(--text-dim);
-            line-height: 1.6;
-        }
+        .step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .step p { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
 
-        /* Sections showcase */
-        .sections-showcase {
-            padding: 100px 24px;
-            max-width: 1200px;
-            margin: 0 auto;
+        /* Submit CTA */
+        .submit-section {
+            padding: 80px 24px;
+            max-width: 800px; margin: 0 auto; text-align: center;
         }
-        .sections-showcase h2 {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 800;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
+        .submit-section h2 {
+            font-size: 28px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px;
         }
-        .sections-showcase .subtitle {
-            text-align: center;
-            color: var(--text-dim);
-            font-size: 18px;
-            margin-bottom: 48px;
-        }
-        .section-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            justify-content: center;
-        }
-        .section-tag {
-            background: rgba(124, 92, 252, 0.08);
-            border: 1px solid rgba(124, 92, 252, 0.2);
-            color: #c4b5fd;
-            padding: 8px 20px;
-            border-radius: 100px;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .section-tag:hover {
-            background: rgba(124, 92, 252, 0.15);
-            border-color: rgba(124, 92, 252, 0.4);
-        }
-        .section-tag.alt {
-            background: rgba(232, 100, 90, 0.08);
-            border-color: rgba(232, 100, 90, 0.2);
-            color: #fca5a1;
-        }
-        .section-tag.alt:hover {
-            background: rgba(232, 100, 90, 0.15);
-            border-color: rgba(232, 100, 90, 0.4);
-        }
-
-        /* CTA */
-        .cta {
-            padding: 120px 24px;
-            text-align: center;
-        }
-        .cta h2 {
-            font-size: 40px;
-            font-weight: 900;
-            letter-spacing: -1px;
-            margin-bottom: 16px;
-        }
-        .cta p {
-            font-size: 18px;
-            color: var(--text-dim);
-            margin-bottom: 40px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
+        .submit-section p {
+            font-size: 16px; color: var(--text-dim); margin-bottom: 28px;
+            max-width: 500px; margin-left: auto; margin-right: auto;
         }
 
         /* Footer */
         footer {
-            padding: 40px 24px;
-            text-align: center;
-            border-top: 1px solid var(--border);
-            color: var(--text-dim);
-            font-size: 14px;
+            padding: 40px 24px; text-align: center;
+            border-top: 1px solid var(--border); color: var(--text-dim); font-size: 14px;
         }
+        .footer-links { display: flex; gap: 24px; justify-content: center; margin-bottom: 16px; }
+        .footer-links a { color: var(--text-dim); text-decoration: none; font-size: 13px; }
+        .footer-links a:hover { color: var(--text); }
 
-        /* Responsive */
         @media (max-width: 768px) {
             nav { padding: 16px 20px; }
+            .nav-links { gap: 8px; }
             .steps { grid-template-columns: repeat(2, 1fr); }
-            .features-grid { grid-template-columns: 1fr; }
+            .editions-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 480px) {
             .steps { grid-template-columns: 1fr; }
@@ -363,131 +215,112 @@
 <body>
     <nav>
         <a href="/" class="nav-brand">Weekly<span>AMP</span></a>
-        <div style="display:flex;gap:12px;align-items:center">
+        <div class="nav-links">
+            <a href="/newsletters" class="nav-link">Newsletters</a>
             {% if authenticated %}
             <a href="/dashboard" class="nav-link">Dashboard</a>
-            {% else %}
-            <a href="/login" class="nav-link">Editor Login</a>
             {% endif %}
+            <a href="/subscribe" class="nav-link nav-link-cta">Subscribe</a>
         </div>
     </nav>
 
     <section class="hero">
         <div class="hero-content">
-            <div class="hero-badge">Free Submissions Now Open</div>
-            <h1>Get your music in front of <span class="highlight">thousands of fans.</span></h1>
-            <p>WeeklyAMP is a curated music newsletter that spotlights independent artists and songwriters. Submit your new release, your story, or a guest article — and get featured in our next issue.</p>
+            <div class="hero-badge">3 Editions &middot; 3x Weekly &middot; Always Free</div>
+            <h1>The music newsletter for <span class="highlight">fans, artists & industry.</span></h1>
+            <p>WeeklyAMP delivers curated stories, expert insights, and actionable advice — tailored to how you experience music. Choose the edition that fits you.</p>
             <div class="hero-cta">
-                <a href="/submit" class="btn btn-primary">Submit Your Music</a>
-                <a href="#how-it-works" class="btn btn-outline">How It Works</a>
+                <a href="/subscribe" class="btn btn-primary">Subscribe Free</a>
+                <a href="/newsletters" class="btn btn-outline">Explore Editions</a>
             </div>
         </div>
     </section>
 
-    <section class="features" id="features">
-        <div class="features-header">
-            <h2>Why artists submit to WeeklyAMP</h2>
-            <p>Real exposure to real listeners — not algorithms.</p>
+    <section class="editions" id="editions">
+        <div class="editions-header">
+            <h2>Three editions, one mission</h2>
+            <p>Pick the newsletter that matches your world — or subscribe to all three.</p>
         </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(124, 92, 252, 0.12); color: #a78bfa;">&#127911;</div>
-                <h3>Get Featured</h3>
-                <p>Your music, your story, front and center. Selected submissions are featured in dedicated sections read by music fans, industry pros, and fellow artists.</p>
+        <div class="editions-grid">
+            <!-- Fan Edition -->
+            <div class="edition-card" style="border-color: rgba(232, 100, 90, 0.2);">
+                <div class="edition-icon-wrap" style="background: rgba(232, 100, 90, 0.12);">&#127911;</div>
+                <h3 style="color: #e8645a;">Fan Edition</h3>
+                <div class="tagline" style="color: #e8645a;">The insider scoop for music lovers</div>
+                <p>Backstage stories, classic album deep-dives, lyric breakdowns, and creative inspiration — delivered to your inbox three times a week.</p>
+                <div class="edition-sections">
+                    <span style="background: rgba(232, 100, 90, 0.1); color: #fca5a1;">Backstage Pass</span>
+                    <span style="background: rgba(232, 100, 90, 0.1); color: #fca5a1;">Vinyl Vault</span>
+                    <span style="background: rgba(232, 100, 90, 0.1); color: #fca5a1;">Lyrics Unpacked</span>
+                    <span style="background: rgba(232, 100, 90, 0.1); color: #fca5a1;">+ 4 more</span>
+                </div>
+                <a href="/subscribe" class="edition-cta" style="background: #e8645a;">Subscribe to Fan Edition</a>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(232, 100, 90, 0.12); color: #fca5a1;">&#128240;</div>
-                <h3>30 Newsletter Sections</h3>
-                <p>From Artist Spotlight to Community Wins, Songcraft to New Releases — there are multiple ways your work can be included in every issue.</p>
+            <!-- Artist Edition -->
+            <div class="edition-card" style="border-color: rgba(124, 92, 252, 0.2);">
+                <div class="edition-icon-wrap" style="background: rgba(124, 92, 252, 0.12);">&#127928;</div>
+                <h3 style="color: #7c5cfc;">Artist Edition</h3>
+                <div class="tagline" style="color: #7c5cfc;">Level up your music career</div>
+                <p>Songwriting techniques, vocal coaching, gear reviews, production tips, social media strategy, and DIY marketing — everything independent artists need to grow.</p>
+                <div class="edition-sections">
+                    <span style="background: rgba(124, 92, 252, 0.1); color: #c4b5fd;">Coaching</span>
+                    <span style="background: rgba(124, 92, 252, 0.1); color: #c4b5fd;">Songcraft</span>
+                    <span style="background: rgba(124, 92, 252, 0.1); color: #c4b5fd;">Gear Garage</span>
+                    <span style="background: rgba(124, 92, 252, 0.1); color: #c4b5fd;">+ 7 more</span>
+                </div>
+                <a href="/subscribe" class="edition-cta" style="background: #7c5cfc;">Subscribe to Artist Edition</a>
             </div>
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(22, 163, 74, 0.12); color: #4ade80;">&#128176;</div>
-                <h3>100% Free to Submit</h3>
-                <p>No pay-to-play, no hidden fees. We believe great music deserves great exposure — regardless of your budget or label status.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(245, 158, 11, 0.12); color: #fbbf24;">&#128197;</div>
-                <h3>3x Weekly Issues</h3>
-                <p>We publish Monday, Wednesday, and Friday — which means more chances for your music to land in front of new listeners every single week.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(8, 145, 178, 0.12); color: #22d3ee;">&#9998;</div>
-                <h3>Write a Guest Article</h3>
-                <p>Have something to say? Submit a guest column about your creative process, industry insights, or lessons learned on your journey as an independent artist.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon" style="background: rgba(234, 88, 12, 0.12); color: #fb923c;">&#128101;</div>
-                <h3>Join a Community</h3>
-                <p>WeeklyAMP readers are independent artists, songwriters, producers, and music fans. Get your name in a newsletter built by and for the indie music community.</p>
+            <!-- Industry Edition -->
+            <div class="edition-card" style="border-color: rgba(245, 158, 11, 0.2);">
+                <div class="edition-icon-wrap" style="background: rgba(245, 158, 11, 0.12);">&#128200;</div>
+                <h3 style="color: #f59e0b;">Industry Edition</h3>
+                <div class="tagline" style="color: #f59e0b;">Data and deals that move the needle</div>
+                <p>Industry news, deal analysis, streaming data, revenue strategies, rights and royalties explainers, music tech, and AI developments — for professionals who need to stay ahead.</p>
+                <div class="edition-sections">
+                    <span style="background: rgba(245, 158, 11, 0.1); color: #fbbf24;">Industry Pulse</span>
+                    <span style="background: rgba(245, 158, 11, 0.1); color: #fbbf24;">Money Moves</span>
+                    <span style="background: rgba(245, 158, 11, 0.1); color: #fbbf24;">AI Music Lab</span>
+                    <span style="background: rgba(245, 158, 11, 0.1); color: #fbbf24;">+ 5 more</span>
+                </div>
+                <a href="/subscribe" class="edition-cta" style="background: #f59e0b;">Subscribe to Industry Edition</a>
             </div>
         </div>
     </section>
 
     <section class="how-it-works" id="how-it-works">
         <div class="how-it-works-inner">
-            <h2>How Submissions Work</h2>
+            <h2>How It Works</h2>
             <div class="steps">
                 <div class="step">
                     <div class="step-num">1</div>
-                    <h3>Submit</h3>
-                    <p>Fill out the form with your artist info, links, genre, and a short description of your music or story.</p>
+                    <h3>Pick Your Editions</h3>
+                    <p>Choose from Fan, Artist, or Industry — or subscribe to all three for the full picture.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">2</div>
-                    <h3>Review</h3>
-                    <p>Our editorial team reviews every submission. We look for quality, originality, and relevance to our readers.</p>
+                    <h3>Get Curated Content</h3>
+                    <p>Each edition is packed with original writing, expert insights, and hand-picked resources.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">3</div>
-                    <h3>Feature</h3>
-                    <p>Selected artists are written into upcoming newsletter sections — with links, context, and a genuine spotlight.</p>
+                    <h3>Delivered 3x Weekly</h3>
+                    <p>New issues land in your inbox Monday, Wednesday, and Saturday. Never miss a beat.</p>
                 </div>
                 <div class="step">
                     <div class="step-num">4</div>
-                    <h3>Reach</h3>
-                    <p>Your feature goes out to our full subscriber list. New fans discover your music in their inbox.</p>
+                    <h3>Always Free</h3>
+                    <p>No paywalls, no trials. WeeklyAMP is free for everyone who loves music.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="sections-showcase">
-        <h2>Where your music could appear</h2>
-        <p class="subtitle">Every issue features a rotating mix of these sections — multiple chances to get featured.</p>
-        <div class="section-tags">
-            <span class="section-tag alt">Artist Spotlight</span>
-            <span class="section-tag">Community Wins</span>
-            <span class="section-tag alt">Backstage Pass</span>
-            <span class="section-tag">Songcraft</span>
-            <span class="section-tag alt">Vocal Booth</span>
-            <span class="section-tag">Production Notes</span>
-            <span class="section-tag alt">Creative Fuel</span>
-            <span class="section-tag">Stage Ready</span>
-            <span class="section-tag alt">Guest Column</span>
-            <span class="section-tag">Industry Pulse</span>
-            <span class="section-tag alt">Streaming Dashboard</span>
-            <span class="section-tag">AI Music Lab</span>
-            <span class="section-tag alt">Money Moves</span>
-            <span class="section-tag">Social Playbook</span>
-            <span class="section-tag alt">Gear Garage</span>
-            <span class="section-tag">Rights &amp; Royalties</span>
-            <span class="section-tag alt">DIY Marketing</span>
-            <span class="section-tag">Brand Building</span>
-            <span class="section-tag alt">Tech Talk</span>
-            <span class="section-tag">PS from PS</span>
-        </div>
+    <section class="submit-section">
+        <h2>Are you an artist?</h2>
+        <p>Submit your music, your story, or a guest article — and get featured in front of our growing readership.</p>
+        <a href="/submit" class="btn btn-outline">Submit Your Music</a>
     </section>
 
-    <section class="cta">
-        <h2>Your next fans are waiting.</h2>
-        <p>Submit your music today — it only takes a minute, and it's completely free.</p>
-        <div class="hero-cta">
-            <a href="/submit" class="btn btn-primary">Submit Your Music Now</a>
-        </div>
-    </section>
-
-    <footer>
-        <p>&copy; 2026 WeeklyAMP — TrueFans AMP Magazine. Built for independent artists, powered by AI.</p>
-    </footer>
+    {% include "partials/public_footer.html" %}
 </body>
 </html>

@@ -32,6 +32,26 @@ _env.filters["markdown"] = _md_filter
 _env.filters["truncate_words"] = lambda s, n=20: " ".join((s or "").split()[:n]) + ("..." if len((s or "").split()) > n else "")
 
 
+import re as _re
+
+def _plain_preview(text: str, max_len: int = 140) -> str:
+    """Strip markdown formatting and return a short plain-text preview."""
+    if not text:
+        return ""
+    # Skip title/author header lines
+    lines = text.split("\n")
+    body_lines = [l for l in lines if l.strip() and not l.startswith("**") and not l.startswith("*By ") and not l.startswith("[Read")]
+    plain = " ".join(body_lines)
+    plain = _re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', plain)  # [text](url) -> text
+    plain = plain.replace("**", "").replace("*", "")
+    plain = " ".join(plain.split())  # collapse whitespace
+    if len(plain) > max_len:
+        plain = plain[:max_len].rsplit(" ", 1)[0] + "..."
+    return plain
+
+_env.filters["plain_preview"] = _plain_preview
+
+
 def get_config() -> AppConfig:
     return load_config()
 

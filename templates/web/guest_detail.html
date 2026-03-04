@@ -5,7 +5,11 @@
 {% block content %}
 <div class="page-header">
     <h2>{{ article.title or '(untitled)' }}</h2>
-    <p>By {{ article.author_name or '—' }} — Permission: {{ article.permission_state }}</p>
+    <p>By {{ article.author_name or '—' }}
+    {% if article.original_url %}
+        — <a href="{{ article.original_url }}" target="_blank" style="color: var(--accent);">Source</a>
+    {% endif %}
+    </p>
 </div>
 
 {% if message %}
@@ -27,10 +31,19 @@
     </div>
 </div>
 
-{% if article.content_full %}
+{% if article.content_summary %}
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-title">Newsletter Preview</div>
+    <div class="content-preview" style="margin-top: 12px; line-height: 1.7;">
+        {{ article.content_summary | markdown }}
+    </div>
+</div>
+{% elif article.content_full %}
 <div class="card" style="margin-bottom: 24px;">
     <div class="card-title">Content</div>
-    <div class="content-preview" style="margin-top: 12px;">{{ article.content_full }}</div>
+    <div class="content-preview" style="margin-top: 12px; line-height: 1.7;">
+        {{ article.content_full | markdown }}
+    </div>
 </div>
 {% endif %}
 
@@ -38,7 +51,7 @@
     <div class="card-title">Actions</div>
     <div class="actions" style="margin-top: 12px; gap: 12px;">
         {% if article.permission_state not in ('published', 'declined') %}
-        <form method="post" action="/guests/{{ article.id }}/permission" style="display: inline-flex; gap: 8px; align-items: center;">
+        <form hx-post="/guests/{{ article.id }}/permission" hx-target="body" hx-swap="innerHTML" style="display: inline-flex; gap: 8px; align-items: center;">
             <select name="permission_state" class="select-sm">
                 {% for state in permission_states %}
                 <option value="{{ state }}" {% if state == article.permission_state %}selected{% endif %}>{{ state|title }}</option>
@@ -49,7 +62,7 @@
         {% endif %}
 
         {% if article.permission_state in ('received', 'approved') and upcoming_issues %}
-        <form method="post" action="/guests/{{ article.id }}/approve" style="display: inline-flex; gap: 8px; align-items: center;">
+        <form hx-post="/guests/{{ article.id }}/approve" hx-target="body" hx-swap="innerHTML" style="display: inline-flex; gap: 8px; align-items: center;">
             <select name="issue_id" class="select-sm">
                 <option value="0">No issue</option>
                 {% for issue in upcoming_issues %}
