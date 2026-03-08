@@ -631,6 +631,16 @@ class Repository:
         conn.close()
         return dict(row) if row else None
 
+    def update_edition_sections(self, slug: str, section_slugs: str) -> None:
+        """Update the ordered section list for an edition."""
+        conn = self._conn()
+        conn.execute(
+            "UPDATE newsletter_editions SET section_slugs = ? WHERE slug = ?",
+            (section_slugs, slug),
+        )
+        conn.commit()
+        conn.close()
+
     def subscribe_to_editions(
         self,
         email: str,

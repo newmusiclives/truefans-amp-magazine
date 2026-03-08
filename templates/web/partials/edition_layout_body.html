@@ -1,0 +1,117 @@
+{% if message is defined and message %}
+<div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
+{% endif %}
+
+<div id="edition-layout-body">
+
+<!-- Newsletter preview layout -->
+<div class="card" style="border-left:4px solid {{ layout.edition.color }}">
+    <div class="card-header">
+        <span class="card-title">Newsletter Layout Order</span>
+        <span style="color:var(--text-dim);font-size:12px">Drag sections or use arrows to reorder. This defines the reading order in the final newsletter.</span>
+    </div>
+
+    <!-- INTRO (fixed, always first) -->
+    <div style="padding:12px 16px;background:linear-gradient(135deg, {{ layout.edition.color }}15, {{ layout.edition.color }}08);border:2px dashed {{ layout.edition.color }};border-radius:8px;margin-bottom:4px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">&#9993;</span>
+        <div>
+            <strong style="color:{{ layout.edition.color }}">WELCOME INTRO</strong>
+            <div style="font-size:11px;color:var(--text-dim)">AI-generated — references the day, week, and 2 highlights from this issue. Tailored to {{ layout.edition.name }} audience.</div>
+        </div>
+        <span class="badge" style="background:{{ layout.edition.color }};color:#fff;margin-left:auto;font-size:10px">Auto</span>
+    </div>
+
+    <!-- Sections list -->
+    {% for item in layout.items %}
+    {% if item.type == 'divider' %}
+    <!-- Divider -->
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 16px;margin:2px 0">
+        <div style="flex:1;height:2px;background:{{ layout.edition.color }}40"></div>
+        <span style="font-size:11px;color:var(--text-dim);white-space:nowrap">AD BREAK / DIVIDER</span>
+        <div style="flex:1;height:2px;background:{{ layout.edition.color }}40"></div>
+        <button class="btn btn-danger btn-sm" style="font-size:10px;padding:1px 6px"
+                hx-post="/schedule/layout/{{ layout.edition.slug }}/remove-section/{{ item.slug }}"
+                hx-target="#edition-layout-body" hx-swap="outerHTML">x</button>
+    </div>
+    {% else %}
+    <!-- Section row -->
+    <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;margin:2px 0;background:#fafafa;border-radius:6px;border:1px solid #e5e7eb">
+        <!-- Position number -->
+        <span style="font-size:12px;color:var(--text-dim);font-weight:600;width:20px;text-align:center">{{ loop.index }}</span>
+
+        <!-- Move buttons -->
+        <div style="display:flex;flex-direction:column;gap:1px">
+            <button class="btn btn-sm" style="font-size:10px;padding:0 4px;line-height:14px"
+                    hx-post="/schedule/layout/{{ layout.edition.slug }}/move/{{ item.slug }}/up"
+                    hx-target="#edition-layout-body" hx-swap="outerHTML"
+                    {% if loop.first %}disabled{% endif %}>&#9650;</button>
+            <button class="btn btn-sm" style="font-size:10px;padding:0 4px;line-height:14px"
+                    hx-post="/schedule/layout/{{ layout.edition.slug }}/move/{{ item.slug }}/down"
+                    hx-target="#edition-layout-body" hx-swap="outerHTML"
+                    {% if loop.last %}disabled{% endif %}>&#9660;</button>
+        </div>
+
+        <!-- Section info -->
+        <div style="flex:1">
+            <strong style="font-size:14px">{{ item.display_name }}</strong>
+            <span style="font-size:11px;color:var(--text-dim);margin-left:8px">{{ item.category | replace('_', ' ') | title }}</span>
+        </div>
+
+        <!-- Word count badge -->
+        <span class="badge" style="font-size:10px;background:#f3f4f6;color:#6b7280">{{ item.word_count_label }}</span>
+
+        <!-- Add divider after -->
+        <form style="display:inline" hx-post="/schedule/layout/{{ layout.edition.slug }}/add-divider"
+              hx-target="#edition-layout-body" hx-swap="outerHTML">
+            <input type="hidden" name="after" value="{{ item.slug }}">
+            <button type="submit" class="btn btn-sm" style="font-size:10px;padding:2px 6px"
+                    title="Insert divider/ad break after this section">+ Divider</button>
+        </form>
+
+        <!-- Remove -->
+        <button class="btn btn-danger btn-sm" style="font-size:10px;padding:2px 6px"
+                hx-post="/schedule/layout/{{ layout.edition.slug }}/remove-section/{{ item.slug }}"
+                hx-target="#edition-layout-body" hx-swap="outerHTML"
+                title="Remove from this edition">Remove</button>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    {% if not layout.items %}
+    <p style="color:var(--text-dim);padding:16px;text-align:center">No sections assigned to this edition yet. Add some below.</p>
+    {% endif %}
+
+    <!-- PS CLOSING (fixed, always last) -->
+    <div style="padding:12px 16px;background:linear-gradient(135deg, #f9fafb, #f3f4f6);border:2px dashed {{ layout.edition.color }};border-radius:8px;margin-top:4px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">&#9998;</span>
+        <div>
+            <strong style="color:{{ layout.edition.color }}">PS — Paul Saunders, Founder — TrueFans CONNECT</strong>
+            <div style="font-size:11px;color:var(--text-dim)">AI-generated closing note — unique to each issue, references specific content. Warm, personal tone.</div>
+        </div>
+        <span class="badge" style="background:{{ layout.edition.color }};color:#fff;margin-left:auto;font-size:10px">Auto</span>
+    </div>
+</div>
+
+<!-- Add section to edition -->
+{% if layout.available %}
+<div class="card" style="margin-top:16px">
+    <div class="card-header">
+        <span class="card-title">Add Section to {{ layout.edition.name }}</span>
+    </div>
+    <form hx-post="/schedule/layout/{{ layout.edition.slug }}/add-section"
+          hx-target="#edition-layout-body" hx-swap="outerHTML"
+          style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+        <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0">
+            <label>Available Sections</label>
+            <select name="slug">
+                {% for s in layout.available %}
+                <option value="{{ s.slug }}">{{ s.display_name }} ({{ s.category | replace('_', ' ') | title }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Add to Edition</button>
+    </form>
+</div>
+{% endif %}
+
+</div>

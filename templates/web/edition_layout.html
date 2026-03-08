@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ layout.edition.name }} Layout — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_schedule %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:28px">{{ layout.edition.icon | safe }}</span>
+        <div>
+            <h2 style="color:{{ layout.edition.color }};margin:0">{{ layout.edition.name }}</h2>
+            <p style="margin:0;color:var(--text-dim)">{{ layout.edition.tagline }} — {{ layout.total_sections }} sections</p>
+        </div>
+    </div>
+    <div style="margin-top:8px">
+        <a href="/schedule" class="btn btn-sm" style="font-size:12px">Back to Schedule</a>
+        {% for ed in editions %}
+        {% if ed.slug != layout.edition.slug %}
+        <a href="/schedule/layout/{{ ed.slug }}" class="btn btn-sm" style="font-size:12px;background:{{ ed.color }};color:#fff">{{ ed.name }}</a>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+
+<div id="edition-layout-body">
+    {% include "partials/edition_layout_body.html" %}
+</div>
+{% endblock %}

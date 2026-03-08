@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
@@ -195,3 +196,156 @@ async def create_week_issues(week_id: str = Form("")):
     return render("partials/schedule_grid.html",
         grid=grid, editions=editions, sections=sections, send_days=SEND_DAYS,
         upcoming=upcoming, message=message, level=level)
+
+
+# ---------------------------------------------------------------------------
+# Edition Layout Editor — reorder sections, add/remove, dividers
+# ---------------------------------------------------------------------------
+
+def _build_edition_layout(repo, edition_slug: str) -> dict:
+    """Build the full layout for an edition, including section details."""
+    edition = repo.get_edition_by_slug(edition_slug)
+    if not edition:
+        return {}
+
+    # Parse the ordered section slugs (may include __divider__ markers)
+    raw_slugs = [s.strip() for s in edition.get("section_slugs", "").split(",") if s.strip()]
+
+    all_sections = repo.get_active_sections()
+    section_map = {s["slug"]: s for s in all_sections}
+
+    items = []
+    for slug in raw_slugs:
+        if slug.startswith("__divider"):
+            items.append({"type": "divider", "slug": slug, "display_name": "— Divider —"})
+        else:
+            sec = section_map.get(slug)
+            if sec:
+                items.append({
+                    "type": "section",
+                    "slug": slug,
+                    "display_name": sec.get("display_name", slug),
+                    "category": sec.get("category", ""),
+                    "word_count_label": sec.get("word_count_label", "medium"),
+                })
+
+    # Sections available but not in this edition
+    used_slugs = {s for s in raw_slugs if not s.startswith("__divider")}
+    available = [s for s in all_sections if s["slug"] not in used_slugs]
+
+    return {
+        "edition": edition,
+        "items": items,
+        "available": available,
+        "total_sections": len([i for i in items if i["type"] == "section"]),
+    }
+
+
+@router.get("/layout/{edition_slug}", response_class=HTMLResponse)
+async def edition_layout(edition_slug: str):
+    repo = get_repo()
+    layout = _build_edition_layout(repo, edition_slug)
+    if not layout:
+        return render("partials/alert.html", message="Edition not found.", level="error")
+
+    editions = repo.get_editions()
+    return render("edition_layout.html", layout=layout, editions=editions)
+
+
+@router.post("/layout/{edition_slug}/reorder", response_class=HTMLResponse)
+async def reorder_sections(edition_slug: str, request: Request):
+    """Save the reordered section list for an edition."""
+    form = await request.form()
+    # section_order is a hidden field with comma-separated slugs in new order
+    section_order = form.get("section_order", "")
+
+    repo = get_repo()
+    repo.update_edition_sections(edition_slug, section_order)
+
+    layout = _build_edition_layout(repo, edition_slug)
+    return render("partials/edition_layout_body.html", layout=layout,
+        message="Section order saved!", level="success")
+
+
+@router.post("/layout/{edition_slug}/move/{slug}/{direction}", response_class=HTMLResponse)
+async def move_section(edition_slug: str, slug: str, direction: str):
+    """Move a section up or down in the edition's order."""
+    repo = get_repo()
+    edition = repo.get_edition_by_slug(edition_slug)
+    if not edition:
+        return render("partials/alert.html", message="Edition not found.", level="error")
+
+    slugs = [s.strip() for s in edition.get("section_slugs", "").split(",") if s.strip()]
+    if slug not in slugs:
+        return render("partials/alert.html", message="Section not in edition.", level="error")
+
+    idx = slugs.index(slug)
+    if direction == "up" and idx > 0:
+        slugs[idx], slugs[idx - 1] = slugs[idx - 1], slugs[idx]
+    elif direction == "down" and idx < len(slugs) - 1:
+        slugs[idx], slugs[idx + 1] = slugs[idx + 1], slugs[idx]
+
+    repo.update_edition_sections(edition_slug, ",".join(slugs))
+    layout = _build_edition_layout(repo, edition_slug)
+    return render("partials/edition_layout_body.html", layout=layout)
+
+
+@router.post("/layout/{edition_slug}/add-section", response_class=HTMLResponse)
+async def add_section_to_edition(edition_slug: str, slug: str = Form(...)):
+    """Add a section to the end of an edition's lineup."""
+    repo = get_repo()
+    edition = repo.get_edition_by_slug(edition_slug)
+    if not edition:
+        return render("partials/alert.html", message="Edition not found.", level="error")
+
+    slugs = [s.strip() for s in edition.get("section_slugs", "").split(",") if s.strip()]
+    if slug not in slugs:
+        slugs.append(slug)
+        repo.update_edition_sections(edition_slug, ",".join(slugs))
+
+    layout = _build_edition_layout(repo, edition_slug)
+    return render("partials/edition_layout_body.html", layout=layout,
+        message=f"Added {slug}", level="success")
+
+
+@router.post("/layout/{edition_slug}/remove-section/{slug}", response_class=HTMLResponse)
+async def remove_section_from_edition(edition_slug: str, slug: str):
+    """Remove a section from an edition's lineup."""
+    repo = get_repo()
+    edition = repo.get_edition_by_slug(edition_slug)
+    if not edition:
+        return render("partials/alert.html", message="Edition not found.", level="error")
+
+    slugs = [s.strip() for s in edition.get("section_slugs", "").split(",") if s.strip()]
+    slugs = [s for s in slugs if s != slug]
+    repo.update_edition_sections(edition_slug, ",".join(slugs))
+
+    layout = _build_edition_layout(repo, edition_slug)
+    return render("partials/edition_layout_body.html", layout=layout,
+        message=f"Removed {slug}", level="success")
+
+
+@router.post("/layout/{edition_slug}/add-divider", response_class=HTMLResponse)
+async def add_divider(edition_slug: str, after: str = Form("")):
+    """Insert a divider after a given section slug."""
+    repo = get_repo()
+    edition = repo.get_edition_by_slug(edition_slug)
+    if not edition:
+        return render("partials/alert.html", message="Edition not found.", level="error")
+
+    slugs = [s.strip() for s in edition.get("section_slugs", "").split(",") if s.strip()]
+
+    # Generate unique divider ID
+    divider_count = sum(1 for s in slugs if s.startswith("__divider"))
+    divider_slug = f"__divider_{divider_count + 1}"
+
+    if after and after in slugs:
+        idx = slugs.index(after) + 1
+        slugs.insert(idx, divider_slug)
+    else:
+        slugs.append(divider_slug)
+
+    repo.update_edition_sections(edition_slug, ",".join(slugs))
+    layout = _build_edition_layout(repo, edition_slug)
+    return render("partials/edition_layout_body.html", layout=layout,
+        message="Divider added", level="success")

@@ -9,10 +9,11 @@
 <div class="card" style="border-left:4px solid {{ ed.color }};margin-bottom:16px">
     <div class="card-header" style="display:flex;align-items:center;gap:10px">
         <span style="font-size:22px">{{ ed.icon | safe }}</span>
-        <div>
+        <div style="flex:1">
             <span class="card-title" style="color:{{ ed.color }}">{{ ed.name }}</span>
             <span style="color:var(--text-dim);font-size:12px;margin-left:8px">{{ ed.tagline }}</span>
         </div>
+        <a href="/schedule/layout/{{ ed.slug }}" class="btn btn-sm" style="font-size:11px;background:{{ ed.color }};color:#fff;text-decoration:none">Edit Layout</a>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;margin-bottom:12px">
