@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Send Schedule</h2>
-    <p>3 Newsletters × 3 Days = 9 Issues Per Week</p>
+    <p>3 Newsletters × 3 Days = 9 Issues Per Week — each with unique content, intro and PS closing</p>
 </div>
 
 <!-- One-click setup + create week issues -->
@@ -13,11 +13,16 @@
     <div class="card-header">
         <span class="card-title">Quick Actions</span>
     </div>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">
+        <strong>Step 1:</strong> Set up slots to distribute sections evenly across days.
+        <strong>Step 2:</strong> Create issues for a specific week.
+        Each issue gets its own AI-generated welcome intro and PS closing from Paul Saunders.
+    </p>
     <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
         <form hx-post="/schedule/setup-all" hx-target="#schedule-grid" hx-swap="outerHTML">
             <button type="submit" class="btn btn-primary"
-                    title="Auto-configure all 9 schedule slots with each edition's default sections">
-                Set Up All 9 Slots
+                    title="Auto-distribute sections evenly across 3 days for each newsletter">
+                Step 1: Set Up All 9 Slots
             </button>
         </form>
         <form hx-post="/schedule/create-week-issues" hx-target="#schedule-grid" hx-swap="outerHTML"
@@ -26,7 +31,7 @@
                 <label style="font-size:12px">Week ID (blank = current)</label>
                 <input type="text" name="week_id" placeholder="2026-W10" style="width:160px">
             </div>
-            <button type="submit" class="btn btn-primary">Create 9 Issues</button>
+            <button type="submit" class="btn btn-primary">Step 2: Create 9 Issues</button>
         </form>
     </div>
 </div>
@@ -36,13 +41,17 @@
     {% include "partials/schedule_grid.html" %}
 </div>
 
-<!-- Manual add/edit for a specific slot -->
+<!-- Edit a specific slot's sections -->
 <div class="card">
     <div class="card-header">
-        <span class="card-title">Edit Schedule Slot</span>
+        <span class="card-title">Edit Slot — Choose Which Sections Go On Which Day</span>
     </div>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">
+        Select a newsletter and day, then tick the sections you want in that specific issue.
+        This lets you control exactly which content appears on which day.
+    </p>
     <form hx-post="/schedule/save-day" hx-target="#schedule-grid" hx-swap="outerHTML">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
             <div class="form-group">
                 <label>Newsletter</label>
                 <select name="edition_slug">
@@ -64,9 +73,10 @@
                 <input type="text" name="label" placeholder="e.g. Fan Monday">
             </div>
         </div>
-        <details style="margin-bottom:12px">
-            <summary style="cursor:pointer;color:var(--text-dim);font-size:13px">Override sections (optional — defaults to edition's sections)</summary>
-            <div class="section-picker" style="margin-top:8px">
+
+        <div style="margin-bottom:16px">
+            <label style="font-weight:600;margin-bottom:8px;display:block">Select Content Sections for This Slot</label>
+            <div class="section-picker">
                 {% set cats = {} %}
                 {% for s in sections %}
                     {% set cat = s.category or 'uncategorized' %}
@@ -76,11 +86,11 @@
                     {% if cats[cat].append(s) %}{% endif %}
                 {% endfor %}
                 {% for cat, cat_sections in cats.items() %}
-                <div class="section-category-group">
-                    <div class="section-category-label">{{ cat | replace('_', ' ') | title }}</div>
-                    <div class="section-checkboxes">
+                <div class="section-category-group" style="margin-bottom:12px">
+                    <div class="section-category-label" style="font-weight:600;font-size:13px;margin-bottom:4px;color:var(--text-primary)">{{ cat | replace('_', ' ') | title }}</div>
+                    <div class="section-checkboxes" style="display:flex;flex-wrap:wrap;gap:6px">
                         {% for s in cat_sections %}
-                        <label class="checkbox-label">
+                        <label class="checkbox-label" style="display:flex;align-items:center;gap:4px;padding:4px 8px;background:#f3f4f6;border-radius:6px;font-size:13px;cursor:pointer">
                             <input type="checkbox" name="section_slugs" value="{{ s.slug }}">
                             {{ s.display_name }}
                         </label>
@@ -89,7 +99,11 @@
                 </div>
                 {% endfor %}
             </div>
-        </details>
+            <p style="color:var(--text-dim);font-size:11px;margin-top:4px">
+                Leave all unchecked to auto-fill with the edition's default sections.
+            </p>
+        </div>
+
         <button type="submit" class="btn btn-primary">Save Slot</button>
     </form>
 </div>
