@@ -149,12 +149,25 @@ DEFAULT_SECTIONS = [
     ("vinyl_vault", "VINYL VAULT", 53, "rotating", "medium", 400, "inspiration", "ongoing", 0, "Classic album retrospectives and hidden gems"),
     ("the_muse", "THE MUSE", 54, "rotating", "medium", 400, "inspiration", "short", 3, "Stories of creative breakthroughs and inspiration"),
     ("lyrics_unpacked", "LYRICS UNPACKED", 55, "rotating", "medium", 400, "inspiration", "ongoing", 0, "Deep lyric analysis and interpretation"),
+    # Fan Engagement (sort 56-59)
+    ("playlist_picks", "PLAYLIST PICKS", 56, "rotating", "short", 200, "fan_engagement", "ongoing", 0, "Curated playlists and listening recommendations"),
+    ("concert_diary", "CONCERT DIARY", 57, "rotating", "medium", 400, "fan_engagement", "ongoing", 0, "Live show reviews, upcoming tours, and concert culture"),
+    ("music_discovery", "MUSIC DISCOVERY", 58, "rotating", "medium", 300, "fan_engagement", "ongoing", 0, "New releases and under-the-radar finds worth your ears"),
+    ("fan_spotlight", "FAN SPOTLIGHT", 59, "rotating", "short", 200, "fan_engagement", "ongoing", 0, "Celebrating passionate fans and their music stories"),
     # Community (sort 60-69)
     ("fan_mail", "FAN MAIL", 60, "rotating", "short", 200, "community", "ongoing", 0, "Reader letters, questions, and shout-outs"),
     ("truefans_connect", "TRUEFANS CONNECT", 61, "rotating", "medium", 400, "community", "ongoing", 0, "Community highlights and TrueFans platform news"),
     ("community_wins", "COMMUNITY WINS", 62, "rotating", "short", 200, "community", "ongoing", 0, "Celebrating reader and community achievements"),
     # Guest Content (sort 70-79)
     ("guest_column", "GUEST COLUMN", 70, "rotating", "long", 800, "guest_content", "ongoing", 0, "Guest articles from industry experts"),
+    # Industry Deep-Dive (sort 80-89)
+    ("executive_moves", "EXECUTIVE MOVES", 80, "rotating", "short", 200, "industry_deep_dive", "ongoing", 0, "Key hires, departures, and power shifts in music business"),
+    ("global_markets", "GLOBAL MARKETS", 81, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "International music market trends and expansion opportunities"),
+    ("playlist_politics", "PLAYLIST POLITICS", 82, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "How playlists shape careers — editorial vs algorithmic power"),
+    ("startup_spotlight", "STARTUP SPOTLIGHT", 83, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Music tech startups and emerging platforms to watch"),
+    # Artist Career (sort 90-95)
+    ("release_strategy", "RELEASE STRATEGY", 90, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Planning singles, EPs, and album rollouts for maximum impact"),
+    ("collaboration_corner", "COLLABORATION CORNER", 91, "rotating", "medium", 300, "artist_career", "ongoing", 0, "Finding co-writers, producers, and creative partners"),
 ]
 
 
@@ -466,7 +479,7 @@ DEFAULT_EDITIONS = [
         "Music fans and casual listeners",
         "#e8645a",
         "&#127911;",
-        "backstage_pass,vinyl_vault,artist_spotlight,lyrics_unpacked,mondegreen,creative_fuel,the_muse",
+        "backstage_pass,vinyl_vault,artist_spotlight,lyrics_unpacked,mondegreen,creative_fuel,the_muse,playlist_picks,concert_diary,music_discovery,fan_spotlight,fan_mail,greatest_songwriters",
         1,
     ),
     (
@@ -477,7 +490,7 @@ DEFAULT_EDITIONS = [
         "Independent artists and songwriters",
         "#7c5cfc",
         "&#127928;",
-        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight",
+        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight,release_strategy,collaboration_corner",
         2,
     ),
     (
@@ -488,14 +501,14 @@ DEFAULT_EDITIONS = [
         "Industry professionals and music business",
         "#f59e0b",
         "&#128200;",
-        "industry_pulse,deal_or_no_deal,streaming_dashboard,money_moves,rights_and_royalties,tech_talk,ai_music_lab,guest_column",
+        "industry_pulse,deal_or_no_deal,streaming_dashboard,money_moves,rights_and_royalties,tech_talk,ai_music_lab,guest_column,executive_moves,global_markets,playlist_politics,startup_spotlight",
         3,
     ),
 ]
 
 
 def seed_editions(db_path: str = "", database_url: str = "", backend: str = "") -> int:
-    """Insert default newsletter editions. Returns count of newly inserted."""
+    """Insert or update default newsletter editions. Returns count of newly inserted."""
     backend = backend or _get_backend()
     conn = get_connection(db_path, database_url, backend)
     p = _ph(backend)
@@ -514,6 +527,11 @@ def seed_editions(db_path: str = "", database_url: str = "", backend: str = "") 
         except ierr:
             if backend == "postgres":
                 conn.rollback()
+            # Edition exists — update section_slugs to pick up new sections
+            conn.execute(
+                f"UPDATE newsletter_editions SET section_slugs = {p} WHERE slug = {p}",
+                (section_slugs, slug),
+            )
     conn.commit()
     conn.close()
     return inserted
