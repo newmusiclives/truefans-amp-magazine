@@ -168,6 +168,16 @@ DEFAULT_SECTIONS = [
     # Artist Career (sort 90-95)
     ("release_strategy", "RELEASE STRATEGY", 90, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Planning singles, EPs, and album rollouts for maximum impact"),
     ("collaboration_corner", "COLLABORATION CORNER", 91, "rotating", "medium", 300, "artist_career", "ongoing", 0, "Finding co-writers, producers, and creative partners"),
+    ("mental_health", "ARTIST WELLBEING", 92, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Mental health, burnout prevention, and sustainable creative life"),
+    ("touring_tips", "TOURING TIPS", 93, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Planning tours, booking venues, and life on the road"),
+    ("fan_building", "FAN BUILDING", 94, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Growing and engaging your fanbase from zero to superfans"),
+    # Fan extras (sort 96-97)
+    ("album_countdown", "ALBUM COUNTDOWN", 96, "rotating", "medium", 300, "fan_engagement", "ongoing", 0, "Upcoming album releases and what to look forward to"),
+    ("behind_the_lyrics", "BEHIND THE LYRICS", 97, "rotating", "medium", 400, "fan_engagement", "ongoing", 0, "The real stories and inspirations behind iconic songs"),
+    # Industry extras (sort 84-86)
+    ("festival_economy", "FESTIVAL ECONOMY", 84, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Festival business models, trends, and market analysis"),
+    ("catalog_watch", "CATALOG WATCH", 85, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Music catalog acquisitions, valuations, and investment trends"),
+    ("sync_and_licensing", "SYNC & LICENSING", 86, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Sync placements, licensing deals, and opportunities in film, TV, and gaming"),
 ]
 
 
@@ -479,7 +489,7 @@ DEFAULT_EDITIONS = [
         "Music fans and casual listeners",
         "#e8645a",
         "&#127911;",
-        "backstage_pass,vinyl_vault,artist_spotlight,lyrics_unpacked,mondegreen,creative_fuel,the_muse,playlist_picks,concert_diary,music_discovery,fan_spotlight,fan_mail,greatest_songwriters",
+        "backstage_pass,vinyl_vault,artist_spotlight,lyrics_unpacked,mondegreen,creative_fuel,the_muse,playlist_picks,concert_diary,music_discovery,fan_spotlight,fan_mail,greatest_songwriters,album_countdown,behind_the_lyrics",
         1,
     ),
     (
@@ -490,7 +500,7 @@ DEFAULT_EDITIONS = [
         "Independent artists and songwriters",
         "#7c5cfc",
         "&#127928;",
-        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight,release_strategy,collaboration_corner",
+        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight,release_strategy,collaboration_corner,mental_health,touring_tips,fan_building",
         2,
     ),
     (
@@ -501,7 +511,7 @@ DEFAULT_EDITIONS = [
         "Industry professionals and music business",
         "#f59e0b",
         "&#128200;",
-        "industry_pulse,deal_or_no_deal,streaming_dashboard,money_moves,rights_and_royalties,tech_talk,ai_music_lab,guest_column,executive_moves,global_markets,playlist_politics,startup_spotlight",
+        "industry_pulse,deal_or_no_deal,streaming_dashboard,money_moves,rights_and_royalties,tech_talk,ai_music_lab,guest_column,executive_moves,global_markets,playlist_politics,startup_spotlight,festival_economy,catalog_watch,sync_and_licensing",
         3,
     ),
 ]
