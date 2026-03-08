@@ -6,19 +6,20 @@
 
 {% if layout.duplicates %}
 <div class="alert alert-error" style="margin-bottom:16px">
-    <strong>Duplicate sections detected!</strong> These sections appear on multiple days:
+    <strong>Duplicate sections!</strong> These appear on multiple days — move or remove to fix:
     {% for slug, days in layout.duplicates.items() %}
-    <br>{{ slug }} — on {{ days | join(', ') }}
+    <br><strong>{{ slug }}</strong> on {{ days | join(' + ') }}
     {% endfor %}
 </div>
 {% endif %}
 
 {% if layout.unassigned %}
 <div class="alert alert-info" style="margin-bottom:16px">
-    <strong>Unassigned sections:</strong> These belong to {{ layout.edition.name }} but aren't on any day yet:
+    <strong>Not yet assigned to a day:</strong>
     {% for s in layout.unassigned %}
-    <span style="background:#e5e7eb;padding:2px 6px;border-radius:4px;font-size:12px;margin:2px">{{ s.display_name }}</span>
+    <span style="display:inline-block;background:#e5e7eb;padding:2px 8px;border-radius:4px;font-size:12px;margin:2px">{{ s.display_name }}</span>
     {% endfor %}
+    <br><span style="font-size:11px;color:var(--text-dim)">Use the "Add" dropdown at the bottom of any day column to assign these.</span>
 </div>
 {% endif %}
 
@@ -28,21 +29,21 @@
     <div class="card" style="border-top:3px solid {{ layout.edition.color }};margin-bottom:0">
         <div class="card-header" style="padding-bottom:4px">
             <span class="card-title" style="font-size:16px">{{ dd.day_title }}</span>
-            <span style="color:var(--text-dim);font-size:12px">{{ dd.section_count }} sections</span>
+            <span class="badge" style="background:{{ layout.edition.color }};color:#fff;font-size:11px">{{ dd.section_count }} sections</span>
         </div>
 
         <!-- INTRO -->
-        <div style="padding:8px 10px;background:{{ layout.edition.color }}10;border:1px dashed {{ layout.edition.color }};border-radius:6px;margin-bottom:4px;font-size:11px">
+        <div style="padding:8px 10px;background:{{ layout.edition.color }}10;border:1px dashed {{ layout.edition.color }};border-radius:6px;margin-bottom:6px;font-size:11px">
             <strong style="color:{{ layout.edition.color }}">WELCOME INTRO</strong>
-            <div style="color:var(--text-dim)">AI — day + highlights</div>
+            <span style="color:var(--text-dim);margin-left:4px">AI-generated</span>
         </div>
 
         <!-- Sections for this day -->
         {% for item in dd.sections_list %}
         {% if item.type == 'divider' %}
-        <div style="display:flex;align-items:center;gap:4px;padding:4px 0;margin:2px 0">
+        <div style="display:flex;align-items:center;gap:4px;padding:3px 0;margin:2px 0">
             <div style="flex:1;height:2px;background:{{ layout.edition.color }}50"></div>
-            <span style="font-size:9px;color:var(--text-dim);white-space:nowrap">AD BREAK</span>
+            <span style="font-size:9px;color:var(--text-dim)">AD BREAK</span>
             <div style="flex:1;height:2px;background:{{ layout.edition.color }}50"></div>
             <button class="btn btn-danger btn-sm" style="font-size:9px;padding:0 4px;line-height:14px"
                     hx-post="/schedule/layout/{{ layout.edition.slug }}/{{ dd.day }}/remove-section/{{ item.slug }}"
@@ -50,7 +51,7 @@
         </div>
         {% else %}
         <div style="display:flex;align-items:center;gap:4px;padding:6px 8px;margin:2px 0;background:{% if item.slug in layout.duplicates %}#fef2f2{% else %}#fafafa{% endif %};border-radius:4px;border:1px solid {% if item.slug in layout.duplicates %}#fca5a5{% else %}#e5e7eb{% endif %}">
-            <!-- Move -->
+            <!-- Reorder -->
             <div style="display:flex;flex-direction:column;gap:0px">
                 <button class="btn btn-sm" style="font-size:8px;padding:0 3px;line-height:12px"
                         hx-post="/schedule/layout/{{ layout.edition.slug }}/{{ dd.day }}/move/{{ item.slug }}/up"
@@ -64,32 +65,46 @@
             <!-- Info -->
             <div style="flex:1;min-width:0">
                 <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ item.display_name }}">{{ item.display_name }}</div>
-                <div style="font-size:9px;color:var(--text-dim)">{{ item.word_count_label }}</div>
+                <div style="font-size:9px;color:var(--text-dim)">{{ item.word_count_label }}{% if item.slug in layout.duplicates %} — <span style="color:#ef4444">DUPLICATE</span>{% endif %}</div>
             </div>
-            <!-- Actions -->
+            <!-- Move to another day -->
+            <form style="display:inline" hx-post="/schedule/layout/{{ layout.edition.slug }}/{{ dd.day }}/move-to/{{ item.slug }}"
+                  hx-target="#edition-layout-body" hx-swap="outerHTML">
+                <select name="to_day" style="font-size:9px;padding:1px 2px;width:55px" onchange="this.form.requestSubmit()">
+                    <option value="" disabled selected>Move</option>
+                    {% for other_day in layout.send_days %}
+                    {% if other_day != dd.day %}
+                    <option value="{{ other_day }}">{{ other_day | title }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </form>
+            <!-- Divider after -->
             <form style="display:inline" hx-post="/schedule/layout/{{ layout.edition.slug }}/{{ dd.day }}/add-divider"
                   hx-target="#edition-layout-body" hx-swap="outerHTML">
                 <input type="hidden" name="after" value="{{ item.slug }}">
-                <button type="submit" class="btn btn-sm" style="font-size:8px;padding:1px 4px" title="Add divider after">+</button>
+                <button type="submit" class="btn btn-sm" style="font-size:8px;padding:1px 3px" title="Insert ad break after">+ad</button>
             </form>
+            <!-- Remove from day (moves to unassigned) -->
             <button class="btn btn-danger btn-sm" style="font-size:8px;padding:1px 4px"
                     hx-post="/schedule/layout/{{ layout.edition.slug }}/{{ dd.day }}/remove-section/{{ item.slug }}"
-                    hx-target="#edition-layout-body" hx-swap="outerHTML" title="Remove">x</button>
+                    hx-target="#edition-layout-body" hx-swap="outerHTML" title="Remove from this day">x</button>
         </div>
         {% endif %}
         {% endfor %}
 
         {% if not dd.sections_list %}
-        <p style="color:var(--text-dim);font-size:11px;text-align:center;padding:12px 0">No sections yet</p>
+        <p style="color:var(--text-dim);font-size:11px;text-align:center;padding:12px 0">No sections — add from unassigned below</p>
         {% endif %}
 
         <!-- PS CLOSING -->
-        <div style="padding:8px 10px;background:#f9fafb;border:1px dashed {{ layout.edition.color }};border-radius:6px;margin-top:4px;font-size:11px">
+        <div style="padding:8px 10px;background:#f9fafb;border:1px dashed {{ layout.edition.color }};border-radius:6px;margin-top:6px;font-size:11px">
             <strong style="color:{{ layout.edition.color }}">PS — Paul Saunders</strong>
-            <div style="color:var(--text-dim)">Founder, TrueFans CONNECT</div>
+            <span style="color:var(--text-dim);margin-left:4px">AI-generated</span>
         </div>
 
-        <!-- Add section to this day -->
+        <!-- Add unassigned section to this day -->
+        {% if layout.unassigned %}
         <div style="margin-top:8px">
             <form hx-post="/schedule/layout/{{ layout.edition.slug }}/{{ dd.day }}/add-section"
                   hx-target="#edition-layout-body" hx-swap="outerHTML"
@@ -98,13 +113,11 @@
                     {% for s in layout.unassigned %}
                     <option value="{{ s.slug }}">{{ s.display_name }}</option>
                     {% endfor %}
-                    {% for s in layout.available %}
-                    <option value="{{ s.slug }}">{{ s.display_name }} (other)</option>
-                    {% endfor %}
                 </select>
                 <button type="submit" class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 8px">Add</button>
             </form>
         </div>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
@@ -112,22 +125,28 @@
 <!-- Summary -->
 <div class="card">
     <div class="card-header">
-        <span class="card-title">{{ layout.edition.name }} Summary</span>
+        <span class="card-title">{{ layout.edition.name }} — Content Balance</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;font-size:13px">
         {% for dd in layout.days %}
         <div>
-            <strong>{{ dd.day_title }}:</strong> {{ dd.section_count }} sections
-            {% if dd.section_count == 0 %}<span style="color:#ef4444"> — empty!</span>{% endif %}
+            <strong style="color:{{ layout.edition.color }}">{{ dd.day_title }}:</strong>
+            {{ dd.section_count }} sections + Intro + PS
+            = {{ dd.section_count + 2 }} pieces
+            {% if dd.section_count < 4 %}<span style="color:#ef4444"> (needs more!)</span>{% endif %}
         </div>
         {% endfor %}
     </div>
     {% if layout.duplicates %}
     <p style="color:#ef4444;font-size:12px;margin-top:8px">
-        Warning: {{ layout.duplicates | length }} section(s) appear on multiple days. Move or remove duplicates to avoid repeating content.
+        {{ layout.duplicates | length }} duplicate(s) — use the "Move" dropdown to shift sections between days.
+    </p>
+    {% elif layout.unassigned %}
+    <p style="color:#f59e0b;font-size:12px;margin-top:8px">
+        {{ layout.unassigned | length }} section(s) not assigned to any day yet.
     </p>
     {% else %}
-    <p style="color:#059669;font-size:12px;margin-top:8px">No duplicates — each section appears on exactly one day.</p>
+    <p style="color:#059669;font-size:12px;margin-top:8px">All {{ layout.edition.name }} sections are assigned — no duplicates, content is balanced.</p>
     {% endif %}
 </div>
 

@@ -138,16 +138,13 @@ def _build_day_layout(repo, edition_slug: str) -> dict:
             if sec:
                 unassigned.append(sec)
 
-    # Sections not in this edition at all (available to add)
-    available = [s for s in all_sections if s["slug"] not in set(master_slugs)]
-
     return {
         "edition": edition,
         "days": days_data,
         "duplicates": duplicates,
         "unassigned": unassigned,
-        "available": available,
         "total_sections": len(master_slugs),
+        "send_days": SEND_DAYS,
     }
 
 
@@ -413,3 +410,43 @@ async def add_divider(edition_slug: str, day: str, after: str = Form("")):
     layout = _build_day_layout(repo, edition_slug)
     return render("partials/edition_layout_body.html", layout=layout,
         message="Divider added", level="success")
+
+
+@router.post("/layout/{edition_slug}/{from_day}/move-to/{slug}", response_class=HTMLResponse)
+async def move_section_to_day(edition_slug: str, from_day: str, slug: str, to_day: str = Form(...)):
+    """Move a section from one day to another within the same edition."""
+    if from_day == to_day:
+        layout = _build_day_layout(get_repo(), edition_slug)
+        return render("partials/edition_layout_body.html", layout=layout)
+
+    repo = get_repo()
+    schedules = repo.get_send_schedules()
+
+    # Remove from source day
+    from_sched = None
+    for s in schedules:
+        if s.get("edition_slug") == edition_slug and s["day_of_week"] == from_day:
+            from_sched = s
+            break
+    from_slugs = []
+    if from_sched and from_sched.get("section_slugs"):
+        from_slugs = [s.strip() for s in from_sched["section_slugs"].split(",") if s.strip()]
+    from_slugs = [s for s in from_slugs if s != slug]
+    _save_day_sections(repo, edition_slug, from_day, ",".join(from_slugs))
+
+    # Add to target day
+    to_sched = None
+    for s in schedules:
+        if s.get("edition_slug") == edition_slug and s["day_of_week"] == to_day:
+            to_sched = s
+            break
+    to_slugs = []
+    if to_sched and to_sched.get("section_slugs"):
+        to_slugs = [s.strip() for s in to_sched["section_slugs"].split(",") if s.strip()]
+    if slug not in to_slugs:
+        to_slugs.append(slug)
+    _save_day_sections(repo, edition_slug, to_day, ",".join(to_slugs))
+
+    layout = _build_day_layout(repo, edition_slug)
+    return render("partials/edition_layout_body.html", layout=layout,
+        message=f"Moved to {to_day.title()}", level="success")
