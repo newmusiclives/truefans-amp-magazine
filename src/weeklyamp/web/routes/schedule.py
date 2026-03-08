@@ -235,7 +235,7 @@ def _build_edition_layout(repo, edition_slug: str) -> dict:
 
     return {
         "edition": edition,
-        "items": items,
+        "sections_list": items,
         "available": available,
         "total_sections": len([i for i in items if i["type"] == "section"]),
     }

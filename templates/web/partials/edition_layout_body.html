@@ -22,7 +22,7 @@
     </div>
 
     <!-- Sections list -->
-    {% for item in layout.items %}
+    {% for item in layout.sections_list %}
     {% if item.type == 'divider' %}
     <!-- Divider -->
     <div style="display:flex;align-items:center;gap:8px;padding:6px 16px;margin:2px 0">
@@ -77,7 +77,7 @@
     {% endif %}
     {% endfor %}
 
-    {% if not layout.items %}
+    {% if not layout.sections_list %}
     <p style="color:var(--text-dim);padding:16px;text-align:center">No sections assigned to this edition yet. Add some below.</p>
     {% endif %}
 
