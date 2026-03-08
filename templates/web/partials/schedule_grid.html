@@ -1,0 +1,97 @@
+{% if message is defined and message %}
+<div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
+{% endif %}
+
+<div id="schedule-grid">
+
+<!-- Edition cards with day slots -->
+{% for ed in grid %}
+<div class="card" style="border-left:4px solid {{ ed.color }};margin-bottom:16px">
+    <div class="card-header" style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:22px">{{ ed.icon | safe }}</span>
+        <div>
+            <span class="card-title" style="color:{{ ed.color }}">{{ ed.name }}</span>
+            <span style="color:var(--text-dim);font-size:12px;margin-left:8px">{{ ed.tagline }}</span>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;margin-bottom:12px">
+        {% for slot in ed.days %}
+        <div style="border:1px solid {% if slot.configured %}{{ ed.color }}{% else %}#e5e7eb{% endif %};border-radius:8px;padding:12px;background:{% if slot.configured %}#f0fdf4{% else %}#fafafa{% endif %}">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <span class="badge" style="background:{{ ed.color }};color:#fff;font-weight:600">{{ slot.day | title }}</span>
+                {% if slot.configured %}
+                <span style="color:#059669;font-size:12px;font-weight:600">Active</span>
+                {% else %}
+                <span style="color:#9ca3af;font-size:12px">Not set</span>
+                {% endif %}
+            </div>
+
+            {% if slot.configured %}
+            <div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">{{ slot.label }}</div>
+            <div style="font-family:var(--font-mono);font-size:10px;color:#6b7280;word-break:break-word;max-height:60px;overflow:hidden">
+                {{ slot.section_slugs or ed.section_slugs }}
+            </div>
+            <div style="margin-top:8px">
+                <button class="btn btn-danger btn-sm"
+                        hx-post="/schedule/remove-day/{{ ed.slug }}/{{ slot.day }}"
+                        hx-target="#schedule-grid"
+                        hx-swap="outerHTML"
+                        style="font-size:11px;padding:2px 8px">Remove</button>
+            </div>
+            {% else %}
+            <div style="color:#9ca3af;font-size:12px;font-style:italic">
+                Click "Set Up All 9 Slots" or add manually below
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <div style="font-size:11px;color:var(--text-dim)">
+        <strong>Sections:</strong> {{ ed.section_slugs | replace(',', ', ') }}
+    </div>
+</div>
+{% endfor %}
+
+{% if not grid %}
+<div class="card">
+    <p style="color:var(--text-dim);padding:8px 0">No editions found. Editions are seeded automatically on startup.</p>
+</div>
+{% endif %}
+
+</div>
+
+{% if upcoming is defined and upcoming %}
+<div class="card" style="margin-top:16px">
+    <div class="card-header">
+        <span class="card-title">Upcoming Issues ({{ upcoming | length }})</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr><th>#</th><th>Newsletter</th><th>Title</th><th>Week</th><th>Day</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for i in upcoming %}
+                <tr>
+                    <td>{{ i.issue_number }}</td>
+                    <td>
+                        {% if i.edition_slug %}
+                        {% set colors = {'fan': '#e8645a', 'artist': '#7c5cfc', 'industry': '#f59e0b'} %}
+                        <span class="badge" style="background:{{ colors.get(i.edition_slug, '#6b7280') }};color:#fff;font-size:11px">
+                            {{ i.edition_slug | replace('_', ' ') | title }}
+                        </span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>{{ i.title }}</td>
+                    <td>{{ i.week_id or '—' }}</td>
+                    <td>{% if i.send_day %}<span class="badge badge-core">{{ i.send_day | title }}</span>{% else %}—{% endif %}</td>
+                    <td><span class="badge badge-{{ i.status }}">{{ i.status }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}

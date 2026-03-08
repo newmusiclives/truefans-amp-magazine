@@ -1,24 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Schedule — TrueFans NEWSLETTERS{% endblock %}
+{% block title %}Send Schedule — TrueFans NEWSLETTERS{% endblock %}
 {% block nav_schedule %}active{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h2>Send Schedule</h2>
-    <p>Configure edition-aware publishing — 3 editions × 3 days = 9 issues per week</p>
+    <p>3 Newsletters × 3 Days = 9 Issues Per Week</p>
 </div>
 
-<!-- Add/edit send day -->
+<!-- One-click setup + create week issues -->
 <div class="card">
     <div class="card-header">
-        <span class="card-title">Configure Send Day</span>
+        <span class="card-title">Quick Actions</span>
     </div>
-    <form hx-post="/schedule/save-day" hx-target="#schedule-table" hx-swap="outerHTML">
+    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
+        <form hx-post="/schedule/setup-all" hx-target="#schedule-grid" hx-swap="outerHTML">
+            <button type="submit" class="btn btn-primary"
+                    title="Auto-configure all 9 schedule slots with each edition's default sections">
+                Set Up All 9 Slots
+            </button>
+        </form>
+        <form hx-post="/schedule/create-week-issues" hx-target="#schedule-grid" hx-swap="outerHTML"
+              style="display:flex;gap:12px;align-items:end">
+            <div class="form-group" style="margin-bottom:0">
+                <label style="font-size:12px">Week ID (blank = current)</label>
+                <input type="text" name="week_id" placeholder="2026-W10" style="width:160px">
+            </div>
+            <button type="submit" class="btn btn-primary">Create 9 Issues</button>
+        </form>
+    </div>
+</div>
+
+<!-- Schedule Grid -->
+<div id="schedule-grid">
+    {% include "partials/schedule_grid.html" %}
+</div>
+
+<!-- Manual add/edit for a specific slot -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Edit Schedule Slot</span>
+    </div>
+    <form hx-post="/schedule/save-day" hx-target="#schedule-grid" hx-swap="outerHTML">
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
             <div class="form-group">
-                <label>Edition</label>
-                <select name="edition_slug" id="edition-select">
-                    <option value="">— All Sections —</option>
+                <label>Newsletter</label>
+                <select name="edition_slug">
                     {% for ed in editions %}
                     <option value="{{ ed.slug }}">{{ ed.name }}</option>
                     {% endfor %}
@@ -27,8 +54,8 @@
             <div class="form-group">
                 <label>Day of Week</label>
                 <select name="day_of_week">
-                    {% for d in days %}
-                    <option value="{{ d }}">{{ d | title }}</option>
+                    {% for d in all_days %}
+                    <option value="{{ d }}" {% if d in send_days %}selected{% endif %}>{{ d | title }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -37,9 +64,9 @@
                 <input type="text" name="label" placeholder="e.g. Fan Monday">
             </div>
         </div>
-        <div class="form-group">
-            <label>Sections <span style="color:var(--text-dim);font-size:12px">(leave unchecked to auto-fill from edition)</span></label>
-            <div class="section-picker">
+        <details style="margin-bottom:12px">
+            <summary style="cursor:pointer;color:var(--text-dim);font-size:13px">Override sections (optional — defaults to edition's sections)</summary>
+            <div class="section-picker" style="margin-top:8px">
                 {% set cats = {} %}
                 {% for s in sections %}
                     {% set cat = s.category or 'uncategorized' %}
@@ -62,39 +89,9 @@
                 </div>
                 {% endfor %}
             </div>
-        </div>
-        <button type="submit" class="btn btn-primary" style="margin-top:8px">Save Day</button>
+        </details>
+        <button type="submit" class="btn btn-primary">Save Slot</button>
     </form>
-</div>
-
-<!-- Schedule table + upcoming -->
-<div id="schedule-table">
-    {% include "partials/schedule_table.html" %}
-</div>
-
-<!-- Create week issues + auto-plan -->
-<div class="card">
-    <div class="card-header">
-        <span class="card-title">Create Week Issues</span>
-    </div>
-    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">
-        Creates one issue per configured send day × edition. For a full week with 3 editions × 3 days, this generates 9 issues.
-    </p>
-    <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
-        <form hx-post="/schedule/create-week-issues" hx-target="#schedule-table" hx-swap="outerHTML"
-              style="display:flex;gap:12px;align-items:end">
-            <div class="form-group">
-                <label>Week ID (leave blank for current week)</label>
-                <input type="text" name="week_id" placeholder="2026-W07" style="width:200px">
-            </div>
-            <button type="submit" class="btn btn-primary" style="margin-bottom:16px">Create Issues</button>
-        </form>
-        <form hx-post="/schedule/auto-plan-week" hx-target="#schedule-table" hx-swap="outerHTML"
-              style="display:flex;align-items:end">
-            <button type="submit" class="btn btn-primary" style="margin-bottom:16px"
-                    title="Fill in missing category coverage across all send days">Auto-Plan Categories</button>
-        </form>
-    </div>
 </div>
 
 {% endblock %}

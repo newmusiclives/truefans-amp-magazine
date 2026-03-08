@@ -72,13 +72,19 @@ def _generate_welcome_intro(
         highlights.append(f"- {s['display_name']}: {s['summary']}")
     highlights_text = "\n".join(highlights) if highlights else "- A fresh collection of insights and stories"
 
-    edition_context = ""
+    audience_note = ""
     if edition_name:
-        edition_context = f"\nThis is the {edition_name} of {config.newsletter.name}, tailored specifically for that audience.\n"
+        if "fan" in edition_name.lower():
+            audience_note = "Your readers are music fans and listeners who love discovering stories behind the music."
+        elif "artist" in edition_name.lower():
+            audience_note = "Your readers are independent artists and songwriters looking to level up their craft and career."
+        elif "industry" in edition_name.lower():
+            audience_note = "Your readers are music industry professionals who need actionable insights and data."
 
-    prompt = f"""Write a warm, engaging welcome intro for this issue of {config.newsletter.name}.
-{edition_context}
+    prompt = f"""Write a warm, engaging welcome intro for the {edition_name + ' of ' if edition_name else ''}{config.newsletter.name}.
+
 This is Issue #{issue['issue_number']}, going out on {date_ctx['day_name']}, {date_ctx['date_str']} (Week {date_ctx['week_number']} of {date_ctx['year']}).
+{audience_note}
 
 Here are the highlights from this issue:
 {highlights_text}
@@ -121,17 +127,27 @@ def _generate_ps_closing(
 
     edition_context = f" ({edition_name})" if edition_name else ""
 
-    prompt = f"""Write a brief, personal PS closing note from Paul Saunders (PS) for this specific issue of {config.newsletter.name}{edition_context}.
+    audience_note = ""
+    if edition_name:
+        if "fan" in edition_name.lower():
+            audience_note = "Your audience is music fans and listeners — speak to their passion and curiosity."
+        elif "artist" in edition_name.lower():
+            audience_note = "Your audience is independent artists and songwriters — speak to their creative journey and career growth."
+        elif "industry" in edition_name.lower():
+            audience_note = "Your audience is music industry professionals — speak to business insights and staying ahead."
+
+    prompt = f"""Write a brief, personal PS closing note from Paul Saunders, Founder of TrueFans CONNECT, for this specific issue of {config.newsletter.name}{edition_context}.
 
 This is Issue #{issue['issue_number']}, {date_ctx['day_name']} {date_ctx['date_str']}.
-{f'This is the {edition_name}, so address the audience accordingly.' if edition_name else ''}
+{audience_note}
 
 The sections covered in this issue:
 {sections_text}
 
 Requirements:
 - Start with "PS —" (the signature sign-off)
-- Write 2-3 sentences maximum
+- Sign off as "Paul Saunders, Founder — TrueFans CONNECT"
+- Write 2-3 sentences maximum between the opening PS and the sign-off
 - Make it feel personal and specific to THIS issue — reference or reflect on one thing from the content
 - Can include: a personal thought, a call to action, a question for readers, or a behind-the-scenes note
 - Tone: genuine, warm, slightly informal — like a handwritten note at the bottom of a letter

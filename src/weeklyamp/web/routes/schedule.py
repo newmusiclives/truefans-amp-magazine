@@ -1,35 +1,70 @@
-"""Schedule management routes — multi-frequency, edition-aware publishing."""
+"""Schedule management routes — 3 newsletters × 3 days = 9 issues per week."""
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
-from weeklyamp.content.sections import build_week_section_plan
 from weeklyamp.web.deps import get_config, get_repo, render
 
 router = APIRouter()
 
-DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+SEND_DAYS = ["monday", "wednesday", "saturday"]
+ALL_DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+
+def _build_schedule_grid(repo) -> list[dict]:
+    """Build a grid showing each edition × day with its schedule status."""
+    editions = repo.get_editions()
+    schedules = repo.get_send_schedules()
+
+    # Index schedules by (edition_slug, day_of_week)
+    sched_map = {}
+    for s in schedules:
+        key = (s.get("edition_slug", ""), s["day_of_week"])
+        sched_map[key] = s
+
+    grid = []
+    for ed in editions:
+        ed_entry = {
+            "slug": ed["slug"],
+            "name": ed["name"],
+            "color": ed.get("color", "#6b7280"),
+            "icon": ed.get("icon", ""),
+            "tagline": ed.get("tagline", ""),
+            "section_slugs": ed.get("section_slugs", ""),
+            "days": [],
+        }
+        for day in SEND_DAYS:
+            sched = sched_map.get((ed["slug"], day))
+            ed_entry["days"].append({
+                "day": day,
+                "configured": sched is not None,
+                "label": sched.get("label", "") if sched else "",
+                "section_slugs": sched.get("section_slugs", "") if sched else "",
+            })
+        grid.append(ed_entry)
+    return grid
 
 
 @router.get("/", response_class=HTMLResponse)
 async def schedule_page():
     repo = get_repo()
     cfg = get_config()
-    schedules = repo.get_send_schedules()
-    sections = repo.get_active_sections()
     editions = repo.get_editions()
-    upcoming = repo.get_upcoming_issues(limit=12)
+    grid = _build_schedule_grid(repo)
+    sections = repo.get_active_sections()
+    upcoming = repo.get_upcoming_issues(limit=15)
 
     return render("schedule.html",
-        schedules=schedules,
-        sections=sections,
+        grid=grid,
         editions=editions,
+        sections=sections,
         upcoming=upcoming,
-        days=DAYS,
+        send_days=SEND_DAYS,
+        all_days=ALL_DAYS,
         config=cfg,
     )
 
@@ -40,40 +75,59 @@ async def save_day(request: Request):
     day_of_week = form.get("day_of_week", "")
     edition_slug = form.get("edition_slug", "")
     label = form.get("label", "")
-    # Checkboxes send multiple values for the same name
     slugs = form.getlist("section_slugs")
+
+    repo = get_repo()
 
     # If no sections manually picked, auto-fill from edition's section list
     if not slugs and edition_slug:
-        repo = get_repo()
         edition_sections = repo.get_edition_sections(edition_slug)
         slugs = [s["slug"] for s in edition_sections]
 
     section_slugs = ", ".join(slugs) if slugs else ""
-
-    repo = get_repo()
     repo.upsert_send_schedule(day_of_week, label, section_slugs, edition_slug)
 
-    schedules = repo.get_send_schedules()
-    sections = repo.get_active_sections()
+    # Return updated grid
+    grid = _build_schedule_grid(repo)
     editions = repo.get_editions()
-    return render("partials/schedule_table.html",
-        schedules=schedules, sections=sections, editions=editions, days=DAYS)
+    sections = repo.get_active_sections()
+    return render("partials/schedule_grid.html",
+        grid=grid, editions=editions, sections=sections, send_days=SEND_DAYS)
 
 
-@router.post("/remove-day/{day}", response_class=HTMLResponse)
-async def remove_day(day: str, request: Request):
-    form = await request.form()
-    edition_slug = form.get("edition_slug", "")
-
+@router.post("/remove-day/{edition_slug}/{day}", response_class=HTMLResponse)
+async def remove_day(edition_slug: str, day: str):
     repo = get_repo()
     repo.delete_send_schedule(day, edition_slug)
 
-    schedules = repo.get_send_schedules()
-    sections = repo.get_active_sections()
+    grid = _build_schedule_grid(repo)
     editions = repo.get_editions()
-    return render("partials/schedule_table.html",
-        schedules=schedules, sections=sections, editions=editions, days=DAYS)
+    sections = repo.get_active_sections()
+    return render("partials/schedule_grid.html",
+        grid=grid, editions=editions, sections=sections, send_days=SEND_DAYS)
+
+
+@router.post("/setup-all", response_class=HTMLResponse)
+async def setup_all():
+    """One-click setup: create all 9 schedule slots (3 editions × 3 days)."""
+    repo = get_repo()
+    editions = repo.get_editions()
+    created = 0
+
+    for ed in editions:
+        edition_sections = repo.get_edition_sections(ed["slug"])
+        section_slugs = ", ".join(s["slug"] for s in edition_sections)
+
+        for day in SEND_DAYS:
+            label = f"{ed['name']} — {day.title()}"
+            repo.upsert_send_schedule(day, label, section_slugs, ed["slug"])
+            created += 1
+
+    grid = _build_schedule_grid(repo)
+    sections = repo.get_active_sections()
+    return render("partials/schedule_grid.html",
+        grid=grid, editions=editions, sections=sections, send_days=SEND_DAYS,
+        message=f"Set up {created} schedule slots (3 editions × 3 days)", level="success")
 
 
 @router.post("/create-week-issues", response_class=HTMLResponse)
@@ -97,10 +151,14 @@ async def create_week_issues(week_id: str = Form("")):
         if (day, ed_slug) in existing_keys:
             continue
 
-        # Build a descriptive title
-        ed_label = ed_slug.replace("_", " ").title() if ed_slug else "General"
-        title = f"{ed_label} Edition — {day.title()} — {week_id}"
+        # Find edition name
+        ed_name = "General"
+        for ed in editions:
+            if ed["slug"] == ed_slug:
+                ed_name = ed["name"]
+                break
 
+        title = f"{ed_name} — {day.title()} — {week_id}"
         num = repo.get_next_issue_number()
         repo.create_issue_with_schedule(
             issue_number=num,
@@ -112,40 +170,11 @@ async def create_week_issues(week_id: str = Form("")):
         )
         created += 1
 
-    upcoming = repo.get_upcoming_issues(limit=12)
+    upcoming = repo.get_upcoming_issues(limit=15)
+    grid = _build_schedule_grid(repo)
+    sections = repo.get_active_sections()
     message = f"Created {created} issues for week {week_id}" if created else f"Issues for {week_id} already exist"
     level = "success" if created else "info"
-    return render("partials/schedule_table.html",
-        schedules=schedules, sections=repo.get_active_sections(),
-        editions=editions, days=DAYS, upcoming=upcoming,
-        message=message, level=level)
-
-
-@router.post("/auto-plan-week", response_class=HTMLResponse)
-async def auto_plan_week():
-    """Apply category rotation to fill gaps in the week's schedule."""
-    repo = get_repo()
-    schedules = repo.get_send_schedules()
-
-    plan = build_week_section_plan(repo, schedules)
-
-    updated = 0
-    for day, slugs in plan.items():
-        new_slugs = ", ".join(slugs)
-        label = ""
-        edition_slug = ""
-        for s in schedules:
-            if s["day_of_week"] == day:
-                label = s.get("label", "")
-                edition_slug = s.get("edition_slug", "")
-                break
-        repo.upsert_send_schedule(day, label, new_slugs, edition_slug)
-        updated += 1
-
-    schedules = repo.get_send_schedules()
-    sections = repo.get_active_sections()
-    editions = repo.get_editions()
-    message = f"Auto-planned {updated} days with category rotation coverage"
-    return render("partials/schedule_table.html",
-        schedules=schedules, sections=sections, editions=editions, days=DAYS,
-        message=message, level="success")
+    return render("partials/schedule_grid.html",
+        grid=grid, editions=editions, sections=sections, send_days=SEND_DAYS,
+        upcoming=upcoming, message=message, level=level)
