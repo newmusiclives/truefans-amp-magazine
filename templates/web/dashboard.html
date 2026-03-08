@@ -73,6 +73,9 @@
         <div class="upcoming-mini">
             {% for u in upcoming_sends %}
             <div class="upcoming-item">
+                {% if u.edition_slug %}
+                <span class="badge" style="background:{% if u.edition_slug == 'fan' %}#e8645a{% elif u.edition_slug == 'artist' %}#6366f1{% elif u.edition_slug == 'industry' %}#059669{% else %}#6b7280{% endif %};color:#fff;font-size:10px">{{ u.edition_slug | replace('_', ' ') | title }}</span>
+                {% endif %}
                 <span class="badge badge-core">{{ u.send_day | default('—') | title }}</span>
                 <span>#{{ u.issue_number }} {{ u.title }}</span>
                 <span class="badge badge-{{ u.status }}">{{ u.status }}</span>

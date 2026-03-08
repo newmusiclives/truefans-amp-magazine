@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 
 from fastapi import APIRouter
@@ -12,22 +11,12 @@ from jinja2 import Environment, FileSystemLoader
 
 from weeklyamp.core.config import load_config
 from weeklyamp.db.repository import Repository
+from weeklyamp.web.deps import get_repo as _get_repo
 
 _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent.parent / "templates" / "web"
 _env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
 
 router = APIRouter()
-
-
-def _get_repo() -> Repository:
-    cfg = load_config()
-    db_path = cfg.db_path
-    if not os.path.isabs(db_path):
-        if os.path.exists("/app"):
-            db_path = os.path.join("/app", db_path)
-        else:
-            db_path = os.path.abspath(db_path)
-    return Repository(db_path)
 
 
 @router.get("/newsletters/archive", response_class=HTMLResponse)
@@ -58,6 +47,11 @@ async def newsletter_issue(issue_number: int):
 @router.get("/feed.xml")
 async def rss_feed():
     from fastapi.responses import Response
+    cfg = load_config()
+    site_domain = cfg.site_domain.rstrip("/")
+    nl_name = cfg.newsletter.name
+    nl_tagline = cfg.newsletter.tagline
+
     repo = _get_repo()
     issues = repo.get_published_issues(limit=20)
 
@@ -68,9 +62,9 @@ async def rss_feed():
         description = assembled["plain_content"][:500] + "..." if assembled and assembled.get("plain_content") else f"Issue #{issue['issue_number']}"
         items.append(
             f"""    <item>
-      <title>TrueFans NEWSLETTERS #{issue['issue_number']}{(' — ' + issue['title']) if issue.get('title') else ''}</title>
-      <link>https://truefansnewsletters.com/newsletters/archive/{issue['issue_number']}</link>
-      <guid>https://truefansnewsletters.com/newsletters/archive/{issue['issue_number']}</guid>
+      <title>{nl_name} #{issue['issue_number']}{(' — ' + issue['title']) if issue.get('title') else ''}</title>
+      <link>{site_domain}/newsletters/archive/{issue['issue_number']}</link>
+      <guid>{site_domain}/newsletters/archive/{issue['issue_number']}</guid>
       <pubDate>{pub_date}</pubDate>
       <description><![CDATA[{description}]]></description>
     </item>"""
@@ -79,11 +73,11 @@ async def rss_feed():
     xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>TrueFans NEWSLETTERS</title>
-    <link>https://truefansnewsletters.com</link>
-    <description>The music newsletters for industry professionals, music artists and their fans.</description>
+    <title>{nl_name}</title>
+    <link>{site_domain}</link>
+    <description>{nl_tagline}</description>
     <language>en-us</language>
-    <atom:link href="https://truefansnewsletters.com/feed.xml" rel="self" type="application/rss+xml"/>
+    <atom:link href="{site_domain}/feed.xml" rel="self" type="application/rss+xml"/>
 {chr(10).join(items)}
   </channel>
 </rss>"""

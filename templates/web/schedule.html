@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Send Schedule</h2>
-    <p>Configure multi-frequency publishing — which days and which sections</p>
+    <p>Configure edition-aware publishing — 3 editions × 3 days = 9 issues per week</p>
 </div>
 
 <!-- Add/edit send day -->
@@ -14,7 +14,16 @@
         <span class="card-title">Configure Send Day</span>
     </div>
     <form hx-post="/schedule/save-day" hx-target="#schedule-table" hx-swap="outerHTML">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group">
+                <label>Edition</label>
+                <select name="edition_slug" id="edition-select">
+                    <option value="">— All Sections —</option>
+                    {% for ed in editions %}
+                    <option value="{{ ed.slug }}">{{ ed.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="form-group">
                 <label>Day of Week</label>
                 <select name="day_of_week">
@@ -25,11 +34,11 @@
             </div>
             <div class="form-group">
                 <label>Label</label>
-                <input type="text" name="label" placeholder="e.g. Main Issue">
+                <input type="text" name="label" placeholder="e.g. Fan Monday">
             </div>
         </div>
         <div class="form-group">
-            <label>Sections</label>
+            <label>Sections <span style="color:var(--text-dim);font-size:12px">(leave unchecked to auto-fill from edition)</span></label>
             <div class="section-picker">
                 {% set cats = {} %}
                 {% for s in sections %}
@@ -68,6 +77,9 @@
     <div class="card-header">
         <span class="card-title">Create Week Issues</span>
     </div>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px">
+        Creates one issue per configured send day × edition. For a full week with 3 editions × 3 days, this generates 9 issues.
+    </p>
     <div style="display:flex;gap:12px;align-items:end;flex-wrap:wrap">
         <form hx-post="/schedule/create-week-issues" hx-target="#schedule-table" hx-swap="outerHTML"
               style="display:flex;gap:12px;align-items:end">

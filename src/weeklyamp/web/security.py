@@ -50,7 +50,12 @@ _FALLBACK_SECRET_KEY = ""
 
 _SESSION_COOKIE = "_session"
 _SESSION_VALUE = "admin"
-_SESSION_MAX_AGE = 43200  # 12 hours
+
+
+def _get_session_max_age() -> int:
+    """Get session max age from config, with fallback."""
+    import os
+    return int(os.environ.get("WEEKLYAMP_SESSION_MAX_AGE", 43200))
 
 _CSRF_COOKIE = "_csrf"
 
@@ -66,8 +71,13 @@ _login_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescap
 
 _login_attempts: dict[str, list[float]] = {}  # ip -> [timestamps]
 _login_lock = threading.Lock()
-_MAX_ATTEMPTS = 5
-_WINDOW_SECONDS = 900  # 15 minutes
+
+
+def _get_login_rate_config() -> tuple[int, int]:
+    """Get login rate limit config."""
+    max_attempts = int(os.environ.get("WEEKLYAMP_RATE_LOGIN_MAX", 5))
+    window = int(os.environ.get("WEEKLYAMP_RATE_LOGIN_WINDOW", 900))
+    return max_attempts, window
 
 
 def _get_client_ip(request: Request) -> str:
@@ -80,12 +90,13 @@ def _get_client_ip(request: Request) -> str:
 
 def _is_rate_limited(ip: str) -> bool:
     """Check if an IP has exceeded the login attempt limit."""
+    max_attempts, window = _get_login_rate_config()
     now = time.time()
     with _login_lock:
         attempts = _login_attempts.get(ip, [])
-        attempts = [t for t in attempts if now - t < _WINDOW_SECONDS]
+        attempts = [t for t in attempts if now - t < window]
         _login_attempts[ip] = attempts
-        return len(attempts) >= _MAX_ATTEMPTS
+        return len(attempts) >= max_attempts
 
 
 def _record_attempt(ip: str) -> None:
@@ -143,7 +154,7 @@ def create_session(response: Response, request: Request | None = None) -> Respon
     response.set_cookie(
         _SESSION_COOKIE,
         signed,
-        max_age=_SESSION_MAX_AGE,
+        max_age=_get_session_max_age(),
         httponly=True,
         samesite="lax",
         secure=secure,
@@ -168,7 +179,7 @@ def is_authenticated(request: Request) -> bool:
         return False
     signer = _get_signer()
     try:
-        signer.unsign(cookie, max_age=_SESSION_MAX_AGE)
+        signer.unsign(cookie, max_age=_get_session_max_age())
         return True
     except (BadSignature, SignatureExpired):
         return False
@@ -349,7 +360,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                     csrf_token,
                     httponly=False,  # JS needs to read this
                     samesite="lax",
-                    max_age=_SESSION_MAX_AGE,
+                    max_age=_get_session_max_age(),
                     secure=secure,
                 )
 

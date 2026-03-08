@@ -130,8 +130,9 @@ def test_subscribe_rate_limiting_returns_429(client):
     with sub_mod._subscribe_lock:
         sub_mod._subscribe_attempts.clear()
 
-    # Fill up the rate limit (5 submissions)
-    for _ in range(sub_mod._SUBSCRIBE_MAX):
+    # Fill up the rate limit
+    max_attempts, _ = sub_mod._get_rate_config()
+    for _ in range(max_attempts):
         client.post(
             "/subscribe",
             data={

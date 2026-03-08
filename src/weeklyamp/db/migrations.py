@@ -375,6 +375,16 @@ PRAGMA foreign_keys=ON;
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (17);
 """,
+    18: """
+-- v18: Edition-aware scheduling — add edition_slug to issues and send_schedule
+ALTER TABLE issues ADD COLUMN edition_slug TEXT DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_issues_edition ON issues(edition_slug);
+
+ALTER TABLE send_schedule ADD COLUMN edition_slug TEXT DEFAULT '';
+CREATE UNIQUE INDEX IF NOT EXISTS idx_schedule_day_edition ON send_schedule(day_of_week, edition_slug);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (18);
+""",
 }
 
 

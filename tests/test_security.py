@@ -8,17 +8,20 @@ import pytest
 
 from weeklyamp.web.security import (
     _clear_attempts,
+    _get_login_rate_config,
     _is_public,
     _is_rate_limited,
     _login_attempts,
     _login_lock,
     _record_attempt,
-    _MAX_ATTEMPTS,
     create_session,
     hash_password,
     is_authenticated,
     verify_password,
 )
+
+# Get rate limit config for tests
+_MAX_ATTEMPTS, _WINDOW_SECONDS = _get_login_rate_config()
 
 
 # ---- Password hashing ----

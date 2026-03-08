@@ -10,19 +10,28 @@
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th>Day</th><th>Label</th><th>Sections</th><th>Actions</th></tr>
+                <tr><th>Edition</th><th>Day</th><th>Label</th><th>Sections</th><th>Actions</th></tr>
             </thead>
             <tbody>
                 {% for s in schedules %}
                 <tr>
+                    <td>
+                        {% if s.edition_slug %}
+                        <span class="badge badge-core" style="background:{% if s.edition_slug == 'fan' %}#e8645a{% elif s.edition_slug == 'artist' %}#6366f1{% elif s.edition_slug == 'industry' %}#059669{% else %}#6b7280{% endif %};color:#fff">
+                            {{ s.edition_slug | replace('_', ' ') | title }}
+                        </span>
+                        {% else %}
+                        <span style="color:var(--text-dim)">General</span>
+                        {% endif %}
+                    </td>
                     <td><span class="badge badge-core">{{ s.day_of_week | title }}</span></td>
                     <td>{{ s.label or '—' }}</td>
-                    <td style="font-family:var(--font-mono);font-size:12px">{{ s.section_slugs or 'All active' }}</td>
+                    <td style="font-family:var(--font-mono);font-size:12px;max-width:300px;overflow:hidden;text-overflow:ellipsis">{{ s.section_slugs or 'All active' }}</td>
                     <td>
-                        <button class="btn btn-danger btn-sm"
-                                hx-post="/schedule/remove-day/{{ s.day_of_week }}"
-                                hx-target="#schedule-table"
-                                hx-swap="outerHTML">Remove</button>
+                        <form style="display:inline" hx-post="/schedule/remove-day/{{ s.day_of_week }}" hx-target="#schedule-table" hx-swap="outerHTML">
+                            <input type="hidden" name="edition_slug" value="{{ s.edition_slug or '' }}">
+                            <button class="btn btn-danger btn-sm" type="submit">Remove</button>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
@@ -42,12 +51,19 @@
     <div class="table-wrap">
         <table>
             <thead>
-                <tr><th>#</th><th>Title</th><th>Week</th><th>Day</th><th>Status</th></tr>
+                <tr><th>#</th><th>Edition</th><th>Title</th><th>Week</th><th>Day</th><th>Status</th></tr>
             </thead>
             <tbody>
                 {% for i in upcoming %}
                 <tr>
                     <td>{{ i.issue_number }}</td>
+                    <td>
+                        {% if i.edition_slug %}
+                        <span class="badge" style="background:{% if i.edition_slug == 'fan' %}#e8645a{% elif i.edition_slug == 'artist' %}#6366f1{% elif i.edition_slug == 'industry' %}#059669{% else %}#6b7280{% endif %};color:#fff;font-size:11px">
+                            {{ i.edition_slug | replace('_', ' ') | title }}
+                        </span>
+                        {% else %}—{% endif %}
+                    </td>
                     <td>{{ i.title }}</td>
                     <td>{{ i.week_id or '—' }}</td>
                     <td>{% if i.send_day %}<span class="badge badge-core">{{ i.send_day | title }}</span>{% else %}—{% endif %}</td>

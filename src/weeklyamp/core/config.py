@@ -17,6 +17,7 @@ from weeklyamp.core.models import (
     BeehiivConfig,
     EmailConfig,
     NewsletterConfig,
+    RateLimitConfig,
     ScheduleConfig,
     SponsorSlotsConfig,
     SubmissionsConfig,
@@ -114,10 +115,33 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
         from_name=os.getenv("WEEKLYAMP_EMAIL_FROM_NAME", email_data.get("from_name", "TrueFans NEWSLETTERS")),
     )
 
+    # Rate limit config
+    rl_data = yaml_data.get("rate_limits", {})
+    rate_limits = RateLimitConfig(
+        login_max=int(os.getenv("WEEKLYAMP_RATE_LOGIN_MAX", rl_data.get("login_max", 5))),
+        login_window=int(os.getenv("WEEKLYAMP_RATE_LOGIN_WINDOW", rl_data.get("login_window", 900))),
+        subscribe_max=int(os.getenv("WEEKLYAMP_RATE_SUBSCRIBE_MAX", rl_data.get("subscribe_max", 5))),
+        subscribe_window=int(os.getenv("WEEKLYAMP_RATE_SUBSCRIBE_WINDOW", rl_data.get("subscribe_window", 900))),
+        submit_max=int(os.getenv("WEEKLYAMP_RATE_SUBMIT_MAX", rl_data.get("submit_max", 10))),
+        submit_window=int(os.getenv("WEEKLYAMP_RATE_SUBMIT_WINDOW", rl_data.get("submit_window", 900))),
+    )
+
     # DB path and backend
     db_path = os.getenv("WEEKLYAMP_DB_PATH", yaml_data.get("db_path", "data/weeklyamp.db"))
     db_backend = os.getenv("WEEKLYAMP_DB_BACKEND", yaml_data.get("db_backend", "sqlite"))
     database_url = os.getenv("WEEKLYAMP_DATABASE_URL", yaml_data.get("database_url", ""))
+
+    # Site domain
+    site_domain = os.getenv("WEEKLYAMP_SITE_DOMAIN", yaml_data.get("site_domain", "https://truefansnewsletters.com"))
+
+    # Session max age
+    session_max_age = int(os.getenv("WEEKLYAMP_SESSION_MAX_AGE", yaml_data.get("session_max_age", 43200)))
+
+    # Pagination default
+    pagination_default = int(os.getenv("WEEKLYAMP_PAGINATION_DEFAULT", yaml_data.get("pagination_default", 50)))
+
+    # Max request body size
+    max_request_body = int(os.getenv("WEEKLYAMP_MAX_REQUEST_BODY", yaml_data.get("max_request_body", 1_048_576)))
 
     return AppConfig(
         newsletter=newsletter,
@@ -128,9 +152,14 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
         agents=agents,
         submissions=submissions,
         email=email,
+        rate_limits=rate_limits,
         db_path=db_path,
         db_backend=db_backend,
         database_url=database_url,
+        site_domain=site_domain,
+        session_max_age=session_max_age,
+        pagination_default=pagination_default,
+        max_request_body=max_request_body,
     )
 
 

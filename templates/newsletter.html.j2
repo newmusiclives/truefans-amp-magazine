@@ -19,7 +19,7 @@
         </div>
 
         {% if intro_copy %}
-        <div class="intro-copy">
+        <div class="intro-copy" style="padding: 24px 0 16px; border-bottom: 1px solid #e5e7eb; margin-bottom: 24px;">
             {{ intro_copy }}
         </div>
         {% endif %}
@@ -27,6 +27,12 @@
         {% for section in sections %}
         {{ section.html }}
         {% endfor %}
+
+        {% if ps_closing %}
+        <div class="ps-closing" style="margin-top: 32px; padding: 24px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #e8645a;">
+            <p style="font-size: 15px; line-height: 1.7; color: #374151; margin: 0; font-style: italic;">{{ ps_closing }}</p>
+        </div>
+        {% endif %}
 
         <div class="footer">
             {% if footer_html %}

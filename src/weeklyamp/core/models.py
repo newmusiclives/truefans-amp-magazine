@@ -243,6 +243,7 @@ class Issue(BaseModel):
     publish_date: Optional[datetime] = None
     week_id: str = ""
     send_day: str = ""
+    edition_slug: str = ""
     issue_template: str = ""
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -403,6 +404,7 @@ class SponsorBooking(BaseModel):
 class SendSchedule(BaseModel):
     id: Optional[int] = None
     day_of_week: str
+    edition_slug: str = ""
     label: str = ""
     section_slugs: str = ""  # comma-separated
     is_active: bool = True
@@ -611,6 +613,15 @@ class AnalyticsConfig(BaseModel):
     plausible_domain: str = ""
 
 
+class RateLimitConfig(BaseModel):
+    login_max: int = 5
+    login_window: int = 900
+    subscribe_max: int = 5
+    subscribe_window: int = 900
+    submit_max: int = 10
+    submit_window: int = 900
+
+
 class AppConfig(BaseModel):
     newsletter: NewsletterConfig = Field(default_factory=NewsletterConfig)
     ai: AIConfig = Field(default_factory=AIConfig)
@@ -621,6 +632,11 @@ class AppConfig(BaseModel):
     submissions: SubmissionsConfig = Field(default_factory=SubmissionsConfig)
     email: EmailConfig = Field(default_factory=EmailConfig)
     analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
+    rate_limits: RateLimitConfig = Field(default_factory=RateLimitConfig)
     db_path: str = "data/weeklyamp.db"
     db_backend: str = "sqlite"  # "sqlite" or "postgres"
     database_url: str = ""  # PostgreSQL connection string
+    site_domain: str = "https://truefansnewsletters.com"
+    session_max_age: int = 43200  # 12 hours
+    pagination_default: int = 50
+    max_request_body: int = 1_048_576  # 1 MB

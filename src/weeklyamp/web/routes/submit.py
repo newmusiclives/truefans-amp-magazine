@@ -24,11 +24,9 @@ _env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True
 
 router = APIRouter()
 
-# ---- Rate limiting (10 submissions per IP per 15 minutes) ----
+# ---- Rate limiting ----
 _submit_attempts: dict[str, list[float]] = {}
 _submit_lock = threading.Lock()
-_SUBMIT_MAX = 10
-_SUBMIT_WINDOW = 900  # 15 minutes
 
 
 def _get_client_ip(request: Request) -> str:
@@ -38,13 +36,19 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _get_rate_config() -> tuple[int, int]:
+    cfg = load_config()
+    return cfg.rate_limits.submit_max, cfg.rate_limits.submit_window
+
+
 def _is_submit_rate_limited(ip: str) -> bool:
+    max_attempts, window = _get_rate_config()
     now = time.time()
     with _submit_lock:
         attempts = _submit_attempts.get(ip, [])
-        attempts = [t for t in attempts if now - t < _SUBMIT_WINDOW]
+        attempts = [t for t in attempts if now - t < window]
         _submit_attempts[ip] = attempts
-        return len(attempts) >= _SUBMIT_MAX
+        return len(attempts) >= max_attempts
 
 
 def _record_submission(ip: str) -> None:
@@ -115,12 +119,13 @@ async def api_submit(request: Request, x_truefans_api_key: str = Header(None)):
     """JSON API endpoint for TrueFans CONNECT integration."""
     ip = _get_client_ip(request)
     if _is_submit_rate_limited(ip):
+        max_attempts, window = _get_rate_config()
         return JSONResponse(
             status_code=429,
             content={"error": "Too many submissions. Please try again later."},
             headers={
-                "Retry-After": "900",
-                "X-RateLimit-Limit": str(_SUBMIT_MAX),
+                "Retry-After": str(window),
+                "X-RateLimit-Limit": str(max_attempts),
                 "X-RateLimit-Remaining": "0",
             },
         )
@@ -150,15 +155,16 @@ async def api_submit(request: Request, x_truefans_api_key: str = Header(None)):
         _record_submission(ip)
 
         # Calculate remaining
+        max_attempts, window = _get_rate_config()
         with _submit_lock:
-            current = len([t for t in _submit_attempts.get(ip, []) if time.time() - t < _SUBMIT_WINDOW])
-        remaining = max(0, _SUBMIT_MAX - current)
+            current = len([t for t in _submit_attempts.get(ip, []) if time.time() - t < window])
+        remaining = max(0, max_attempts - current)
 
         return JSONResponse(
             status_code=201,
             content={"id": submission_id, "status": "submitted"},
             headers={
-                "X-RateLimit-Limit": str(_SUBMIT_MAX),
+                "X-RateLimit-Limit": str(max_attempts),
                 "X-RateLimit-Remaining": str(remaining),
             },
         )

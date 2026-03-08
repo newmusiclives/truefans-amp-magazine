@@ -22,7 +22,16 @@ async def publish_page():
 
     drafts = repo.get_drafts_for_issue(issue["id"]) if issue else []
     approved = sum(1 for d in drafts if d["status"] in ("approved", "revised"))
-    total = len(repo.get_active_sections())
+
+    # Use edition-scoped section count if applicable
+    edition_slug = issue.get("edition_slug", "") if issue else ""
+    edition = None
+    if edition_slug:
+        edition = repo.get_edition_by_slug(edition_slug)
+        edition_sections = repo.get_edition_sections(edition_slug)
+        total = len(edition_sections)
+    else:
+        total = len(repo.get_active_sections())
 
     return render("publish.html",
         issue=issue,
@@ -31,6 +40,7 @@ async def publish_page():
         approved=approved,
         total=total,
         config=cfg,
+        edition=edition,
     )
 
 
@@ -77,7 +87,13 @@ async def push():
         return render("partials/alert.html", message="Beehiiv not configured.", level="error")
 
     client = BeehiivClient(cfg.beehiiv)
-    title = f"{cfg.newsletter.name} #{issue['issue_number']}"
+    edition_slug = issue.get("edition_slug", "") if issue else ""
+    if edition_slug:
+        ed = repo.get_edition_by_slug(edition_slug)
+        ed_name = ed.get("name", "") if ed else ""
+        title = f"{cfg.newsletter.name} — {ed_name} #{issue['issue_number']}"
+    else:
+        title = f"{cfg.newsletter.name} #{issue['issue_number']}"
     try:
         result = client.create_post(title=title, html_content=assembled["html_content"], send=False)
         post_id = result.get("id", "")

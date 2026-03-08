@@ -19,15 +19,25 @@ async def drafts_page():
     cfg = get_config()
     repo = get_repo()
     issue = repo.get_current_issue()
-    sections = repo.get_active_sections()
+
+    # If issue belongs to an edition, show only that edition's sections
+    edition_slug = issue.get("edition_slug", "") if issue else ""
+    if edition_slug:
+        sections = repo.get_edition_sections(edition_slug)
+    else:
+        sections = repo.get_active_sections()
+
     drafts = repo.get_drafts_for_issue(issue["id"]) if issue else []
     draft_map = {d["section_slug"]: d for d in drafts}
+
+    edition = repo.get_edition_by_slug(edition_slug) if edition_slug else None
 
     return render("drafts.html",
         issue=issue,
         sections=sections,
         draft_map=draft_map,
         config=cfg,
+        edition=edition,
     )
 
 

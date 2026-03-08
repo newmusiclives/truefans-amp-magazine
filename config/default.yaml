@@ -1,6 +1,6 @@
 newsletter:
   name: "TrueFans NEWSLETTERS"
-  tagline: ""
+  tagline: "The music newsletters for industry professionals, music artists and their fans."
   from_name: "PS"
   reply_to: ""
   header_image_url: "https://web-production-88ebc.up.railway.app/static/header-logo.png"
@@ -53,5 +53,18 @@ email:
 analytics:
   plausible_domain: ""  # e.g. "truefansnewsletters.com" — leave empty to disable
 
+rate_limits:
+  login_max: 5
+  login_window: 900
+  subscribe_max: 5
+  subscribe_window: 900
+  submit_max: 10
+  submit_window: 900
+
 db_path: "data/weeklyamp.db"
 db_backend: "sqlite"  # "sqlite" or "postgres"
+
+site_domain: "https://truefansnewsletters.com"
+session_max_age: 43200  # 12 hours
+pagination_default: 50
+max_request_body: 1048576  # 1 MB

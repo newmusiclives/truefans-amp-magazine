@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
+import signal
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -32,24 +34,70 @@ _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates"
 _STATIC_DIR = _TEMPLATES_DIR / "web" / "static"
 
 
+def _setup_logging():
+    """Configure structured logging with JSON-compatible format."""
+    log_format = os.environ.get("LOG_FORMAT", "text")
+    level = os.environ.get("LOG_LEVEL", "INFO").upper()
+
+    if log_format == "json":
+        import json
+        class JSONFormatter(logging.Formatter):
+            def format(self, record):
+                return json.dumps({
+                    "timestamp": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"),
+                    "level": record.levelname,
+                    "logger": record.name,
+                    "message": record.getMessage(),
+                    "module": record.module,
+                    "line": record.lineno,
+                })
+        handler = logging.StreamHandler()
+        handler.setFormatter(JSONFormatter())
+        logging.root.handlers = [handler]
+        logging.root.setLevel(level)
+    else:
+        logging.basicConfig(
+            level=level,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+
+def _is_production() -> bool:
+    """Check if running in production mode."""
+    return os.environ.get("WEEKLYAMP_ENV", "development").lower() in ("production", "prod")
+
+
 def create_app() -> FastAPI:
-    logging.basicConfig(
-        level=os.environ.get("LOG_LEVEL", "INFO").upper(),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    _setup_logging()
+
+    config = load_config()
+
+    # Production safety checks — fail fast if critical config is missing
+    if _is_production():
+        missing = []
+        if not os.environ.get("WEEKLYAMP_SECRET_KEY"):
+            missing.append("WEEKLYAMP_SECRET_KEY")
+        if not os.environ.get("WEEKLYAMP_ADMIN_HASH") and not os.environ.get("WEEKLYAMP_ADMIN_PASSWORD"):
+            missing.append("WEEKLYAMP_ADMIN_HASH or WEEKLYAMP_ADMIN_PASSWORD")
+        if missing:
+            logger.critical("Production mode: missing required config: %s", ", ".join(missing))
+            sys.exit(1)
+    else:
+        if not os.environ.get("WEEKLYAMP_SECRET_KEY"):
+            logger.warning("WEEKLYAMP_SECRET_KEY not set — sessions won't survive restarts")
+        if not os.environ.get("WEEKLYAMP_ADMIN_HASH") and not os.environ.get("WEEKLYAMP_ADMIN_PASSWORD"):
+            logger.warning("No admin password configured — auth is disabled")
+
+    if config.email.enabled and not config.email.smtp_host:
+        logger.warning("Email enabled but SMTP_HOST not configured — sending will fail")
+
+    site_domain = config.site_domain.rstrip("/")
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        # Startup
         try:
-            config = load_config()
-            # Validate critical production config
-            if not os.environ.get("WEEKLYAMP_SECRET_KEY"):
-                logger.warning("WEEKLYAMP_SECRET_KEY not set — sessions won't survive restarts")
-            if not os.environ.get("WEEKLYAMP_ADMIN_HASH") and not os.environ.get("WEEKLYAMP_ADMIN_PASSWORD"):
-                logger.warning("No admin password configured — auth is disabled")
-            if config.email.enabled and not config.email.smtp_host:
-                logger.warning("Email enabled but SMTP_HOST not configured — sending will fail")
             db_path = config.db_path
             backend = config.db_backend
             database_url = config.database_url
@@ -70,12 +118,21 @@ def create_app() -> FastAPI:
             added = sync_sources_from_config(repo)
             if added:
                 logger.info("Synced %d new sources from sources.yaml", added)
-            logger.info("Database initialized at %s", db_path)
+            logger.info("Database initialized at %s (backend=%s)", db_path, backend)
         except Exception:
             logger.exception("Failed to initialize database")
+            if _is_production():
+                sys.exit(1)
+
         yield
 
+        # Shutdown — close connections cleanly
+        logger.info("Shutting down — closing database connections")
+
     app = FastAPI(title="TrueFans NEWSLETTERS", docs_url=None, redoc_url=None, lifespan=lifespan)
+
+    # Store config on app for access in routes
+    app.state.config = config
 
     # Middleware (order matters: outermost runs first)
     app.add_middleware(SecurityHeadersMiddleware)
@@ -102,7 +159,7 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception):
-        logger.exception("Unhandled server error")
+        logger.exception("Unhandled server error: %s %s", request.method, request.url.path)
         return HTMLResponse(_error_500, status_code=500)
 
     # Public landing page
@@ -116,7 +173,7 @@ def create_app() -> FastAPI:
         authenticated = is_authenticated(request)
         return HR(tpl.render(authenticated=authenticated))
 
-    # Health check
+    # Health checks
     @app.get("/health")
     def health():
         try:
@@ -129,6 +186,49 @@ def create_app() -> FastAPI:
                 status_code=503,
                 content={"status": "error", "detail": str(exc)},
             )
+
+    @app.get("/health/ready")
+    def readiness():
+        """Readiness check — verifies all dependencies are available."""
+        checks = {}
+        overall = True
+
+        # Database
+        try:
+            from weeklyamp.web.deps import get_repo
+            repo = get_repo()
+            repo.get_editions()
+            checks["db"] = "ok"
+        except Exception as exc:
+            checks["db"] = f"error: {exc}"
+            overall = False
+
+        # AI provider (check key is set, don't make a call)
+        if os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("OPENAI_API_KEY"):
+            checks["ai_provider"] = "configured"
+        else:
+            checks["ai_provider"] = "not configured"
+
+        # Email
+        if config.email.enabled:
+            if config.email.smtp_host:
+                checks["email"] = "configured"
+            else:
+                checks["email"] = "enabled but smtp_host missing"
+                overall = False
+        else:
+            checks["email"] = "disabled"
+
+        status_code = 200 if overall else 503
+        return JSONResponse(
+            status_code=status_code,
+            content={"status": "ok" if overall else "degraded", "checks": checks},
+        )
+
+    @app.get("/health/live")
+    def liveness():
+        """Liveness check — confirms the process is alive."""
+        return {"status": "ok"}
 
     # SEO: robots.txt
     @app.get("/robots.txt")
@@ -155,7 +255,7 @@ def create_app() -> FastAPI:
             "Disallow: /login\n"
             "Disallow: /logout\n"
             "\n"
-            "Sitemap: https://truefansnewsletters.com/sitemap.xml\n"
+            f"Sitemap: {site_domain}/sitemap.xml\n"
         )
         return PlainTextResponse(body)
 
@@ -163,10 +263,10 @@ def create_app() -> FastAPI:
     @app.get("/sitemap.xml")
     def sitemap_xml():
         urls = [
-            "https://truefansnewsletters.com/",
-            "https://truefansnewsletters.com/newsletters",
-            "https://truefansnewsletters.com/subscribe",
-            "https://truefansnewsletters.com/submit",
+            f"{site_domain}/",
+            f"{site_domain}/newsletters",
+            f"{site_domain}/subscribe",
+            f"{site_domain}/submit",
         ]
         xml_urls = "\n".join(
             f"  <url><loc>{u}</loc></url>" for u in urls
@@ -241,7 +341,7 @@ def create_app() -> FastAPI:
     def security_logs():
         from weeklyamp.web.deps import get_repo
         repo = get_repo()
-        events = repo.get_security_log(limit=50)
+        events = repo.get_security_log(limit=config.pagination_default)
         tpl = _sec_env.get_template("security_logs.html")
         return HTMLResponse(tpl.render(events=events))
 

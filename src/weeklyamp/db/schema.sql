@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS issues (
     publish_date TIMESTAMP,
     week_id TEXT DEFAULT '',
     send_day TEXT DEFAULT '',
+    edition_slug TEXT DEFAULT '',
     issue_template TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -136,6 +137,7 @@ CREATE TABLE IF NOT EXISTS section_rotation_log (
 CREATE TABLE IF NOT EXISTS send_schedule (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     day_of_week TEXT NOT NULL,
+    edition_slug TEXT DEFAULT '',
     label TEXT DEFAULT '',
     section_slugs TEXT DEFAULT '',
     is_active INTEGER DEFAULT 1,
@@ -377,6 +379,8 @@ CREATE TABLE IF NOT EXISTS subscriber_editions (
 );
 
 -- Indexes
+CREATE INDEX IF NOT EXISTS idx_issues_edition ON issues(edition_slug);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_schedule_day_edition ON send_schedule(day_of_week, edition_slug);
 CREATE INDEX IF NOT EXISTS idx_drafts_issue_section ON drafts(issue_id, section_slug);
 CREATE INDEX IF NOT EXISTS idx_raw_content_source ON raw_content(source_id);
 CREATE INDEX IF NOT EXISTS idx_raw_content_used ON raw_content(is_used);
@@ -420,3 +424,4 @@ INSERT OR IGNORE INTO schema_version (version) VALUES (14);
 INSERT OR IGNORE INTO schema_version (version) VALUES (15);
 INSERT OR IGNORE INTO schema_version (version) VALUES (16);
 INSERT OR IGNORE INTO schema_version (version) VALUES (17);
+INSERT OR IGNORE INTO schema_version (version) VALUES (18);

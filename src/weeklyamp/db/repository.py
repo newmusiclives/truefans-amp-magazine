@@ -196,13 +196,13 @@ class Repository:
 
     def create_issue_with_schedule(
         self, issue_number: int, title: str = "", week_id: str = "",
-        send_day: str = "", issue_template: str = "",
+        send_day: str = "", issue_template: str = "", edition_slug: str = "",
     ) -> int:
         conn = self._conn()
         cur = conn.execute(
-            """INSERT INTO issues (issue_number, title, week_id, send_day, issue_template)
-               VALUES (?, ?, ?, ?, ?)""",
-            (issue_number, title, week_id, send_day, issue_template),
+            """INSERT INTO issues (issue_number, title, week_id, send_day, edition_slug, issue_template)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (issue_number, title, week_id, send_day, edition_slug, issue_template),
         )
         conn.commit()
         row_id = cur.lastrowid
@@ -725,34 +725,50 @@ class Repository:
         conn.close()
         return [dict(r) for r in rows]
 
-    def upsert_send_schedule(self, day_of_week: str, label: str = "", section_slugs: str = "") -> int:
+    def upsert_send_schedule(self, day_of_week: str, label: str = "", section_slugs: str = "", edition_slug: str = "") -> int:
         conn = self._conn()
-        # Check if exists
+        # Check if exists (keyed on day + edition)
         existing = conn.execute(
-            "SELECT id FROM send_schedule WHERE day_of_week = ?", (day_of_week,)
+            "SELECT id FROM send_schedule WHERE day_of_week = ? AND edition_slug = ?",
+            (day_of_week, edition_slug),
         ).fetchone()
         if existing:
             conn.execute(
-                "UPDATE send_schedule SET label = ?, section_slugs = ?, is_active = 1 WHERE day_of_week = ?",
-                (label, section_slugs, day_of_week),
+                "UPDATE send_schedule SET label = ?, section_slugs = ?, is_active = 1 WHERE day_of_week = ? AND edition_slug = ?",
+                (label, section_slugs, day_of_week, edition_slug),
             )
             conn.commit()
             row_id = existing["id"]
         else:
             cur = conn.execute(
-                "INSERT INTO send_schedule (day_of_week, label, section_slugs) VALUES (?, ?, ?)",
-                (day_of_week, label, section_slugs),
+                "INSERT INTO send_schedule (day_of_week, edition_slug, label, section_slugs) VALUES (?, ?, ?, ?)",
+                (day_of_week, edition_slug, label, section_slugs),
             )
             conn.commit()
             row_id = cur.lastrowid
         conn.close()
         return row_id
 
-    def delete_send_schedule(self, day_of_week: str) -> None:
+    def delete_send_schedule(self, day_of_week: str, edition_slug: str = "") -> None:
         conn = self._conn()
-        conn.execute("DELETE FROM send_schedule WHERE day_of_week = ?", (day_of_week,))
+        conn.execute(
+            "DELETE FROM send_schedule WHERE day_of_week = ? AND edition_slug = ?",
+            (day_of_week, edition_slug),
+        )
         conn.commit()
         conn.close()
+
+    def get_edition_sections(self, edition_slug: str) -> list[dict]:
+        """Get active sections that belong to a specific edition."""
+        edition = self.get_edition_by_slug(edition_slug)
+        if not edition:
+            return []
+        slugs = [s.strip() for s in edition.get("section_slugs", "").split(",") if s.strip()]
+        if not slugs:
+            return []
+        all_sections = self.get_active_sections()
+        section_map = {s["slug"]: s for s in all_sections}
+        return [section_map[s] for s in slugs if s in section_map]
 
     # ---- Sponsor Blocks ----
 

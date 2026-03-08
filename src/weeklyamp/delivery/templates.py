@@ -48,6 +48,7 @@ def render_newsletter(
     header_image_url: str = "",
     intro_copy: str = "",
     footer_html: str = "",
+    ps_closing: str = "",
 ) -> str:
     """Render the full newsletter HTML.
 
@@ -71,6 +72,7 @@ def render_newsletter(
         header_image_url=header_image_url,
         intro_copy=intro_copy,
         footer_html=footer_html,
+        ps_closing=ps_closing,
     )
 
 

@@ -15,7 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader
 
 from weeklyamp.core.config import load_config
-from weeklyamp.db.repository import Repository
+from weeklyamp.web.deps import get_repo as _get_repo
 
 logger = logging.getLogger(__name__)
 
@@ -24,11 +24,9 @@ _env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True
 
 router = APIRouter()
 
-# ---- Rate limiting (5 signups per IP per 15 minutes) ----
+# ---- Rate limiting ----
 _subscribe_attempts: dict[str, list[float]] = {}
 _subscribe_lock = threading.Lock()
-_SUBSCRIBE_MAX = 5
-_SUBSCRIBE_WINDOW = 900  # 15 minutes
 
 _EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$")
 
@@ -40,30 +38,24 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else "unknown"
 
 
+def _get_rate_config() -> tuple[int, int]:
+    cfg = load_config()
+    return cfg.rate_limits.subscribe_max, cfg.rate_limits.subscribe_window
+
+
 def _is_subscribe_rate_limited(ip: str) -> bool:
+    max_attempts, window = _get_rate_config()
     now = time.time()
     with _subscribe_lock:
         attempts = _subscribe_attempts.get(ip, [])
-        attempts = [t for t in attempts if now - t < _SUBSCRIBE_WINDOW]
+        attempts = [t for t in attempts if now - t < window]
         _subscribe_attempts[ip] = attempts
-        return len(attempts) >= _SUBSCRIBE_MAX
+        return len(attempts) >= max_attempts
 
 
 def _record_subscribe(ip: str) -> None:
     with _subscribe_lock:
         _subscribe_attempts.setdefault(ip, []).append(time.time())
-
-
-def _get_repo() -> Repository:
-    import os
-    cfg = load_config()
-    db_path = cfg.db_path
-    if not os.path.isabs(db_path):
-        if os.path.exists("/app"):
-            db_path = os.path.join("/app", db_path)
-        else:
-            db_path = os.path.abspath(db_path)
-    return Repository(db_path)
 
 
 @router.get("/subscribe", response_class=HTMLResponse)

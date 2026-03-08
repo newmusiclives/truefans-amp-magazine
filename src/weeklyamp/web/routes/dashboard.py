@@ -40,7 +40,10 @@ async def dashboard():
         }
 
     # Upcoming sends (multi-frequency)
-    upcoming_sends = repo.get_upcoming_issues(limit=5)
+    upcoming_sends = repo.get_upcoming_issues(limit=12)
+
+    # Load editions for display
+    editions = repo.get_editions()
 
     return render("dashboard.html",
         config=cfg,
@@ -51,4 +54,5 @@ async def dashboard():
         stats={"approved": approved, "pending": pending, "rejected": rejected, "total": len(sections)},
         sponsor_stats=sponsor_stats,
         upcoming_sends=upcoming_sends if len(upcoming_sends) > 1 else [],
+        editions=editions,
     )
