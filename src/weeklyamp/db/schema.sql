@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS assembled_issues (
     issue_id INTEGER NOT NULL REFERENCES issues(id),
     html_content TEXT DEFAULT '',
     plain_text TEXT DEFAULT '',
-    beehiiv_post_id TEXT DEFAULT '',
+    ghl_campaign_id TEXT DEFAULT '',
     assembled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     published_at TIMESTAMP
 );
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
     first_name TEXT DEFAULT '',
-    beehiiv_id TEXT DEFAULT '',
+    ghl_contact_id TEXT DEFAULT '',
     status TEXT DEFAULT 'active',
     source_channel TEXT DEFAULT '',
     email_verified INTEGER DEFAULT 0,
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
 CREATE TABLE IF NOT EXISTS engagement_metrics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     issue_id INTEGER NOT NULL REFERENCES issues(id),
-    beehiiv_post_id TEXT DEFAULT '',
+    ghl_campaign_id TEXT DEFAULT '',
     sends INTEGER DEFAULT 0,
     opens INTEGER DEFAULT 0,
     clicks INTEGER DEFAULT 0,
@@ -425,3 +425,571 @@ INSERT OR IGNORE INTO schema_version (version) VALUES (15);
 INSERT OR IGNORE INTO schema_version (version) VALUES (16);
 INSERT OR IGNORE INTO schema_version (version) VALUES (17);
 INSERT OR IGNORE INTO schema_version (version) VALUES (18);
+INSERT OR IGNORE INTO schema_version (version) VALUES (19);
+INSERT OR IGNORE INTO schema_version (version) VALUES (20);
+
+-- Editor articles — direct editor-written content
+CREATE TABLE IF NOT EXISTS editor_articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL DEFAULT '',
+    content TEXT DEFAULT '',
+    author_name TEXT DEFAULT 'John',
+    edition_slug TEXT DEFAULT '',
+    target_issue_id INTEGER REFERENCES issues(id),
+    target_section_slug TEXT DEFAULT '',
+    draft_id INTEGER REFERENCES drafts(id),
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','ready','assigned','published')),
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_editor_articles_edition ON editor_articles(edition_slug);
+CREATE INDEX IF NOT EXISTS idx_editor_articles_status ON editor_articles(status);
+
+-- ======================================================================
+-- v21+: Advanced newsletter features (inactive by default)
+-- ======================================================================
+
+-- Email open/click tracking events
+CREATE TABLE IF NOT EXISTS email_tracking_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    issue_id INTEGER REFERENCES issues(id),
+    event_type TEXT NOT NULL CHECK (event_type IN ('open','click','unsubscribe')),
+    link_url TEXT DEFAULT '',
+    ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_tracking_subscriber ON email_tracking_events(subscriber_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_issue ON email_tracking_events(issue_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_type ON email_tracking_events(event_type);
+
+-- A/B tests for subject lines, content, send times
+CREATE TABLE IF NOT EXISTS ab_tests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue_id INTEGER REFERENCES issues(id),
+    test_type TEXT NOT NULL DEFAULT 'subject' CHECK (test_type IN ('subject','content','send_time')),
+    variant_a TEXT DEFAULT '',
+    variant_b TEXT DEFAULT '',
+    variant_a_percentage INTEGER DEFAULT 50,
+    winner TEXT DEFAULT '' CHECK (winner IN ('','a','b')),
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','running','measuring','complete','cancelled')),
+    sample_size_percent INTEGER DEFAULT 20,
+    auto_send_winner INTEGER DEFAULT 1,
+    measurement_hours INTEGER DEFAULT 4,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_ab_tests_issue ON ab_tests(issue_id);
+CREATE INDEX IF NOT EXISTS idx_ab_tests_status ON ab_tests(status);
+
+-- A/B test per-variant results
+CREATE TABLE IF NOT EXISTS ab_test_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    test_id INTEGER NOT NULL REFERENCES ab_tests(id),
+    variant TEXT NOT NULL CHECK (variant IN ('a','b')),
+    sends INTEGER DEFAULT 0,
+    opens INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    unsubscribes INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(test_id, variant)
+);
+
+-- Email bounce log for deliverability management
+CREATE TABLE IF NOT EXISTS bounce_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    email TEXT NOT NULL,
+    bounce_type TEXT NOT NULL DEFAULT 'soft' CHECK (bounce_type IN ('hard','soft','complaint')),
+    raw_response TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_bounce_email ON bounce_log(email);
+CREATE INDEX IF NOT EXISTS idx_bounce_type ON bounce_log(bounce_type);
+
+-- Domain warm-up tracking
+CREATE TABLE IF NOT EXISTS warmup_config (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain TEXT NOT NULL,
+    daily_limit INTEGER DEFAULT 50,
+    ramp_increment INTEGER DEFAULT 50,
+    ramp_interval_days INTEGER DEFAULT 1,
+    current_day INTEGER DEFAULT 0,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_active INTEGER DEFAULT 0
+);
+
+-- Scheduled sends (deferred publishing)
+CREATE TABLE IF NOT EXISTS scheduled_sends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue_id INTEGER NOT NULL REFERENCES issues(id),
+    edition_slug TEXT DEFAULT '',
+    subject TEXT DEFAULT '',
+    scheduled_at TIMESTAMP NOT NULL,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending','processing','sent','cancelled','failed')),
+    error_message TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    sent_at TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_scheduled_status ON scheduled_sends(status);
+CREATE INDEX IF NOT EXISTS idx_scheduled_at ON scheduled_sends(scheduled_at);
+
+-- Webhooks for inbound/outbound integrations
+CREATE TABLE IF NOT EXISTS webhooks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    direction TEXT DEFAULT 'outbound' CHECK (direction IN ('inbound','outbound')),
+    event_types TEXT DEFAULT '',
+    secret TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 0,
+    last_triggered_at TIMESTAMP,
+    failure_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Webhook delivery log
+CREATE TABLE IF NOT EXISTS webhook_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    webhook_id INTEGER NOT NULL REFERENCES webhooks(id),
+    event_type TEXT NOT NULL,
+    payload_json TEXT DEFAULT '{}',
+    response_status INTEGER DEFAULT 0,
+    response_body TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_webhook_log_webhook ON webhook_log(webhook_id);
+
+-- Referral system
+CREATE TABLE IF NOT EXISTS referral_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    code TEXT UNIQUE NOT NULL,
+    referral_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_referral_code ON referral_codes(code);
+
+CREATE TABLE IF NOT EXISTS referral_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    referrer_code TEXT NOT NULL,
+    referred_subscriber_id INTEGER REFERENCES subscribers(id),
+    referred_email TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_referral_referrer ON referral_log(referrer_code);
+
+-- Subscriber preferences (extends subscriber_editions with richer controls)
+CREATE TABLE IF NOT EXISTS subscriber_preferences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    content_frequency TEXT DEFAULT 'all' CHECK (content_frequency IN ('all','weekly_digest','highlights_only')),
+    preferred_send_hour INTEGER DEFAULT -1,
+    timezone TEXT DEFAULT '',
+    interests TEXT DEFAULT '',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id)
+);
+
+-- Welcome sequence (automated drip emails for new subscribers)
+CREATE TABLE IF NOT EXISTS welcome_sequence_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    edition_slug TEXT DEFAULT '',
+    step_number INTEGER NOT NULL DEFAULT 1,
+    delay_hours INTEGER DEFAULT 0,
+    subject TEXT DEFAULT '',
+    html_content TEXT DEFAULT '',
+    plain_text TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_welcome_edition ON welcome_sequence_steps(edition_slug);
+
+CREATE TABLE IF NOT EXISTS welcome_sequence_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    step_id INTEGER NOT NULL REFERENCES welcome_sequence_steps(id),
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_welcome_log_sub ON welcome_sequence_log(subscriber_id);
+
+-- Re-engagement tracking
+CREATE TABLE IF NOT EXISTS reengagement_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    campaign_type TEXT DEFAULT 'winback' CHECK (campaign_type IN ('winback','survey','last_chance')),
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    opened INTEGER DEFAULT 0,
+    clicked INTEGER DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS idx_reengagement_sub ON reengagement_log(subscriber_id);
+
+-- Reusable content blocks (snippets for sponsor blocks, CTAs, boilerplate)
+CREATE TABLE IF NOT EXISTS reusable_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    block_type TEXT DEFAULT 'content' CHECK (block_type IN ('sponsor','content','cta','header','footer')),
+    html_content TEXT DEFAULT '',
+    plain_text TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User roles for team access control
+CREATE TABLE IF NOT EXISTS user_roles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT DEFAULT '',
+    role TEXT DEFAULT 'viewer' CHECK (role IN ('admin','editor','reviewer','viewer')),
+    display_name TEXT DEFAULT '',
+    email TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    last_login_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Export/backup log
+CREATE TABLE IF NOT EXISTS export_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    export_type TEXT NOT NULL CHECK (export_type IN ('subscribers','content','config','full_backup')),
+    file_path TEXT DEFAULT '',
+    file_size_bytes INTEGER DEFAULT 0,
+    record_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Send time optimization per subscriber
+CREATE TABLE IF NOT EXISTS send_time_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    issue_id INTEGER REFERENCES issues(id),
+    sent_at TIMESTAMP,
+    opened_at TIMESTAMP,
+    hour_of_day INTEGER DEFAULT -1,
+    day_of_week TEXT DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_sendtime_sub ON send_time_history(subscriber_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (21);
+
+-- ======================================================================
+-- v22: Music-specific features (Spotify, artist profiles, genres,
+--      section engagement, trivia/polls)
+-- ======================================================================
+
+-- Spotify artist data cache
+CREATE TABLE IF NOT EXISTS spotify_artist_cache (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    spotify_artist_id TEXT UNIQUE NOT NULL,
+    artist_name TEXT DEFAULT '',
+    genres TEXT DEFAULT '',
+    followers INTEGER DEFAULT 0,
+    popularity INTEGER DEFAULT 0,
+    image_url TEXT DEFAULT '',
+    monthly_listeners INTEGER DEFAULT 0,
+    data_json TEXT DEFAULT '{}',
+    fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_spotify_cache_name ON spotify_artist_cache(artist_name);
+
+-- Spotify new releases tracking
+CREATE TABLE IF NOT EXISTS spotify_releases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    spotify_artist_id TEXT NOT NULL,
+    album_id TEXT NOT NULL,
+    album_name TEXT DEFAULT '',
+    release_date TEXT DEFAULT '',
+    album_type TEXT DEFAULT 'single' CHECK (album_type IN ('album','single','compilation')),
+    image_url TEXT DEFAULT '',
+    external_url TEXT DEFAULT '',
+    fetched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(spotify_artist_id, album_id)
+);
+
+-- Audio embeds attached to drafts/issues
+CREATE TABLE IF NOT EXISTS audio_embeds (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    draft_id INTEGER REFERENCES drafts(id),
+    issue_id INTEGER REFERENCES issues(id),
+    section_slug TEXT DEFAULT '',
+    embed_type TEXT NOT NULL CHECK (embed_type IN ('spotify','youtube','apple_music')),
+    external_id TEXT DEFAULT '',
+    embed_url TEXT DEFAULT '',
+    thumbnail_url TEXT DEFAULT '',
+    title TEXT DEFAULT '',
+    artist_name TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audio_embeds_issue ON audio_embeds(issue_id);
+CREATE INDEX IF NOT EXISTS idx_audio_embeds_draft ON audio_embeds(draft_id);
+
+-- Artist profile pages
+CREATE TABLE IF NOT EXISTS artist_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    artist_name TEXT NOT NULL,
+    email TEXT DEFAULT '',
+    bio TEXT DEFAULT '',
+    website TEXT DEFAULT '',
+    social_links_json TEXT DEFAULT '{}',
+    image_url TEXT DEFAULT '',
+    spotify_artist_id TEXT DEFAULT '',
+    genres TEXT DEFAULT '',
+    music_embeds_json TEXT DEFAULT '[]',
+    is_published INTEGER DEFAULT 0,
+    is_approved INTEGER DEFAULT 0,
+    self_service_token TEXT DEFAULT '',
+    submission_id INTEGER REFERENCES artist_submissions(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_artist_profiles_slug ON artist_profiles(slug);
+CREATE INDEX IF NOT EXISTS idx_artist_profiles_published ON artist_profiles(is_published);
+
+-- Artist follower relationships
+CREATE TABLE IF NOT EXISTS artist_followers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    artist_profile_id INTEGER NOT NULL REFERENCES artist_profiles(id),
+    followed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id, artist_profile_id)
+);
+CREATE INDEX IF NOT EXISTS idx_artist_followers_artist ON artist_followers(artist_profile_id);
+
+-- Track which issues featured which artists
+CREATE TABLE IF NOT EXISTS artist_newsletter_features (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_profile_id INTEGER NOT NULL REFERENCES artist_profiles(id),
+    issue_id INTEGER NOT NULL REFERENCES issues(id),
+    section_slug TEXT DEFAULT '',
+    draft_id INTEGER REFERENCES drafts(id),
+    featured_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_artist_features_artist ON artist_newsletter_features(artist_profile_id);
+
+-- Subscriber genre preferences
+CREATE TABLE IF NOT EXISTS subscriber_genres (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    genre TEXT NOT NULL,
+    priority INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id, genre)
+);
+CREATE INDEX IF NOT EXISTS idx_sub_genres_sub ON subscriber_genres(subscriber_id);
+
+-- Section-to-genre mapping for content relevance
+CREATE TABLE IF NOT EXISTS section_genres (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    section_slug TEXT NOT NULL,
+    genre TEXT NOT NULL,
+    relevance_weight REAL DEFAULT 1.0,
+    UNIQUE(section_slug, genre)
+);
+CREATE INDEX IF NOT EXISTS idx_section_genres_slug ON section_genres(section_slug);
+
+-- Section-level engagement events (extends email tracking)
+CREATE TABLE IF NOT EXISTS section_engagement_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    issue_id INTEGER REFERENCES issues(id),
+    section_slug TEXT NOT NULL,
+    event_type TEXT DEFAULT 'click' CHECK (event_type IN ('click','read')),
+    link_url TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sec_engage_sub ON section_engagement_events(subscriber_id);
+CREATE INDEX IF NOT EXISTS idx_sec_engage_section ON section_engagement_events(section_slug);
+CREATE INDEX IF NOT EXISTS idx_sec_engage_issue ON section_engagement_events(issue_id);
+
+-- Aggregated section engagement scores per issue
+CREATE TABLE IF NOT EXISTS section_engagement_scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    section_slug TEXT NOT NULL,
+    issue_id INTEGER REFERENCES issues(id),
+    total_clicks INTEGER DEFAULT 0,
+    unique_clickers INTEGER DEFAULT 0,
+    click_rate REAL DEFAULT 0.0,
+    computed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(section_slug, issue_id)
+);
+
+-- Per-subscriber interest profile built from engagement
+CREATE TABLE IF NOT EXISTS subscriber_interest_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    section_slug TEXT NOT NULL,
+    engagement_score REAL DEFAULT 0.0,
+    click_count INTEGER DEFAULT 0,
+    last_engaged_at TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id, section_slug)
+);
+CREATE INDEX IF NOT EXISTS idx_interest_sub ON subscriber_interest_profiles(subscriber_id);
+
+-- Music trivia & polls
+CREATE TABLE IF NOT EXISTS trivia_polls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    question_type TEXT NOT NULL DEFAULT 'trivia' CHECK (question_type IN ('trivia','poll')),
+    question_text TEXT NOT NULL,
+    options_json TEXT DEFAULT '[]',
+    correct_option_index INTEGER DEFAULT -1,
+    explanation TEXT DEFAULT '',
+    target_issue_id INTEGER REFERENCES issues(id),
+    results_issue_id INTEGER REFERENCES issues(id),
+    edition_slug TEXT DEFAULT '',
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','active','closed')),
+    closes_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_trivia_issue ON trivia_polls(target_issue_id);
+CREATE INDEX IF NOT EXISTS idx_trivia_status ON trivia_polls(status);
+
+-- Individual votes on trivia/polls
+CREATE TABLE IF NOT EXISTS trivia_poll_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trivia_poll_id INTEGER NOT NULL REFERENCES trivia_polls(id),
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    selected_option_index INTEGER NOT NULL,
+    is_correct INTEGER DEFAULT 0,
+    voted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(trivia_poll_id, subscriber_id)
+);
+CREATE INDEX IF NOT EXISTS idx_trivia_votes_poll ON trivia_poll_votes(trivia_poll_id);
+
+-- Trivia leaderboard (running totals)
+CREATE TABLE IF NOT EXISTS trivia_leaderboard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    correct_count INTEGER DEFAULT 0,
+    total_answered INTEGER DEFAULT 0,
+    streak INTEGER DEFAULT 0,
+    score INTEGER DEFAULT 0,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id)
+);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (22);
+
+-- ======================================================================
+-- v23: Growth & monetization — lead magnets, sponsor portal, contests,
+--      reader content, referral rewards
+-- ======================================================================
+
+-- Lead magnets (gated downloads to drive signups)
+CREATE TABLE IF NOT EXISTS lead_magnets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    description TEXT DEFAULT '',
+    edition_slug TEXT DEFAULT '',
+    file_url TEXT DEFAULT '',
+    cover_image_url TEXT DEFAULT '',
+    download_count INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS lead_magnet_downloads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lead_magnet_id INTEGER NOT NULL REFERENCES lead_magnets(id),
+    email TEXT NOT NULL,
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    downloaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_lm_downloads_magnet ON lead_magnet_downloads(lead_magnet_id);
+
+-- Sponsor inquiries (public application form)
+CREATE TABLE IF NOT EXISTS sponsor_inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    contact_name TEXT DEFAULT '',
+    contact_email TEXT NOT NULL,
+    website TEXT DEFAULT '',
+    budget_range TEXT DEFAULT '',
+    message TEXT DEFAULT '',
+    editions_interested TEXT DEFAULT '',
+    status TEXT DEFAULT 'new' CHECK (status IN ('new','contacted','qualified','proposal','closed_won','closed_lost')),
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sponsor_inq_status ON sponsor_inquiries(status);
+
+-- Contests and giveaways
+CREATE TABLE IF NOT EXISTS contests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    prize_description TEXT DEFAULT '',
+    contest_type TEXT DEFAULT 'referral' CHECK (contest_type IN ('referral','vote','submit','share')),
+    entry_requirement TEXT DEFAULT '',
+    edition_slug TEXT DEFAULT '',
+    start_date TEXT DEFAULT '',
+    end_date TEXT DEFAULT '',
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','active','closed','awarded')),
+    winner_subscriber_id INTEGER REFERENCES subscribers(id),
+    winner_name TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_contests_status ON contests(status);
+
+CREATE TABLE IF NOT EXISTS contest_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contest_id INTEGER NOT NULL REFERENCES contests(id),
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    email TEXT DEFAULT '',
+    entry_data_json TEXT DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(contest_id, subscriber_id)
+);
+CREATE INDEX IF NOT EXISTS idx_contest_entries_contest ON contest_entries(contest_id);
+
+-- Reader-submitted content (hot takes, reviews, tips)
+CREATE TABLE IF NOT EXISTS reader_contributions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    email TEXT DEFAULT '',
+    name TEXT DEFAULT '',
+    content_type TEXT DEFAULT 'hot_take' CHECK (content_type IN ('hot_take','review','tip','question','story')),
+    content TEXT DEFAULT '',
+    edition_slug TEXT DEFAULT '',
+    status TEXT DEFAULT 'submitted' CHECK (status IN ('submitted','approved','featured','rejected')),
+    target_issue_id INTEGER REFERENCES issues(id),
+    featured_in_issue_id INTEGER REFERENCES issues(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_reader_contrib_status ON reader_contributions(status);
+
+-- Referral reward tiers
+CREATE TABLE IF NOT EXISTS referral_rewards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tier_name TEXT NOT NULL,
+    referrals_required INTEGER NOT NULL,
+    reward_description TEXT DEFAULT '',
+    reward_type TEXT DEFAULT 'badge' CHECK (reward_type IN ('badge','content','feature','merch','custom')),
+    is_active INTEGER DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Newsletter milestones (public goals)
+CREATE TABLE IF NOT EXISTS newsletter_milestones (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    target_subscribers INTEGER NOT NULL,
+    title TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    unlock_description TEXT DEFAULT '',
+    is_reached INTEGER DEFAULT 0,
+    reached_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (23);

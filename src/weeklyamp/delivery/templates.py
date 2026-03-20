@@ -31,11 +31,11 @@ def get_env() -> Environment:
     )
 
 
-def render_section(display_name: str, content_html: str) -> str:
+def render_section(display_name: str, content_html: str, headline: str = "") -> str:
     """Render a single section block."""
     env = get_env()
     template = env.get_template("section.html.j2")
-    return template.render(display_name=display_name, content=content_html)
+    return template.render(display_name=display_name, content=content_html, headline=headline)
 
 
 def render_newsletter(
@@ -49,13 +49,24 @@ def render_newsletter(
     intro_copy: str = "",
     footer_html: str = "",
     ps_closing: str = "",
+    edition_slug: str = "",
 ) -> str:
     """Render the full newsletter HTML.
 
     sections: list of {"html": str} dicts in order.
+    edition_slug: if provided, uses edition-specific template (fan/artist/industry).
     """
     env = get_env()
-    template = env.get_template("newsletter.html.j2")
+
+    # Use edition-specific template if available, fall back to generic
+    edition_template = f"edition_{edition_slug}.html.j2" if edition_slug else ""
+    if edition_template:
+        try:
+            template = env.get_template(edition_template)
+        except Exception:
+            template = env.get_template("newsletter.html.j2")
+    else:
+        template = env.get_template("newsletter.html.j2")
 
     if not css:
         css_path = _get_template_dir() / "styles.css"

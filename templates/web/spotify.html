@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}Spotify — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_spotify %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Spotify Dashboard</h2>
+    <p>Look up artists, cache data, and track new releases</p>
+</div>
+
+{% if not enabled %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Feature Inactive</span>
+    </div>
+    <p style="padding:16px;color:var(--text-dim);">
+        Spotify integration is disabled. Set <code>spotify.enabled: true</code> in
+        <code>config/default.yaml</code> and provide <code>SPOTIFY_CLIENT_ID</code> /
+        <code>SPOTIFY_CLIENT_SECRET</code> environment variables to activate.
+    </p>
+</div>
+{% else %}
+
+{% if detail_artist is defined and detail_artist %}
+<!-- ===== Artist Detail View ===== -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">
+            {% if detail_artist.image_url %}
+            <img src="{{ detail_artist.image_url }}" width="40" height="40"
+                 style="border-radius:50%;vertical-align:middle;margin-right:8px;">
+            {% endif %}
+            {{ detail_artist.artist_name }}
+        </span>
+        <a href="/spotify" class="btn btn-sm">Back to Dashboard</a>
+    </div>
+    <div style="padding:16px;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label">Followers</div>
+                <div class="value">{{ "{:,}".format(detail_artist.followers or 0) }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Popularity</div>
+                <div class="value">{{ detail_artist.popularity or 0 }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Genres</div>
+                <div class="value" style="font-size:14px;">{{ detail_artist.genres or '-' }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Last Fetched</div>
+                <div class="value" style="font-size:14px;">{{ detail_artist.fetched_at or '-' }}</div>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-sm"
+                hx-post="/spotify/cache/{{ detail_artist.spotify_artist_id }}"
+                hx-target="#detail-message"
+                hx-swap="innerHTML"
+                style="margin-top:8px;">
+            Refresh Data
+        </button>
+        <span id="detail-message" style="margin-left:8px;"></span>
+    </div>
+</div>
+
+{% if top_tracks is defined and top_tracks %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Top Tracks</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>#</th><th>Track</th><th>Album</th><th>Popularity</th></tr></thead>
+            <tbody>
+            {% for t in top_tracks %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>
+                    {% if t.image_url %}<img src="{{ t.image_url }}" width="24" height="24" style="border-radius:2px;vertical-align:middle;margin-right:6px;">{% endif %}
+                    {% if t.external_url %}<a href="{{ t.external_url }}" target="_blank">{{ t.name }}</a>{% else %}{{ t.name }}{% endif %}
+                </td>
+                <td>{{ t.album_name }}</td>
+                <td>{{ t.popularity }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if artist_releases is defined and artist_releases %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Releases ({{ artist_releases | length }})</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Release</th><th>Type</th><th>Date</th></tr></thead>
+            <tbody>
+            {% for r in artist_releases %}
+            <tr>
+                <td>
+                    {% if r.image_url %}<img src="{{ r.image_url }}" width="24" height="24" style="border-radius:2px;vertical-align:middle;margin-right:6px;">{% endif %}
+                    {% if r.external_url %}<a href="{{ r.external_url }}" target="_blank">{{ r.album_name }}</a>{% else %}{{ r.album_name }}{% endif %}
+                </td>
+                <td>{{ r.album_type }}</td>
+                <td>{{ r.release_date }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% else %}
+<!-- ===== Main Dashboard View ===== -->
+
+<!-- Search -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Artist Lookup</span>
+    </div>
+    <form hx-post="/spotify/lookup" hx-target="#search-results" hx-swap="innerHTML"
+          hx-indicator="#search-spinner"
+          style="display:flex;gap:12px;align-items:end;padding:0 0 16px 0;">
+        <div class="form-group" style="flex:1;">
+            <label>Search Spotify</label>
+            <input type="text" name="query" placeholder="Artist name..." required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px;">
+            <span class="spinner htmx-indicator" id="search-spinner"></span>
+            Search
+        </button>
+    </form>
+    <div id="spotify-message" style="padding:0 0 8px 0;"></div>
+    <div id="search-results"></div>
+</div>
+
+<!-- Cached Artists -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Cached Artists ({{ cached_artists | length }})</span>
+    </div>
+    {% if cached_artists %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Genres</th>
+                    <th>Followers</th>
+                    <th>Popularity</th>
+                    <th>Last Fetched</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for a in cached_artists %}
+            <tr>
+                <td>
+                    {% if a.image_url %}<img src="{{ a.image_url }}" width="28" height="28" style="border-radius:50%;vertical-align:middle;margin-right:6px;">{% endif %}
+                    <a href="/spotify/artist/{{ a.spotify_artist_id }}">{{ a.artist_name }}</a>
+                </td>
+                <td>{{ a.genres or '-' }}</td>
+                <td>{{ "{:,}".format(a.followers or 0) }}</td>
+                <td>{{ a.popularity or 0 }}</td>
+                <td>{{ a.fetched_at or '-' }}</td>
+                <td>
+                    <button class="btn btn-sm"
+                            hx-post="/spotify/cache/{{ a.spotify_artist_id }}"
+                            hx-target="#spotify-message"
+                            hx-swap="innerHTML">
+                        Refresh
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="padding:16px;color:var(--text-dim);">No cached artists yet. Use the search above to look up and cache artist data.</p>
+    {% endif %}
+</div>
+
+<!-- Recent Releases -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Recent Releases</span>
+    </div>
+    {% if recent_releases %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Release</th>
+                    <th>Artist</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for r in recent_releases %}
+            <tr>
+                <td>
+                    {% if r.image_url %}<img src="{{ r.image_url }}" width="24" height="24" style="border-radius:2px;vertical-align:middle;margin-right:6px;">{% endif %}
+                    {% if r.external_url %}<a href="{{ r.external_url }}" target="_blank">{{ r.album_name }}</a>{% else %}{{ r.album_name }}{% endif %}
+                </td>
+                <td>{{ r.artist_name }}</td>
+                <td>{{ r.album_type }}</td>
+                <td>{{ r.release_date }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="padding:16px;color:var(--text-dim);">No releases cached yet. Cache an artist to pull their discography.</p>
+    {% endif %}
+</div>
+
+{% endif %}
+{% endif %}
+{% endblock %}

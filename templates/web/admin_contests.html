@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Contests — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_contests %}active{% endblock %}
+
+{% block content %}
+<div style="padding:32px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div>
+            <h2 style="font-size:24px;font-weight:700;">Contests & Giveaways</h2>
+            <p style="color:#9ca3af;font-size:14px;margin-top:4px;">
+                Create and manage newsletter contests
+                {% if not enabled %}<span style="color:#ef4444;font-weight:600;"> (DISABLED)</span>{% endif %}
+            </p>
+        </div>
+        <a href="/contests" target="_blank" style="color:#e8645a;text-decoration:none;font-size:13px;">
+            View Public Page &rarr;
+        </a>
+    </div>
+
+    {% if message %}
+    <div style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;
+        {% if level == 'success' %}background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);
+        {% else %}background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);{% endif %}">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Create Contest Form -->
+    <div style="background:#13131f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px;margin-bottom:24px;">
+        <h3 style="font-size:16px;font-weight:600;margin-bottom:16px;">Create New Contest</h3>
+        <form method="POST" action="/admin/contests/create" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="grid-column:span 2;">
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Title</label>
+                <input type="text" name="title" required
+                       style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+            </div>
+            <div style="grid-column:span 2;">
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Description</label>
+                <textarea name="description" rows="2"
+                          style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;resize:vertical;"></textarea>
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Prize</label>
+                <input type="text" name="prize"
+                       style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Type</label>
+                <select name="contest_type"
+                        style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+                    <option value="share">Share</option>
+                    <option value="referral">Referral</option>
+                    <option value="vote">Vote</option>
+                    <option value="submit">Submit</option>
+                </select>
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Edition</label>
+                <select name="edition_slug"
+                        style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+                    <option value="">All editions</option>
+                    {% for ed in editions %}
+                    <option value="{{ ed.slug }}">{{ ed.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Entry Requirement</label>
+                <input type="text" name="entry_requirement" placeholder="e.g. Subscribe to newsletter"
+                       style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">Start Date</label>
+                <input type="date" name="start_date"
+                       style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:#9ca3af;">End Date</label>
+                <input type="date" name="end_date"
+                       style="width:100%;padding:8px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f0f0f5;font-size:14px;">
+            </div>
+            <div style="grid-column:span 2;">
+                <button type="submit"
+                        style="padding:10px 24px;background:#e8645a;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;">
+                    Create Contest
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Contests Table -->
+    <div style="background:#13131f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <th style="text-align:left;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Title</th>
+                    <th style="text-align:left;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Type</th>
+                    <th style="text-align:center;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Entries</th>
+                    <th style="text-align:center;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Status</th>
+                    <th style="text-align:center;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Winner</th>
+                    <th style="text-align:right;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contests %}
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:12px 16px;">
+                        <div style="font-weight:600;">{{ c.title }}</div>
+                        {% if c.prize_description %}
+                        <div style="font-size:12px;color:#f59e0b;">{{ c.prize_description }}</div>
+                        {% endif %}
+                    </td>
+                    <td style="padding:12px 16px;color:#9ca3af;">{{ c.contest_type }}</td>
+                    <td style="padding:12px 16px;text-align:center;font-weight:600;">{{ c.entry_count }}</td>
+                    <td style="padding:12px 16px;text-align:center;">
+                        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;
+                            {% if c.status == 'active' %}background:rgba(16,185,129,0.15);color:#10b981;
+                            {% elif c.status == 'awarded' %}background:rgba(245,158,11,0.15);color:#f59e0b;
+                            {% else %}background:rgba(156,163,175,0.15);color:#9ca3af;{% endif %}">
+                            {{ c.status|title }}
+                        </span>
+                    </td>
+                    <td style="padding:12px 16px;text-align:center;color:#f59e0b;">
+                        {{ c.winner_name or '—' }}
+                    </td>
+                    <td style="padding:12px 16px;text-align:right;">
+                        {% if c.status == 'active' %}
+                        <form method="POST" action="/admin/contests/{{ c.id }}/close" style="display:inline;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;font-size:12px;cursor:pointer;">
+                                Close
+                            </button>
+                        </form>
+                        <form method="POST" action="/admin/contests/{{ c.id }}/pick-winner" style="display:inline;margin-left:4px;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:4px;font-size:12px;cursor:pointer;">
+                                Pick Winner
+                            </button>
+                        </form>
+                        {% elif c.status == 'closed' %}
+                        <form method="POST" action="/admin/contests/{{ c.id }}/pick-winner" style="display:inline;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:4px;font-size:12px;cursor:pointer;">
+                                Pick Winner
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="color:#9ca3af;font-size:12px;">Done</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not contests %}
+                <tr>
+                    <td colspan="6" style="padding:24px;text-align:center;color:#9ca3af;">
+                        No contests yet. Create one above.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

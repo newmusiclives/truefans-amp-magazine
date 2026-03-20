@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Reader Content — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_reader_content %}active{% endblock %}
+
+{% block content %}
+<div style="padding:32px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <div>
+            <h2 style="font-size:24px;font-weight:700;">Reader Content</h2>
+            <p style="color:#9ca3af;font-size:14px;margin-top:4px;">
+                Review and manage reader-submitted contributions
+                {% if not enabled %}<span style="color:#ef4444;font-weight:600;"> (DISABLED)</span>{% endif %}
+            </p>
+        </div>
+        <a href="/contribute" target="_blank" style="color:#e8645a;text-decoration:none;font-size:13px;">
+            View Submission Form &rarr;
+        </a>
+    </div>
+
+    {% if message %}
+    <div style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:14px;
+        {% if level == 'success' %}background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);
+        {% else %}background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);{% endif %}">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Contributions Table -->
+    <div style="background:#13131f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                    <th style="text-align:left;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Name</th>
+                    <th style="text-align:left;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Type</th>
+                    <th style="text-align:left;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Edition</th>
+                    <th style="text-align:center;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Status</th>
+                    <th style="text-align:left;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Content</th>
+                    <th style="text-align:right;padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contributions %}
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:12px 16px;">
+                        <div style="font-weight:600;">{{ c.name or 'Anonymous' }}</div>
+                        <div style="font-size:12px;color:#9ca3af;">{{ c.email }}</div>
+                    </td>
+                    <td style="padding:12px 16px;">
+                        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase;
+                            {% if c.content_type == 'hot_take' %}background:rgba(239,68,68,0.15);color:#ef4444;
+                            {% elif c.content_type == 'review' %}background:rgba(139,92,246,0.15);color:#8b5cf6;
+                            {% elif c.content_type == 'tip' %}background:rgba(16,185,129,0.15);color:#10b981;
+                            {% elif c.content_type == 'question' %}background:rgba(59,130,246,0.15);color:#3b82f6;
+                            {% else %}background:rgba(245,158,11,0.15);color:#f59e0b;{% endif %}">
+                            {{ c.content_type|replace('_', ' ') }}
+                        </span>
+                    </td>
+                    <td style="padding:12px 16px;color:#9ca3af;">{{ c.edition_slug or '—' }}</td>
+                    <td style="padding:12px 16px;text-align:center;">
+                        <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;
+                            {% if c.status == 'submitted' %}background:rgba(59,130,246,0.15);color:#3b82f6;
+                            {% elif c.status == 'approved' %}background:rgba(16,185,129,0.15);color:#10b981;
+                            {% elif c.status == 'featured' %}background:rgba(245,158,11,0.15);color:#f59e0b;
+                            {% else %}background:rgba(156,163,175,0.15);color:#9ca3af;{% endif %}">
+                            {{ c.status|title }}
+                        </span>
+                    </td>
+                    <td style="padding:12px 16px;max-width:300px;">
+                        <div style="color:#d1d5db;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                            {{ c.content[:120] }}{% if c.content|length > 120 %}...{% endif %}
+                        </div>
+                    </td>
+                    <td style="padding:12px 16px;text-align:right;white-space:nowrap;">
+                        {% if c.status == 'submitted' %}
+                        <form method="POST" action="/admin/reader-content/{{ c.id }}/approve" style="display:inline;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.3);border-radius:4px;font-size:12px;cursor:pointer;">
+                                Approve
+                            </button>
+                        </form>
+                        <form method="POST" action="/admin/reader-content/{{ c.id }}/reject" style="display:inline;margin-left:4px;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;font-size:12px;cursor:pointer;">
+                                Reject
+                            </button>
+                        </form>
+                        {% elif c.status == 'approved' %}
+                        {% if issues %}
+                        <form method="POST" action="/admin/reader-content/{{ c.id }}/feature/{{ issues[0].id }}" style="display:inline;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(245,158,11,0.15);color:#f59e0b;border:1px solid rgba(245,158,11,0.3);border-radius:4px;font-size:12px;cursor:pointer;"
+                                    title="Feature in issue #{{ issues[0].issue_number }}">
+                                Feature
+                            </button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="/admin/reader-content/{{ c.id }}/reject" style="display:inline;margin-left:4px;">
+                            <button type="submit"
+                                    style="padding:4px 12px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;font-size:12px;cursor:pointer;">
+                                Reject
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="color:#9ca3af;font-size:12px;">{{ c.status|title }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not contributions %}
+                <tr>
+                    <td colspan="6" style="padding:24px;text-align:center;color:#9ca3af;">
+                        No reader contributions yet.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

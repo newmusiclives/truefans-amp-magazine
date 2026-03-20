@@ -12,7 +12,7 @@ from rich.console import Console
 from weeklyamp.content.assembly import assemble_newsletter
 from weeklyamp.core.config import load_config
 from weeklyamp.db.repository import Repository
-from weeklyamp.delivery.beehiiv import BeehiivClient
+from weeklyamp.delivery.smtp_sender import SMTPSender
 
 console = Console()
 publish_app = typer.Typer(name="publish", help="Assemble and publish newsletter.")
@@ -42,7 +42,7 @@ def assemble() -> None:
     repo.update_issue_status(issue["id"], "assembled")
 
     console.print(f"[green]Assembled![/green] HTML: {len(html)} chars, Plain: {len(plain_text)} chars")
-    console.print("Run [cyan]weeklyamp publish preview[/cyan] to view, or [cyan]weeklyamp publish push[/cyan] to send to Beehiiv.")
+    console.print("Run [cyan]weeklyamp publish preview[/cyan] to view, or [cyan]weeklyamp publish push[/cyan] to send.")
 
 
 @publish_app.command("preview")
@@ -72,14 +72,14 @@ def preview() -> None:
 
 @publish_app.command("push")
 def push(
-    send: bool = typer.Option(False, "--send", help="Send immediately (otherwise saves as Beehiiv draft)"),
+    send: bool = typer.Option(False, "--send", help="Send immediately via SMTP"),
 ) -> None:
-    """Push the assembled newsletter to Beehiiv."""
+    """Send the assembled newsletter via GoHighLevel SMTP."""
     cfg = load_config()
     repo = Repository(cfg.db_path)
 
-    if not cfg.beehiiv.api_key or not cfg.beehiiv.publication_id:
-        console.print("[red]Beehiiv not configured.[/red] Set BEEHIIV_API_KEY and BEEHIIV_PUBLICATION_ID in .env")
+    if not cfg.email.enabled or not cfg.email.smtp_host:
+        console.print("[red]Email not configured.[/red] Set WEEKLYAMP_EMAIL_ENABLED=true and SMTP settings in .env")
         raise typer.Exit(1)
 
     issue = repo.get_current_issue()
@@ -92,31 +92,39 @@ def push(
         console.print("[red]No assembled HTML.[/red] Run [cyan]weeklyamp publish assemble[/cyan] first.")
         raise typer.Exit(1)
 
-    client = BeehiivClient(cfg.beehiiv)
+    # Build subject
     title = f"{cfg.newsletter.name} #{issue['issue_number']}"
     if issue.get("title"):
         title += f" — {issue['title']}"
 
-    action = "Sending" if send else "Creating draft in"
-    console.print(f"[bold]{action} Beehiiv...[/bold]")
-
-    try:
-        result = client.create_post(
-            title=title,
-            html_content=assembled["html_content"],
-            send=send,
+    if send:
+        console.print("[bold]Sending newsletter via SMTP...[/bold]")
+        recipients = repo.get_subscribers("active")
+        sender = SMTPSender(cfg.email)
+        result = sender.send_bulk(
+            recipients=recipients,
+            subject=title,
+            html_body=assembled["html_content"],
+            plain_text=assembled.get("plain_text", ""),
+            site_domain=cfg.site_domain,
         )
-        post_id = result.get("id", "")
-        repo.update_assembled_beehiiv(assembled["id"], post_id)
-
-        if send:
-            repo.update_issue_status(issue["id"], "published")
-            console.print(f"[bold green]Published![/bold green] Post ID: {post_id}")
+        repo.update_assembled_ghl(assembled["id"], f"smtp-{issue['id']}")
+        repo.update_issue_status(issue["id"], "published")
+        console.print(f"[bold green]Published![/bold green] Sent to {result['sent']} subscribers")
+        if result["failed"]:
+            console.print(f"[yellow]{result['failed']} failed[/yellow]")
+    else:
+        console.print("[bold]Sending test email to from_address...[/bold]")
+        sender = SMTPSender(cfg.email)
+        success = sender.send_single(
+            to_email=cfg.email.from_address,
+            subject=f"[TEST] {title}",
+            html_body=assembled["html_content"],
+            plain_text=assembled.get("plain_text", ""),
+        )
+        if success:
+            console.print(f"[green]Test email sent to {cfg.email.from_address}[/green]")
+            console.print("Add [cyan]--send[/cyan] flag to send to all subscribers.")
         else:
-            console.print(f"[green]Draft created in Beehiiv![/green] Post ID: {post_id}")
-            console.print("Review in Beehiiv dashboard, then send when ready.")
-    except Exception as exc:
-        console.print(f"[red]Beehiiv push failed:[/red] {exc}")
-        raise typer.Exit(1)
-    finally:
-        client.close()
+            console.print("[red]Test send failed — check SMTP settings.[/red]")
+            raise typer.Exit(1)

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Trivia #{{ poll.id }} — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_trivia %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>
+        {% if poll.question_type == 'trivia' %}Trivia{% else %}Poll{% endif %}
+        #{{ poll.id }}
+    </h2>
+    <p>
+        {% if poll.status == 'active' %}
+            <span class="badge badge-success">Active</span>
+        {% elif poll.status == 'closed' %}
+            <span class="badge badge-muted">Closed</span>
+        {% else %}
+            <span class="badge badge-warning">Draft</span>
+        {% endif %}
+        &mdash; Issue {{ poll.target_issue_id or '—' }}
+        {% if poll.edition_slug %} ({{ poll.edition_slug }}){% endif %}
+    </p>
+</div>
+
+{% if message is defined and message %}
+<div class="alert alert-{{ level | default('info') }}">{{ message }}</div>
+{% endif %}
+
+<!-- Question -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Question</span>
+        {% if poll.status != 'closed' %}
+        <form method="post" action="/trivia/{{ poll.id }}/close" style="display:inline;">
+            <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('Close this poll? No more votes will be accepted.')">
+                Close Poll
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    <div style="padding:16px;">
+        <p style="font-size:18px;font-weight:600;margin-bottom:8px;">{{ poll.question_text }}</p>
+        {% if poll.question_type == 'trivia' and poll.explanation %}
+        <p style="color:#6B7280;font-size:14px;">
+            <strong>Explanation:</strong> {{ poll.explanation }}
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Results -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Results ({{ results.total_votes }} vote{{ 's' if results.total_votes != 1 else '' }})</span>
+    </div>
+    <div style="padding:16px;">
+        {% for option in poll.options %}
+        {% set idx = loop.index0 %}
+        {% set votes = results.votes_by_option.get(idx, 0) %}
+        {% set pct = results.percentages.get(idx, 0.0) %}
+        {% set is_correct = (poll.question_type == 'trivia' and idx == poll.correct_option_index) %}
+
+        <div style="margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-weight:600;{% if is_correct %}color:#065F46;{% endif %}">
+                    {{ option }}
+                    {% if is_correct %}
+                        <span style="color:#10B981;" title="Correct answer">&#10003;</span>
+                    {% endif %}
+                </span>
+                <span style="color:#6B7280;font-size:14px;">{{ votes }} ({{ pct }}%)</span>
+            </div>
+            <div style="background:#F3F4F6;border-radius:4px;height:10px;width:100%;">
+                <div style="background:{% if is_correct %}#10B981{% else %}#6C3AED{% endif %};
+                            border-radius:4px;height:10px;width:{{ [pct, 1] | max }}%;
+                            transition:width 0.3s;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div style="margin-top:16px;">
+    <a href="/trivia" class="btn btn-secondary">&larr; Back to list</a>
+</div>
+{% endblock %}

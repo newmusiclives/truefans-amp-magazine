@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile.artist_name }} — TrueFans NEWSLETTERS</title>
+    <meta name="description" content="{{ profile.bio[:160] if profile.bio else profile.artist_name + ' on TrueFans NEWSLETTERS' }}">
+    <meta property="og:title" content="{{ profile.artist_name }} — TrueFans NEWSLETTERS">
+    <meta property="og:description" content="{{ profile.bio[:200] if profile.bio else 'Discover ' + profile.artist_name + ' on TrueFans NEWSLETTERS' }}">
+    {% if profile.image_url %}<meta property="og:image" content="{{ profile.image_url }}">{% endif %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --purple-glow: rgba(124, 92, 252, 0.3);
+            --gold: #f59e0b;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Nav */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+        .nav-brand span { color: var(--accent); }
+        .nav-links { display: flex; gap: 12px; align-items: center; }
+        .nav-link {
+            color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500;
+            padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        .nav-link-cta { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .nav-link-cta:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+
+        /* Profile header */
+        .profile-header {
+            padding: 120px 24px 40px;
+            max-width: 900px; margin: 0 auto;
+            display: flex; gap: 32px; align-items: flex-start;
+        }
+        .profile-image {
+            width: 160px; height: 160px; border-radius: 16px; object-fit: cover;
+            border: 2px solid var(--border); flex-shrink: 0;
+        }
+        .profile-placeholder {
+            width: 160px; height: 160px; border-radius: 16px; flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(124,92,252,0.2), rgba(232,100,90,0.2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; font-weight: 800; color: rgba(255,255,255,0.2);
+            border: 2px solid var(--border);
+        }
+        .profile-info { flex: 1; }
+        .profile-name {
+            font-size: clamp(28px, 4vw, 42px); font-weight: 900;
+            letter-spacing: -1.5px; margin-bottom: 12px;
+        }
+        .profile-genres {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+        }
+        .profile-genre {
+            font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+            padding: 4px 14px; border-radius: 100px;
+            background: rgba(124,92,252,0.12); color: #a78bfa;
+        }
+        .profile-meta {
+            font-size: 14px; color: var(--text-dim);
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        }
+        .featured-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 14px; border-radius: 100px; font-size: 12px; font-weight: 600;
+            background: rgba(245,158,11,0.12); color: var(--gold);
+            border: 1px solid rgba(245,158,11,0.25);
+        }
+
+        /* Content sections */
+        .profile-content {
+            max-width: 900px; margin: 0 auto; padding: 0 24px 80px;
+        }
+        .content-section {
+            margin-bottom: 40px;
+        }
+        .content-section h2 {
+            font-size: 18px; font-weight: 700; margin-bottom: 16px;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }
+
+        /* Bio */
+        .bio-text {
+            font-size: 16px; line-height: 1.8; color: var(--text-dim);
+            white-space: pre-wrap;
+        }
+
+        /* Social links */
+        .social-links {
+            display: flex; gap: 12px; flex-wrap: wrap;
+        }
+        .social-link {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border-radius: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--text); text-decoration: none; font-size: 14px; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .social-link:hover {
+            border-color: rgba(124,92,252,0.4); background: rgba(124,92,252,0.08);
+        }
+
+        /* Music embeds */
+        .music-embeds {
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        .music-embed {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 20px; overflow: hidden;
+        }
+        .music-embed iframe { width: 100%; border: none; border-radius: 8px; }
+
+        /* Features list */
+        .features-list { list-style: none; }
+        .feature-item {
+            padding: 12px 16px; border-radius: 10px;
+            background: var(--bg-card); border: 1px solid var(--border);
+            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .feature-item-title { font-weight: 600; font-size: 15px; }
+        .feature-item-meta { font-size: 13px; color: var(--text-dim); }
+
+        /* Follow section */
+        .follow-section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px; text-align: center;
+        }
+        .follow-section h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .follow-section p { font-size: 14px; color: var(--text-dim); margin-bottom: 16px; }
+        .follow-form { display: flex; gap: 12px; justify-content: center; max-width: 400px; margin: 0 auto; }
+        .follow-form input {
+            flex: 1; padding: 10px 16px; border-radius: 8px;
+            background: var(--bg); border: 1px solid var(--border);
+            color: var(--text); font-size: 14px; font-family: var(--font); outline: none;
+        }
+        .follow-form input:focus { border-color: var(--purple); }
+        .follow-form button {
+            padding: 10px 24px; border-radius: 8px; border: none;
+            background: linear-gradient(135deg, var(--accent), #d4524a);
+            color: #fff; font-size: 14px; font-weight: 600; font-family: var(--font);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .follow-form button:hover { transform: translateY(-1px); }
+        .follow-count { font-size: 13px; color: var(--text-dim); margin-top: 8px; display: block; }
+        .follow-success { color: #34d399; font-size: 13px; margin-left: 8px; }
+
+        /* Website link */
+        .website-link {
+            color: var(--accent); text-decoration: none; font-weight: 500;
+        }
+        .website-link:hover { text-decoration: underline; }
+
+        /* Footer */
+        .footer {
+            text-align: center; padding: 32px 24px; border-top: 1px solid var(--border);
+            font-size: 13px; color: var(--text-dim);
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 640px) {
+            nav { padding: 16px 20px; }
+            .profile-header { flex-direction: column; align-items: center; text-align: center; }
+            .profile-genres { justify-content: center; }
+            .profile-meta { justify-content: center; }
+            .follow-form { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">True<span>Fans</span></a>
+        <div class="nav-links">
+            <a href="/artists" class="nav-link">Artists</a>
+            <a href="/newsletters" class="nav-link">Newsletters</a>
+            <a href="/subscribe" class="nav-link nav-link-cta">Subscribe</a>
+        </div>
+    </nav>
+
+    <section class="profile-header">
+        {% if profile.image_url %}
+        <img class="profile-image" src="{{ profile.image_url }}" alt="{{ profile.artist_name }}">
+        {% else %}
+        <div class="profile-placeholder">{{ profile.artist_name[:2] | upper }}</div>
+        {% endif %}
+        <div class="profile-info">
+            <h1 class="profile-name">{{ profile.artist_name }}</h1>
+            {% if profile.genres %}
+            <div class="profile-genres">
+                {% for g in profile.genres.split(',') %}
+                <span class="profile-genre">{{ g.strip() }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div class="profile-meta">
+                <span>{{ profile.follower_count }} follower{{ 's' if profile.follower_count != 1 else '' }}</span>
+                {% if profile.website %}
+                <a href="{{ profile.website }}" class="website-link" target="_blank" rel="noopener">Website</a>
+                {% endif %}
+                {% if profile.features %}
+                <span class="featured-badge">Featured in TrueFans NEWSLETTERS</span>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <div class="profile-content">
+        {% if profile.bio %}
+        <section class="content-section">
+            <h2>About</h2>
+            <div class="bio-text">{{ profile.bio }}</div>
+        </section>
+        {% endif %}
+
+        {% set social = {} %}
+        {% if profile.social_links_json and profile.social_links_json != '{}' %}
+            {% set social = profile.social_links_json %}
+        {% endif %}
+        {% if social and social is mapping and social|length > 0 %}
+        <section class="content-section">
+            <h2>Connect</h2>
+            <div class="social-links">
+                {% for platform, url in social.items() %}
+                {% if url %}
+                <a href="{{ url }}" class="social-link" target="_blank" rel="noopener">
+                    {{ platform | capitalize }}
+                </a>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% set embeds = [] %}
+        {% if profile.music_embeds_json and profile.music_embeds_json != '[]' %}
+            {% set embeds = profile.music_embeds_json %}
+        {% endif %}
+        {% if embeds and embeds is iterable and embeds|length > 0 %}
+        <section class="content-section">
+            <h2>Music</h2>
+            <div class="music-embeds">
+                {% for embed in embeds %}
+                <div class="music-embed">
+                    {% if embed.embed_html %}
+                    {{ embed.embed_html | safe }}
+                    {% elif embed.url %}
+                    <a href="{{ embed.url }}" target="_blank" rel="noopener" class="social-link">{{ embed.title or embed.url }}</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        {% if profile.features %}
+        <section class="content-section">
+            <h2>Newsletter Features</h2>
+            <ul class="features-list">
+                {% for feat in profile.features %}
+                <li class="feature-item">
+                    <span class="feature-item-title">
+                        {% if feat.issue_title %}{{ feat.issue_title }}{% else %}Issue #{{ feat.issue_number }}{% endif %}
+                    </span>
+                    <span class="feature-item-meta">
+                        {% if feat.section_slug %}{{ feat.section_slug | replace('_', ' ') | title }}{% endif %}
+                        {% if feat.edition_slug %} &middot; {{ feat.edition_slug | title }}{% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </section>
+        {% endif %}
+
+        <section class="content-section">
+            <div class="follow-section">
+                <h3>Follow {{ profile.artist_name }}</h3>
+                <p>Get notified when {{ profile.artist_name }} is featured in upcoming newsletters.</p>
+                <div id="follow-result">
+                    <form class="follow-form"
+                          hx-post="/artists/{{ profile.slug }}/follow"
+                          hx-target="#follow-result"
+                          hx-swap="innerHTML">
+                        <input type="email" name="email" placeholder="Your subscriber email" required>
+                        <button type="submit">Follow</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <a href="/">TrueFans NEWSLETTERS</a> — for Industry Professionals, Music Artists and Fans
+    </footer>
+</body>
+</html>

@@ -2,71 +2,203 @@
 <div class="alert alert-{{ level }}" style="margin-bottom:16px">{{ message }}</div>
 {% endif %}
 
-<div class="card" id="sections-table">
-    <div class="card-header">
-        <span class="card-title">All Sections ({{ sections | length }})</span>
+{% set tab_order = ['industry', 'artist', 'fan'] %}
+
+<div id="sections-table">
+<style>
+    .stabs input[type="radio"] { display: none; }
+    .stabs .stab-labels { display: flex; border-bottom: 2px solid var(--border, #e5e7eb); margin: 0; padding: 0; }
+    .stabs .stab-labels label {
+        padding: 12px 22px; cursor: pointer; font-weight: 600; font-size: 14px;
+        color: var(--text-muted, #9ca3af); border-bottom: 3px solid transparent; margin-bottom: -2px;
+        transition: color 0.15s, border-color 0.15s; user-select: none;
+    }
+    .stabs .stab-labels label:hover { color: var(--text, #111); }
+    .stabs .stab-labels label .tc { font-weight: 400; font-size: 12px; opacity: 0.7; margin-left: 4px; }
+    .stabs .stab-panel { display: none; }
+    /* Show panel when matching radio is checked */
+    {% for slug in tab_order %}{% set ed = editions | selectattr('slug', 'equalto', slug) | first %}{% if ed %}
+    .stabs #stab-{{ ed.slug }}:checked ~ .stab-panel-{{ ed.slug }} { display: block; }
+    .stabs #stab-{{ ed.slug }}:checked ~ .stab-labels label[for="stab-{{ ed.slug }}"] { color: {{ ed.color }}; border-bottom-color: {{ ed.color }}; }
+    {% endif %}{% endfor %}
+    .stabs #stab-shared:checked ~ .stab-panel-shared { display: block; }
+    .stabs #stab-shared:checked ~ .stab-labels label[for="stab-shared"] { color: var(--text, #111); border-bottom-color: var(--text-muted, #9ca3af); }
+</style>
+
+<div class="card stabs" style="padding:0;overflow:hidden">
+    <!-- Hidden radio inputs -->
+    {% for slug in tab_order %}{% set ed = editions | selectattr('slug', 'equalto', slug) | first %}{% if ed %}
+    <input type="radio" name="edition-tab" id="stab-{{ ed.slug }}" {% if loop.first %}checked{% endif %}>
+    {% endif %}{% endfor %}
+    {% if grouped.shared %}
+    <input type="radio" name="edition-tab" id="stab-shared">
+    {% endif %}
+
+    <!-- Tab labels -->
+    <div class="stab-labels">
+        {% for slug in tab_order %}{% set ed = editions | selectattr('slug', 'equalto', slug) | first %}{% if ed %}
+        <label for="stab-{{ ed.slug }}">{{ ed.icon | default('') | safe }} {{ ed.name }} <span class="tc">({{ grouped[ed.slug] | length }})</span></label>
+        {% endif %}{% endfor %}
+        {% if grouped.shared %}
+        <label for="stab-shared">&#9881; Shared <span class="tc">({{ grouped.shared | length }})</span></label>
+        {% endif %}
     </div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Slug</th>
-                    <th>Display Name</th>
-                    <th>Type</th>
-                    <th>Word Count</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sec in sections %}
-                {% if sec.section_type != 'suggested' %}
-                <tr>
-                    <td>{{ sec.sort_order }}</td>
-                    <td style="font-family:var(--font-mono);font-size:13px">{{ sec.slug }}</td>
-                    <td>{{ sec.display_name }}</td>
-                    <td>
-                        <select class="select-sm"
-                                hx-post="/sections/update-type/{{ sec.slug }}"
-                                hx-target="#sections-table"
-                                hx-swap="outerHTML"
-                                name="section_type">
-                            <option value="core" {% if sec.section_type == 'core' %}selected{% endif %}>Core</option>
-                            <option value="rotating" {% if sec.section_type == 'rotating' %}selected{% endif %}>Rotating</option>
-                        </select>
-                    </td>
-                    <td>
-                        <select class="select-sm"
-                                hx-post="/sections/update-word-count/{{ sec.slug }}"
-                                hx-target="#sections-table"
-                                hx-swap="outerHTML"
-                                name="word_count_label">
-                            <option value="short" {% if sec.word_count_label == 'short' %}selected{% endif %}>Short</option>
-                            <option value="medium" {% if sec.word_count_label == 'medium' %}selected{% endif %}>Medium</option>
-                            <option value="long" {% if sec.word_count_label == 'long' %}selected{% endif %}>Long</option>
-                        </select>
-                        <span class="wc-target">~{{ sec.target_word_count }}w</span>
-                    </td>
-                    <td>
-                        {% if sec.is_active %}
-                        <span class="badge badge-active">Active</span>
-                        {% else %}
-                        <span class="badge badge-inactive">Inactive</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <button class="btn btn-ghost btn-sm"
-                                hx-post="/sections/toggle/{{ sec.slug }}"
-                                hx-target="#sections-table"
-                                hx-swap="outerHTML">
-                            {% if sec.is_active %}Disable{% else %}Enable{% endif %}
-                        </button>
-                    </td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
+
+    <!-- Edition panels -->
+    {% for slug in tab_order %}
+    {% set ed = editions | selectattr('slug', 'equalto', slug) | first %}
+    {% if ed %}
+    <div class="stab-panel stab-panel-{{ ed.slug }}">
+        <div style="padding:8px 16px 0">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ ed.color }};display:inline-block"></span>
+                <strong>{{ ed.name }}</strong>
+                <span style="color:var(--text-muted);font-size:13px">— {{ ed.audience }}</span>
+                <span style="color:var(--text-dim);font-size:12px;margin-left:auto">{{ grouped[ed.slug] | length }} sections</span>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Slug</th>
+                        <th>Display Name</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Word Count</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sec in grouped[ed.slug] %}
+                    <tr>
+                        <td>{{ sec.sort_order }}</td>
+                        <td style="font-family:var(--font-mono);font-size:13px">{{ sec.slug }}</td>
+                        <td>{{ sec.display_name }}</td>
+                        <td><span style="font-size:12px;color:var(--text-muted)">{{ sec.category or '—' }}</span></td>
+                        <td>
+                            <select class="select-sm"
+                                    hx-post="/sections/update-type/{{ sec.slug }}"
+                                    hx-target="#sections-table"
+                                    hx-swap="outerHTML"
+                                    name="section_type">
+                                <option value="core" {% if sec.section_type == 'core' %}selected{% endif %}>Core</option>
+                                <option value="rotating" {% if sec.section_type == 'rotating' %}selected{% endif %}>Rotating</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="select-sm"
+                                    hx-post="/sections/update-word-count/{{ sec.slug }}"
+                                    hx-target="#sections-table"
+                                    hx-swap="outerHTML"
+                                    name="word_count_label">
+                                <option value="short" {% if sec.word_count_label == 'short' %}selected{% endif %}>Short</option>
+                                <option value="medium" {% if sec.word_count_label == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="long" {% if sec.word_count_label == 'long' %}selected{% endif %}>Long</option>
+                            </select>
+                            <span class="wc-target">~{{ sec.target_word_count }}w</span>
+                        </td>
+                        <td>
+                            {% if sec.is_active %}
+                            <span class="badge badge-active">Active</span>
+                            {% else %}
+                            <span class="badge badge-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm"
+                                    hx-post="/sections/toggle/{{ sec.slug }}"
+                                    hx-target="#sections-table"
+                                    hx-swap="outerHTML">
+                                {% if sec.is_active %}Disable{% else %}Enable{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+    {% endif %}
+    {% endfor %}
+
+    <!-- Shared sections panel -->
+    {% if grouped.shared %}
+    <div class="stab-panel stab-panel-shared">
+        <div style="padding:8px 16px 0">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0">
+                <span style="width:10px;height:10px;border-radius:50%;background:var(--text-muted);display:inline-block"></span>
+                <strong>Shared Sections</strong>
+                <span style="color:var(--text-muted);font-size:13px">— Used across all editions</span>
+                <span style="color:var(--text-dim);font-size:12px;margin-left:auto">{{ grouped.shared | length }} sections</span>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Slug</th>
+                        <th>Display Name</th>
+                        <th>Category</th>
+                        <th>Type</th>
+                        <th>Word Count</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sec in grouped.shared %}
+                    <tr>
+                        <td>{{ sec.sort_order }}</td>
+                        <td style="font-family:var(--font-mono);font-size:13px">{{ sec.slug }}</td>
+                        <td>{{ sec.display_name }}</td>
+                        <td><span style="font-size:12px;color:var(--text-muted)">{{ sec.category or '—' }}</span></td>
+                        <td>
+                            <select class="select-sm"
+                                    hx-post="/sections/update-type/{{ sec.slug }}"
+                                    hx-target="#sections-table"
+                                    hx-swap="outerHTML"
+                                    name="section_type">
+                                <option value="core" {% if sec.section_type == 'core' %}selected{% endif %}>Core</option>
+                                <option value="rotating" {% if sec.section_type == 'rotating' %}selected{% endif %}>Rotating</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select class="select-sm"
+                                    hx-post="/sections/update-word-count/{{ sec.slug }}"
+                                    hx-target="#sections-table"
+                                    hx-swap="outerHTML"
+                                    name="word_count_label">
+                                <option value="short" {% if sec.word_count_label == 'short' %}selected{% endif %}>Short</option>
+                                <option value="medium" {% if sec.word_count_label == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="long" {% if sec.word_count_label == 'long' %}selected{% endif %}>Long</option>
+                            </select>
+                            <span class="wc-target">~{{ sec.target_word_count }}w</span>
+                        </td>
+                        <td>
+                            {% if sec.is_active %}
+                            <span class="badge badge-active">Active</span>
+                            {% else %}
+                            <span class="badge badge-inactive">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm"
+                                    hx-post="/sections/toggle/{{ sec.slug }}"
+                                    hx-target="#sections-table"
+                                    hx-swap="outerHTML">
+                                {% if sec.is_active %}Disable{% else %}Enable{% endif %}
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
 </div>

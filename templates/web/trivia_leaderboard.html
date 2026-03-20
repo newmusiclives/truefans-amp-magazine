@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Leaderboard — TrueFans NEWSLETTERS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .brand {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #6C3AED;
+            margin-bottom: 8px;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #6B7280;
+            font-size: 15px;
+            margin-bottom: 32px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        thead {
+            background: #F3F4F6;
+        }
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6B7280;
+        }
+        td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-top: 1px solid #F3F4F6;
+        }
+        .rank {
+            font-weight: 800;
+            font-size: 16px;
+            color: #6C3AED;
+            width: 50px;
+        }
+        .rank-1 { color: #F59E0B; font-size: 20px; }
+        .rank-2 { color: #9CA3AF; font-size: 18px; }
+        .rank-3 { color: #B45309; font-size: 17px; }
+        .name {
+            font-weight: 600;
+        }
+        .score {
+            font-weight: 700;
+            font-size: 16px;
+            color: #6C3AED;
+            text-align: right;
+        }
+        .stat {
+            color: #6B7280;
+            text-align: center;
+        }
+        .empty {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+        .footer a {
+            color: #6C3AED;
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">TrueFans NEWSLETTERS</div>
+        <h1>Trivia Leaderboard</h1>
+        <p class="subtitle">Top music knowledge masters</p>
+
+        <div class="card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th style="text-align:center;">Correct</th>
+                        <th style="text-align:center;">Streak</th>
+                        <th style="text-align:right;">Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in leaderboard %}
+                    <tr>
+                        <td class="rank {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% endif %}">
+                            {{ loop.index }}
+                        </td>
+                        <td class="name">{{ entry.first_name or entry.email.split('@')[0] }}</td>
+                        <td class="stat">{{ entry.correct_count }}/{{ entry.total_answered }}</td>
+                        <td class="stat">{{ entry.streak }}</td>
+                        <td class="score">{{ entry.score }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not leaderboard %}
+                    <tr>
+                        <td colspan="5" class="empty">
+                            No trivia scores yet. Be the first!
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="footer">
+            Powered by <a href="/">TrueFans NEWSLETTERS</a>
+        </div>
+    </div>
+</body>
+</html>

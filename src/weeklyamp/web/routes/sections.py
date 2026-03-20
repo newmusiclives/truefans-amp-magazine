@@ -19,12 +19,53 @@ def _get_all_sections(repo):
     return [dict(r) for r in all_sections]
 
 
+def _group_sections_by_edition(repo, all_sections):
+    """Group sections into edition buckets + shared."""
+    editions = repo.get_editions(active_only=False)
+
+    # Build slug -> edition mapping
+    edition_slugs: dict[str, set[str]] = {}
+    for ed in editions:
+        slugs = set(s.strip() for s in (ed.get("section_slugs", "") or "").split(",") if s.strip())
+        edition_slugs[ed["slug"]] = slugs
+
+    # Group sections
+    grouped: dict[str, list[dict]] = {}
+    for ed in editions:
+        grouped[ed["slug"]] = []
+
+    grouped["shared"] = []
+    assigned = set()
+
+    for sec in all_sections:
+        if sec.get("section_type") == "suggested":
+            continue
+        slug = sec["slug"]
+        placed = False
+        for ed in editions:
+            if slug in edition_slugs[ed["slug"]]:
+                grouped[ed["slug"]].append(sec)
+                assigned.add(slug)
+                placed = True
+                break
+        if not placed:
+            grouped["shared"].append(sec)
+
+    return editions, grouped
+
+
 @router.get("/", response_class=HTMLResponse)
 async def sections_page():
     repo = get_repo()
     all_sections = _get_all_sections(repo)
+    editions, grouped = _group_sections_by_edition(repo, all_sections)
     suggestions = repo.get_suggested_sections()
-    return render("sections.html", sections=all_sections, suggestions=suggestions)
+    return render("sections.html",
+        sections=all_sections,
+        editions=editions,
+        grouped=grouped,
+        suggestions=suggestions,
+    )
 
 
 @router.post("/add", response_class=HTMLResponse)
@@ -43,8 +84,10 @@ async def add_section(
         level = "error"
 
     all_sections = _get_all_sections(repo)
+    editions, grouped = _group_sections_by_edition(repo, all_sections)
     return render("partials/sections_table.html",
-        sections=all_sections, message=message, level=level)
+        sections=all_sections, editions=editions, grouped=grouped,
+        message=message, level=level)
 
 
 @router.post("/toggle/{slug}", response_class=HTMLResponse)
@@ -56,7 +99,9 @@ async def toggle_section(slug: str):
         repo.update_section(slug, is_active=new_state)
 
     all_sections = _get_all_sections(repo)
-    return render("partials/sections_table.html", sections=all_sections)
+    editions, grouped = _group_sections_by_edition(repo, all_sections)
+    return render("partials/sections_table.html",
+        sections=all_sections, editions=editions, grouped=grouped)
 
 
 @router.post("/update-word-count/{slug}", response_class=HTMLResponse)
@@ -67,7 +112,9 @@ async def update_word_count(slug: str, word_count_label: str = Form(...)):
     repo.update_section_word_count(slug, word_count_label, target)
 
     all_sections = _get_all_sections(repo)
-    return render("partials/sections_table.html", sections=all_sections)
+    editions, grouped = _group_sections_by_edition(repo, all_sections)
+    return render("partials/sections_table.html",
+        sections=all_sections, editions=editions, grouped=grouped)
 
 
 @router.post("/update-type/{slug}", response_class=HTMLResponse)
@@ -77,7 +124,9 @@ async def update_type(slug: str, section_type: str = Form(...)):
         repo.update_section(slug, section_type=section_type)
 
     all_sections = _get_all_sections(repo)
-    return render("partials/sections_table.html", sections=all_sections)
+    editions, grouped = _group_sections_by_edition(repo, all_sections)
+    return render("partials/sections_table.html",
+        sections=all_sections, editions=editions, grouped=grouped)
 
 
 @router.post("/suggest", response_class=HTMLResponse)

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}A/B Tests — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_ab_tests %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>A/B Tests</h2>
+    <p>Split-test subject lines, content, and send times</p>
+</div>
+
+{% if not enabled %}
+<div class="empty-state">
+    <div class="icon">&#9878;</div>
+    <h3>Feature not yet activated</h3>
+    <p>A/B testing is currently disabled. To enable it, set <code>ab_testing.enabled: true</code> in <code>config/default.yaml</code>.</p>
+</div>
+{% else %}
+
+<div id="ab-alerts"></div>
+
+<!-- Create Test Form -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Create New A/B Test</span>
+    </div>
+    <details>
+        <summary style="cursor:pointer;color:var(--accent);font-size:13px;padding:8px 0">Expand form</summary>
+        <form hx-post="/ab-tests/create" hx-target="#ab-alerts" hx-swap="innerHTML"
+              style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+            <div class="form-group">
+                <label>Issue ID</label>
+                <input type="number" name="issue_id" required placeholder="e.g. 1">
+            </div>
+            <div class="form-group">
+                <label>Test Type</label>
+                <select name="test_type">
+                    <option value="subject">Subject Line</option>
+                    <option value="content">Content</option>
+                    <option value="send_time">Send Time</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Variant A</label>
+                <input type="text" name="variant_a" required placeholder="e.g. Original subject line">
+            </div>
+            <div class="form-group">
+                <label>Variant B</label>
+                <input type="text" name="variant_b" required placeholder="e.g. Alternative subject line">
+            </div>
+            <div style="grid-column:1/-1">
+                <button type="submit" class="btn btn-primary">Create Test</button>
+            </div>
+        </form>
+    </details>
+</div>
+
+<!-- Tests Table -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">All Tests</span>
+        <span style="color:var(--text-muted);font-size:12px">{{ tests | length }} total</span>
+    </div>
+    {% if tests %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Issue #</th>
+                    <th>Type</th>
+                    <th>Variant A</th>
+                    <th>Variant B</th>
+                    <th>Status</th>
+                    <th>Winner</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for test in tests %}
+                <tr>
+                    <td>{{ test.id }}</td>
+                    <td>{{ test.issue_id }}</td>
+                    <td><span class="badge">{{ test.test_type }}</span></td>
+                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ test.variant_a }}">{{ test.variant_a }}</td>
+                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="{{ test.variant_b }}">{{ test.variant_b }}</td>
+                    <td>
+                        <span class="badge badge-{{ test.status }}">{{ test.status }}</span>
+                    </td>
+                    <td>
+                        {% if test.winner %}
+                        <span style="color:var(--green);font-weight:600">{{ test.winner }}</span>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if test.status in ('running', 'measuring') %}
+                        <button class="btn btn-sm btn-outline"
+                                hx-post="/ab-tests/{{ test.id }}/evaluate"
+                                hx-target="#ab-alerts"
+                                hx-swap="innerHTML">
+                            Evaluate
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                {% if test.results %}
+                <tr>
+                    <td colspan="8" style="padding:0">
+                        <div style="background:var(--bg-secondary);padding:12px 16px;border-top:1px solid var(--border)">
+                            <strong style="font-size:12px;color:var(--text-muted)">Results:</strong>
+                            <table style="margin-top:8px;font-size:13px">
+                                <thead>
+                                    <tr>
+                                        <th>Variant</th>
+                                        <th>Sends</th>
+                                        <th>Opens</th>
+                                        <th>Clicks</th>
+                                        <th>Open Rate</th>
+                                        <th>Click Rate</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in test.results %}
+                                    <tr>
+                                        <td><strong>{{ result.variant }}</strong></td>
+                                        <td>{{ result.sends or 0 }}</td>
+                                        <td>{{ result.opens or 0 }}</td>
+                                        <td>{{ result.clicks or 0 }}</td>
+                                        <td>
+                                            {% if result.sends %}
+                                            {{ "%.1f%%" | format((result.opens or 0) / result.sends * 100) }}
+                                            {% else %}—{% endif %}
+                                        </td>
+                                        <td>
+                                            {% if result.sends %}
+                                            {{ "%.1f%%" | format((result.clicks or 0) / result.sends * 100) }}
+                                            {% else %}—{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
+
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color:var(--text-dim);font-size:13px;padding:8px 0">No A/B tests yet. Create one above.</p>
+    {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}

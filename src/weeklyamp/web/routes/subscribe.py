@@ -15,6 +15,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from jinja2 import Environment, FileSystemLoader
 
 from weeklyamp.core.config import load_config
+from weeklyamp.content.referrals import ReferralManager
 from weeklyamp.web.deps import get_repo as _get_repo
 
 logger = logging.getLogger(__name__)
@@ -114,6 +115,12 @@ async def subscribe_process(request: Request):
             days = sorted(allowed_days)  # default: all 3 days
         edition_days[slug] = days
 
+    # Check for referral code from query params or form
+    ref_code = form.get("ref", "") or ""
+    if not ref_code:
+        ref_code = request.query_params.get("ref", "") or ""
+    ref_code = ref_code.strip()
+
     try:
         sub_id = repo.subscribe_to_editions(
             email=email,
@@ -127,14 +134,28 @@ async def subscribe_process(request: Request):
         repo.set_subscriber_tokens(sub_id, verification_token, unsubscribe_token)
         _record_subscribe(ip)
 
+        # Generate referral code + record referral source (if enabled)
+        cfg = load_config()
+        referral_code = None
+        if cfg.referrals.enabled:
+            mgr = ReferralManager(repo, cfg.referrals)
+            referral_code = mgr.get_or_create_code(sub_id)
+
+            # Track who referred this subscriber
+            if ref_code:
+                mgr.record_referral(ref_code, email)
+
         # PRG: redirect to confirmation page with edition info + days in query
         parts = []
         for slug in selected_slugs:
             days_str = "+".join(edition_days[slug])
             parts.append(f"{slug}:{days_str}")
         editions_param = ",".join(parts)
+        confirm_url = f"/subscribe/confirm?editions={editions_param}"
+        if referral_code:
+            confirm_url += f"&rcode={referral_code}"
         return RedirectResponse(
-            f"/subscribe/confirm?editions={editions_param}",
+            confirm_url,
             status_code=303,
         )
     except Exception:
@@ -176,6 +197,7 @@ async def verify_email(request: Request):
 async def subscribe_confirm(request: Request):
     repo = _get_repo()
     raw = request.query_params.get("editions", "")
+    rcode = request.query_params.get("rcode", "")
     editions = repo.get_editions(active_only=True)
     editions_by_slug = {e["slug"]: e for e in editions}
 
@@ -196,5 +218,27 @@ async def subscribe_confirm(request: Request):
             ed["selected_days"] = days
             selected.append(ed)
 
+    # Build referral URL if code was generated
+    cfg = load_config()
+    referral_url = ""
+    subscriber_count = 0
+    if rcode:
+        referral_url = f"{cfg.site_domain.rstrip('/')}/refer?code={rcode}"
+
+    # Get subscriber count for social proof
+    try:
+        conn = repo._conn()
+        row = conn.execute(
+            "SELECT COUNT(*) as cnt FROM subscribers WHERE status = 'active'"
+        ).fetchone()
+        conn.close()
+        subscriber_count = row["cnt"] if row else 0
+    except Exception:
+        pass
+
     tpl = _env.get_template("subscribe_confirm.html")
-    return tpl.render(selected_editions=selected)
+    return tpl.render(
+        selected_editions=selected,
+        referral_url=referral_url,
+        subscriber_count=subscriber_count,
+    )

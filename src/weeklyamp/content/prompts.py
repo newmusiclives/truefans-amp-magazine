@@ -33,6 +33,9 @@ def build_prompt(
     if target_word_count and word_count_label:
         prompt += f"\n\nIMPORTANT: Target length is {target_word_count} words ({word_count_label}). Stay within this range."
 
+    # Require a headline on the very first line
+    prompt += "\n\nFORMATTING: Your FIRST LINE must be a compelling, specific headline for this section — written as a Markdown heading (# Headline). This headline should hook the reader and preview the content (e.g., '# Own Your Space: How to Command Any Stage in the First 30 Seconds'). The headline is NOT the section name — it's a unique, article-style title for this specific piece. Then write the body content after the headline."
+
     # Ensure the AI always generates content, never asks for input
     prompt += "\n\nCRITICAL: You must write the actual section content now. Do NOT ask for more information, request clarification, or output a template. Generate the finished article directly."
 

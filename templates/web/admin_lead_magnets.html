@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Lead Magnets — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_lead_magnets %}active{% endblock %}
+
+{% block content %}
+<div style="padding: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h1 style="font-size: 1.5rem; font-weight: 700;">Lead Magnets</h1>
+        <a href="/resources" target="_blank" style="color: #7c5cfc; font-size: 0.85rem; text-decoration: none;">View public page &rarr;</a>
+    </div>
+
+    {% if message %}
+    <div style="padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;
+        background: {% if level == 'success' %}rgba(16,185,129,0.1){% elif level == 'error' %}rgba(239,68,68,0.1){% else %}rgba(124,92,252,0.1){% endif %};
+        color: {% if level == 'success' %}#10b981{% elif level == 'error' %}#ef4444{% else %}#7c5cfc{% endif %};
+        border: 1px solid {% if level == 'success' %}rgba(16,185,129,0.3){% elif level == 'error' %}rgba(239,68,68,0.3){% else %}rgba(124,92,252,0.3){% endif %};">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- Create Form -->
+    <details style="margin-bottom: 32px;">
+        <summary style="cursor: pointer; font-weight: 600; color: #e8645a; font-size: 0.95rem; padding: 12px 0;">
+            + Create New Lead Magnet
+        </summary>
+        <form method="POST" action="/admin/lead-magnets/create"
+              hx-post="/admin/lead-magnets/create" hx-target="body" hx-swap="innerHTML"
+              style="background: #13131f; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; margin-top: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #9ca3af; margin-bottom: 4px;">Title *</label>
+                    <input type="text" name="title" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #0a0a12; color: #f0f0f5; font-size: 0.9rem;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #9ca3af; margin-bottom: 4px;">Slug (auto-generated if empty)</label>
+                    <input type="text" name="slug" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #0a0a12; color: #f0f0f5; font-size: 0.9rem;" placeholder="my-free-guide">
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #9ca3af; margin-bottom: 4px;">Description</label>
+                    <textarea name="description" rows="3" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #0a0a12; color: #f0f0f5; font-size: 0.9rem; resize: vertical;"></textarea>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #9ca3af; margin-bottom: 4px;">Edition</label>
+                    <select name="edition_slug" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #0a0a12; color: #f0f0f5; font-size: 0.9rem;">
+                        <option value="">All editions</option>
+                        {% for ed in editions %}
+                        <option value="{{ ed.slug }}">{{ ed.name if ed.name else ed.slug }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #9ca3af; margin-bottom: 4px;">File URL *</label>
+                    <input type="url" name="file_url" required style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #0a0a12; color: #f0f0f5; font-size: 0.9rem;" placeholder="https://...">
+                </div>
+                <div style="grid-column: span 2;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 600; color: #9ca3af; margin-bottom: 4px;">Cover Image URL</label>
+                    <input type="url" name="cover_image_url" style="width: 100%; padding: 10px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #0a0a12; color: #f0f0f5; font-size: 0.9rem;" placeholder="https://...">
+                </div>
+            </div>
+            <button type="submit" style="margin-top: 16px; padding: 10px 24px; border-radius: 8px; border: none; background: #e8645a; color: #fff; font-weight: 700; font-size: 0.9rem; cursor: pointer;">
+                Create Lead Magnet
+            </button>
+        </form>
+    </details>
+
+    <!-- Magnets Table -->
+    {% if magnets %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Title</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Slug</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Edition</th>
+                    <th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Downloads</th>
+                    <th style="padding: 10px 12px; text-align: center; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Active</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in magnets %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                    <td style="padding: 12px;">
+                        <strong>{{ m.title }}</strong>
+                        {% if m.description %}
+                        <br><span style="color: #9ca3af; font-size: 0.8rem;">{{ m.description[:80] }}{% if m.description|length > 80 %}...{% endif %}</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; font-family: monospace; font-size: 0.8rem; color: #9ca3af;">{{ m.slug }}</td>
+                    <td style="padding: 12px;">
+                        {% if m.edition_slug %}
+                        <span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+                            {% if m.edition_slug == 'fan' %}background: rgba(232,100,90,0.15); color: #e8645a;
+                            {% elif m.edition_slug == 'artist' %}background: rgba(124,92,252,0.15); color: #7c5cfc;
+                            {% elif m.edition_slug == 'industry' %}background: rgba(245,158,11,0.15); color: #f59e0b;
+                            {% else %}background: rgba(255,255,255,0.08); color: #9ca3af;{% endif %}">
+                            {{ m.edition_slug }}
+                        </span>
+                        {% else %}
+                        <span style="color: #9ca3af;">All</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px; text-align: center; font-weight: 700;">{{ m.download_count or 0 }}</td>
+                    <td style="padding: 12px; text-align: center;">
+                        {% if m.is_active %}
+                        <span style="color: #10b981; font-weight: 600;">Yes</span>
+                        {% else %}
+                        <span style="color: #ef4444; font-weight: 600;">No</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">
+                        <a href="/resources/{{ m.slug }}" target="_blank" style="color: #7c5cfc; font-size: 0.85rem; text-decoration: none;">View &rarr;</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+        <p style="font-size: 1.1rem;">No lead magnets yet.</p>
+        <p style="margin-top: 8px; font-size: 0.9rem;">Create your first one above to start building your email list.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

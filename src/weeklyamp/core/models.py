@@ -173,6 +173,107 @@ class CalendarStatus(str, Enum):
     COMPLETE = "complete"
 
 
+# --- Tracking ---
+
+class TrackingEventType(str, Enum):
+    OPEN = "open"
+    CLICK = "click"
+    UNSUBSCRIBE = "unsubscribe"
+
+
+# --- A/B Testing ---
+
+class ABTestType(str, Enum):
+    SUBJECT = "subject"
+    CONTENT = "content"
+    SEND_TIME = "send_time"
+
+
+class ABTestStatus(str, Enum):
+    DRAFT = "draft"
+    RUNNING = "running"
+    MEASURING = "measuring"
+    COMPLETE = "complete"
+    CANCELLED = "cancelled"
+
+
+# --- Bounce ---
+
+class BounceType(str, Enum):
+    HARD = "hard"
+    SOFT = "soft"
+    COMPLAINT = "complaint"
+
+
+# --- Scheduled Send ---
+
+class ScheduledSendStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    SENT = "sent"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
+# --- Webhook ---
+
+class WebhookDirection(str, Enum):
+    INBOUND = "inbound"
+    OUTBOUND = "outbound"
+
+
+class WebhookEventType(str, Enum):
+    ISSUE_PUBLISHED = "issue.published"
+    SUBSCRIBER_NEW = "subscriber.new"
+    SUBSCRIBER_UNSUBSCRIBED = "subscriber.unsubscribed"
+    BOUNCE_RECEIVED = "bounce.received"
+    SUBMISSION_RECEIVED = "submission.received"
+
+
+# --- Content Frequency ---
+
+class ContentFrequency(str, Enum):
+    ALL = "all"
+    WEEKLY_DIGEST = "weekly_digest"
+    HIGHLIGHTS_ONLY = "highlights_only"
+
+
+# --- Reusable Block ---
+
+class ReusableBlockType(str, Enum):
+    SPONSOR = "sponsor"
+    CONTENT = "content"
+    CTA = "cta"
+    HEADER = "header"
+    FOOTER = "footer"
+
+
+# --- User Role ---
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    EDITOR = "editor"
+    REVIEWER = "reviewer"
+    VIEWER = "viewer"
+
+
+# --- Re-engagement ---
+
+class ReengagementType(str, Enum):
+    WINBACK = "winback"
+    SURVEY = "survey"
+    LAST_CHANCE = "last_chance"
+
+
+# --- Export ---
+
+class ExportType(str, Enum):
+    SUBSCRIBERS = "subscribers"
+    CONTENT = "content"
+    CONFIG = "config"
+    FULL_BACKUP = "full_backup"
+
+
 # --- Day of Week ---
 
 class DayOfWeek(str, Enum):
@@ -312,7 +413,7 @@ class AssembledIssue(BaseModel):
     issue_id: int
     html_content: str = ""
     plain_text: str = ""
-    beehiiv_post_id: str = ""
+    ghl_campaign_id: str = ""
     assembled_at: Optional[datetime] = None
     published_at: Optional[datetime] = None
 
@@ -322,7 +423,7 @@ class AssembledIssue(BaseModel):
 class Subscriber(BaseModel):
     id: Optional[int] = None
     email: str
-    beehiiv_id: str = ""
+    ghl_contact_id: str = ""
     status: str = "active"
     subscribed_at: Optional[datetime] = None
     synced_at: Optional[datetime] = None
@@ -333,7 +434,7 @@ class Subscriber(BaseModel):
 class EngagementMetric(BaseModel):
     id: Optional[int] = None
     issue_id: int
-    beehiiv_post_id: str = ""
+    ghl_campaign_id: str = ""
     sends: int = 0
     opens: int = 0
     clicks: int = 0
@@ -561,10 +662,15 @@ class AIConfig(BaseModel):
     temperature: float = 0.7
 
 
-class BeehiivConfig(BaseModel):
+class GHLConfig(BaseModel):
     api_key: str = ""
-    publication_id: str = ""
-    base_url: str = "https://api.beehiiv.com/v2"
+    location_id: str = ""
+    base_url: str = "https://services.leadconnectorhq.com"
+    edition_tags: dict[str, str] = Field(default_factory=lambda: {
+        "fan": "newsletter-fan",
+        "artist": "newsletter-artist",
+        "industry": "newsletter-industry",
+    })
 
 
 class NewsletterConfig(BaseModel):
@@ -611,6 +717,132 @@ class EmailConfig(BaseModel):
 
 class AnalyticsConfig(BaseModel):
     plausible_domain: str = ""
+    tracking_enabled: bool = False
+    utm_auto_tag: bool = False
+    utm_source: str = "truefans_newsletter"
+    utm_medium: str = "email"
+
+
+class TrackingConfig(BaseModel):
+    open_tracking: bool = False
+    click_tracking: bool = False
+    tracking_domain: str = ""  # e.g. "trk.truefansnewsletters.com"
+
+
+class ABTestConfig(BaseModel):
+    enabled: bool = False
+    default_sample_percent: int = 20
+    default_measurement_hours: int = 4
+    auto_send_winner: bool = True
+
+
+class DeliverabilityConfig(BaseModel):
+    bounce_handling: bool = False
+    hard_bounce_threshold: int = 1
+    soft_bounce_threshold: int = 3
+    auto_suppress: bool = False
+    warmup_enabled: bool = False
+    warmup_daily_start: int = 50
+    warmup_ramp_increment: int = 50
+
+
+class SchedulerConfig(BaseModel):
+    enabled: bool = False
+    check_interval_seconds: int = 60
+    default_send_hour: int = 9
+    default_timezone: str = "America/New_York"
+
+
+class WebhookConfig(BaseModel):
+    enabled: bool = False
+    inbound_secret: str = ""
+    max_retries: int = 3
+    timeout_seconds: int = 10
+
+
+class ReferralConfig(BaseModel):
+    enabled: bool = False
+    reward_threshold: int = 3
+    code_prefix: str = "TF"
+
+
+class WelcomeSequenceConfig(BaseModel):
+    enabled: bool = False
+    default_steps: int = 3
+
+
+class ReengagementConfig(BaseModel):
+    enabled: bool = False
+    inactive_days: int = 30
+    suppress_after_days: int = 60
+
+
+class RolesConfig(BaseModel):
+    enabled: bool = False
+    require_login: bool = True
+
+
+class SpotifyConfig(BaseModel):
+    enabled: bool = False
+    client_id: str = ""
+    client_secret: str = ""
+    cache_ttl_hours: int = 24
+    auto_lookup_submissions: bool = False
+
+
+class ArtistProfilesConfig(BaseModel):
+    enabled: bool = False
+    allow_self_service: bool = False
+    require_approval: bool = True
+
+
+class GenrePreferencesConfig(BaseModel):
+    enabled: bool = False
+    available_genres: list[str] = Field(default_factory=lambda: [
+        "hip-hop", "rock", "pop", "country", "electronic", "jazz",
+        "r&b", "latin", "metal", "indie", "classical", "folk",
+        "reggae", "punk", "world",
+    ])
+    weight_sections_by_genre: bool = False
+    max_genres_per_subscriber: int = 5
+
+
+class SectionEngagementConfig(BaseModel):
+    enabled: bool = False
+    score_decay_days: int = 90
+    min_events_for_profile: int = 5
+    reorder_by_engagement: bool = False
+
+
+class TriviaPollsConfig(BaseModel):
+    enabled: bool = False
+    max_options: int = 6
+    show_results_in_next_issue: bool = True
+    leaderboard_size: int = 25
+
+
+class LeadMagnetsConfig(BaseModel):
+    enabled: bool = False
+
+
+class SponsorPortalConfig(BaseModel):
+    enabled: bool = False
+    public_rates_visible: bool = False
+    base_cpm: float = 30.0
+    premium_position_multiplier: float = 1.5
+    weekly_discount: float = 0.9
+    monthly_discount: float = 0.8
+
+
+class ContestsConfig(BaseModel):
+    enabled: bool = False
+    max_active: int = 3
+
+
+class ReaderContentConfig(BaseModel):
+    enabled: bool = False
+    auto_approve: bool = False
+    max_per_issue: int = 2
 
 
 class RateLimitConfig(BaseModel):
@@ -625,13 +857,31 @@ class RateLimitConfig(BaseModel):
 class AppConfig(BaseModel):
     newsletter: NewsletterConfig = Field(default_factory=NewsletterConfig)
     ai: AIConfig = Field(default_factory=AIConfig)
-    beehiiv: BeehiivConfig = Field(default_factory=BeehiivConfig)
+    ghl: GHLConfig = Field(default_factory=GHLConfig)
     schedule: ScheduleConfig = Field(default_factory=ScheduleConfig)
     sponsor_slots: SponsorSlotsConfig = Field(default_factory=SponsorSlotsConfig)
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     submissions: SubmissionsConfig = Field(default_factory=SubmissionsConfig)
     email: EmailConfig = Field(default_factory=EmailConfig)
     analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
+    tracking: TrackingConfig = Field(default_factory=TrackingConfig)
+    ab_testing: ABTestConfig = Field(default_factory=ABTestConfig)
+    deliverability: DeliverabilityConfig = Field(default_factory=DeliverabilityConfig)
+    scheduler: SchedulerConfig = Field(default_factory=SchedulerConfig)
+    webhooks: WebhookConfig = Field(default_factory=WebhookConfig)
+    referrals: ReferralConfig = Field(default_factory=ReferralConfig)
+    welcome_sequence: WelcomeSequenceConfig = Field(default_factory=WelcomeSequenceConfig)
+    reengagement: ReengagementConfig = Field(default_factory=ReengagementConfig)
+    roles: RolesConfig = Field(default_factory=RolesConfig)
+    spotify: SpotifyConfig = Field(default_factory=SpotifyConfig)
+    artist_profiles: ArtistProfilesConfig = Field(default_factory=ArtistProfilesConfig)
+    genre_preferences: GenrePreferencesConfig = Field(default_factory=GenrePreferencesConfig)
+    section_engagement: SectionEngagementConfig = Field(default_factory=SectionEngagementConfig)
+    trivia_polls: TriviaPollsConfig = Field(default_factory=TriviaPollsConfig)
+    lead_magnets: LeadMagnetsConfig = Field(default_factory=LeadMagnetsConfig)
+    sponsor_portal: SponsorPortalConfig = Field(default_factory=SponsorPortalConfig)
+    contests: ContestsConfig = Field(default_factory=ContestsConfig)
+    reader_content: ReaderContentConfig = Field(default_factory=ReaderContentConfig)
     rate_limits: RateLimitConfig = Field(default_factory=RateLimitConfig)
     db_path: str = "data/weeklyamp.db"
     db_backend: str = "sqlite"  # "sqlite" or "postgres"

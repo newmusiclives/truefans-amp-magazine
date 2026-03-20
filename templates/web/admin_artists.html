@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Artist Profiles — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_admin_artists %}active{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+    <div>
+        <h2 style="font-size:24px;font-weight:700;">Artist Profiles</h2>
+        <p style="color:#9ca3af;font-size:14px;">Manage artist directory profiles. Approve and publish to make them public.</p>
+    </div>
+</div>
+
+{% if submissions %}
+<div style="background:#13131f;border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:20px;margin-bottom:24px;">
+    <h3 style="font-size:16px;font-weight:600;margin-bottom:12px;">Create from Approved Submissions</h3>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        {% for sub in submissions %}
+        <button
+            hx-post="/admin/artists/0/create-from-submission/{{ sub.id }}"
+            hx-target="#artists-table-wrapper"
+            hx-swap="innerHTML"
+            style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:rgba(124,92,252,0.12);border:1px solid rgba(124,92,252,0.3);color:#a78bfa;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">
+            + {{ sub.artist_name }} ({{ sub.genre or sub.submission_type }})
+        </button>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div id="artists-table-wrapper">
+<div style="overflow-x:auto;">
+<table style="width:100%;border-collapse:collapse;font-size:14px;">
+    <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);text-align:left;">
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Artist</th>
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Slug</th>
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Genres</th>
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Approved</th>
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Published</th>
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Followers</th>
+            <th style="padding:12px 16px;font-weight:600;color:#9ca3af;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if profiles %}
+        {% for p in profiles %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+            <td style="padding:12px 16px;font-weight:600;">
+                {{ p.artist_name }}
+            </td>
+            <td style="padding:12px 16px;">
+                <code style="font-size:12px;background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:4px;">{{ p.slug }}</code>
+            </td>
+            <td style="padding:12px 16px;color:#9ca3af;font-size:13px;">{{ p.genres or '—' }}</td>
+            <td style="padding:12px 16px;">
+                {% if p.is_approved %}
+                <span style="color:#34d399;font-weight:600;">Yes</span>
+                {% else %}
+                <span style="color:#9ca3af;">No</span>
+                {% endif %}
+            </td>
+            <td style="padding:12px 16px;">
+                {% if p.is_published %}
+                <span style="color:#34d399;font-weight:600;">Yes</span>
+                {% else %}
+                <span style="color:#9ca3af;">No</span>
+                {% endif %}
+            </td>
+            <td style="padding:12px 16px;color:#a78bfa;font-weight:600;">{{ p.follower_count }}</td>
+            <td style="padding:12px 16px;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    {% if not p.is_approved %}
+                    <button
+                        hx-post="/admin/artists/{{ p.id }}/approve"
+                        hx-target="#artists-table-wrapper"
+                        hx-swap="innerHTML"
+                        style="padding:6px 14px;border-radius:6px;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);color:#34d399;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;">
+                        Approve
+                    </button>
+                    {% endif %}
+                    {% if p.is_approved and not p.is_published %}
+                    <button
+                        hx-post="/admin/artists/{{ p.id }}/publish"
+                        hx-target="#artists-table-wrapper"
+                        hx-swap="innerHTML"
+                        style="padding:6px 14px;border-radius:6px;background:rgba(124,92,252,0.12);border:1px solid rgba(124,92,252,0.3);color:#a78bfa;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;">
+                        Publish
+                    </button>
+                    {% endif %}
+                    {% if p.is_published %}
+                    <a href="/artists/{{ p.slug }}" target="_blank"
+                       style="padding:6px 14px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#9ca3af;font-size:12px;font-weight:500;text-decoration:none;">
+                        View
+                    </a>
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>
+            <td colspan="7" style="padding:40px 16px;text-align:center;color:#9ca3af;">
+                No artist profiles yet. Create one from an approved submission above.
+            </td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+</div>
+</div>
+{% endblock %}

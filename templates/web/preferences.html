@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Preferences — {{ newsletter_name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0e1117;
+            color: #e6edf3;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 16px;
+        }
+        .container {
+            width: 100%;
+            max-width: 560px;
+        }
+        .brand {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .brand h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #fff;
+        }
+        .brand .tagline {
+            font-size: 13px;
+            color: #8b949e;
+            margin-top: 4px;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .subscriber-email {
+            font-size: 14px;
+            color: #8b949e;
+            margin-bottom: 24px;
+        }
+        .form-section {
+            margin-bottom: 24px;
+        }
+        .form-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #c9d1d9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-section p {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 10px;
+        }
+        .checkbox-group, .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .checkbox-group label, .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+        .checkbox-group label:hover, .radio-group label:hover {
+            border-color: #58a6ff;
+        }
+        .checkbox-group input:checked + span,
+        .radio-group input:checked + span {
+            color: #58a6ff;
+        }
+        .checkbox-group input, .radio-group input {
+            accent-color: #58a6ff;
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #e6edf3;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn-primary {
+            background: #58a6ff;
+            color: #0d1117;
+        }
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background: rgba(63, 185, 80, 0.15);
+            border: 1px solid rgba(63, 185, 80, 0.3);
+            color: #3fb950;
+        }
+        .alert-error {
+            background: rgba(248, 81, 73, 0.15);
+            border: 1px solid rgba(248, 81, 73, 0.3);
+            color: #f85149;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid #30363d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">
+            <h1>{{ newsletter_name }}</h1>
+            <div class="tagline">for Industry Professionals, Music Artists and Fans</div>
+        </div>
+
+        {% if message %}
+        <div class="alert alert-{{ level or 'success' }}">{{ message }}</div>
+        {% endif %}
+
+        <div class="card">
+            <h2>Email Preferences</h2>
+            <div class="subscriber-email">{{ subscriber.email }}</div>
+
+            <form method="post" action="/preferences/{{ token }}">
+                <!-- Editions -->
+                <div class="form-section">
+                    <h3>Editions</h3>
+                    <p>Choose which newsletter editions you want to receive.</p>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="editions" value="fan"
+                                   {% if subscriber.editions and 'fan' in subscriber.editions %}checked{% endif %}>
+                            <span>Fan Edition</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="editions" value="artist"
+                                   {% if subscriber.editions and 'artist' in subscriber.editions %}checked{% endif %}>
+                            <span>Artist Edition</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="editions" value="industry"
+                                   {% if subscriber.editions and 'industry' in subscriber.editions %}checked{% endif %}>
+                            <span>Industry Edition</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Send Days -->
+                <div class="form-section">
+                    <h3>Send Days</h3>
+                    <p>Which days would you like to receive emails?</p>
+                    <div class="checkbox-group">
+                        <label>
+                            <input type="checkbox" name="send_days" value="monday"
+                                   {% if subscriber.send_days and 'monday' in subscriber.send_days %}checked{% endif %}>
+                            <span>Mon</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="send_days" value="wednesday"
+                                   {% if subscriber.send_days and 'wednesday' in subscriber.send_days %}checked{% endif %}>
+                            <span>Wed</span>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="send_days" value="saturday"
+                                   {% if subscriber.send_days and 'saturday' in subscriber.send_days %}checked{% endif %}>
+                            <span>Sat</span>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="divider">
+
+                <!-- Content Frequency -->
+                <div class="form-section">
+                    <h3>Content Frequency</h3>
+                    <div class="radio-group" style="flex-direction:column">
+                        <label>
+                            <input type="radio" name="content_frequency" value="all"
+                                   {% if not subscriber.content_frequency or subscriber.content_frequency == 'all' %}checked{% endif %}>
+                            <span>All emails — get every edition as it's published</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="content_frequency" value="weekly_digest"
+                                   {% if subscriber.content_frequency == 'weekly_digest' %}checked{% endif %}>
+                            <span>Weekly digest — one combined email per week</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="content_frequency" value="highlights_only"
+                                   {% if subscriber.content_frequency == 'highlights_only' %}checked{% endif %}>
+                            <span>Highlights only — just the top stories</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Timezone -->
+                <div class="form-section">
+                    <h3>Timezone</h3>
+                    <select name="timezone">
+                        <option value="America/New_York" {% if subscriber.timezone == 'America/New_York' or not subscriber.timezone %}selected{% endif %}>Eastern (ET)</option>
+                        <option value="America/Chicago" {% if subscriber.timezone == 'America/Chicago' %}selected{% endif %}>Central (CT)</option>
+                        <option value="America/Denver" {% if subscriber.timezone == 'America/Denver' %}selected{% endif %}>Mountain (MT)</option>
+                        <option value="America/Los_Angeles" {% if subscriber.timezone == 'America/Los_Angeles' %}selected{% endif %}>Pacific (PT)</option>
+                        <option value="Europe/London" {% if subscriber.timezone == 'Europe/London' %}selected{% endif %}>London (GMT/BST)</option>
+                        <option value="Europe/Berlin" {% if subscriber.timezone == 'Europe/Berlin' %}selected{% endif %}>Central Europe (CET)</option>
+                        <option value="Asia/Tokyo" {% if subscriber.timezone == 'Asia/Tokyo' %}selected{% endif %}>Tokyo (JST)</option>
+                        <option value="Australia/Sydney" {% if subscriber.timezone == 'Australia/Sydney' %}selected{% endif %}>Sydney (AEST)</option>
+                    </select>
+                </div>
+
+                <!-- Interests -->
+                <div class="form-section">
+                    <h3>Interests</h3>
+                    <p>Tell us what topics interest you most (optional).</p>
+                    <input type="text" name="interests" value="{{ subscriber.interests or '' }}"
+                           placeholder="e.g. indie rock, music production, streaming strategy">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">
+                    Save Preferences
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

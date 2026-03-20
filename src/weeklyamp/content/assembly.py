@@ -40,7 +40,9 @@ def _get_issue_date_context(issue: dict) -> dict:
     else:
         dt = datetime.now()
 
-    day_name = send_day.capitalize() if send_day else dt.strftime("%A")
+    # Use the actual date for day name and date string — send_day is only
+    # a scheduling hint, not the real calendar day.
+    day_name = dt.strftime("%A")
     week_number = dt.isocalendar()[1]
     month_name = dt.strftime("%B")
     year = dt.year
@@ -215,9 +217,25 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
             summary += "..."
         section_summaries.append({"display_name": display_name, "summary": summary})
 
-        # Convert markdown content to HTML (sanitized against XSS)
-        content_html = sanitize_html(markdown.markdown(draft["content"], extensions=["extra"]))
-        # Strip the first heading if it duplicates the section title
+        # Extract headline from content (first markdown heading) and body
+        raw_content = draft["content"] or ""
+        headline = ""
+        body_content = raw_content
+        # Look for a markdown heading on the first non-empty line
+        for line in raw_content.split("\n"):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            heading_match = re.match(r"^#{1,3}\s+(.+)$", stripped)
+            if heading_match:
+                headline = heading_match.group(1).strip()
+                # Remove the heading line from body
+                body_content = raw_content.replace(line, "", 1).strip()
+            break  # Only check the first non-empty line
+
+        # Convert markdown body to HTML (sanitized against XSS)
+        content_html = sanitize_html(markdown.markdown(body_content, extensions=["extra"]))
+        # Safety: also strip any leading HTML heading that slipped through
         content_html = re.sub(r"^\s*<h[1-3][^>]*>.*?</h[1-3]>\s*", "", content_html, count=1)
 
         # Check if this draft came from a guest article or artist submission
@@ -240,12 +258,13 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
                 artist_social=submission.get("artist_social", ""),
             )
         else:
-            section_html = render_section(display_name, content_html)
+            section_html = render_section(display_name, content_html, headline=headline)
 
         sections_html.append({"html": section_html})
 
         # Plain text version
-        plain_parts.append(f"=== {display_name} ===\n\n{draft['content']}\n")
+        headline_plain = f" — {headline}" if headline else ""
+        plain_parts.append(f"=== {display_name}{headline_plain} ===\n\n{draft['content']}\n")
 
     # Generate AI welcome intro and PS closing (edition-aware)
     welcome_intro = _generate_welcome_intro(issue, section_summaries, config, edition_name)
@@ -293,7 +312,7 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
         for b in sponsor_blocks:
             plain_parts.append(f"--- SPONSORED: {b['sponsor_name']} ---\n{b['headline']}\n{b['cta_url']}\n")
 
-    # Render full newsletter
+    # Render full newsletter (using edition-specific template if available)
     html = render_newsletter(
         newsletter_name=config.newsletter.name,
         tagline=config.newsletter.tagline,
@@ -304,6 +323,7 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
         intro_copy=welcome_html,
         footer_html=config.newsletter.footer_html,
         ps_closing=ps_closing,
+        edition_slug=edition_slug,
     )
 
     # Build plain text with intro and PS

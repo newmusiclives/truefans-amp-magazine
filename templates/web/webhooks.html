@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Webhooks — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_webhooks %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Webhooks</h2>
+    <p class="subtitle">Inbound &amp; outbound webhook integrations (inactive — enable in config)</p>
+</div>
+
+{% if not enabled %}
+<div class="alert alert-info">
+    Webhooks are currently <strong>inactive</strong>. Set <code>webhooks.enabled: true</code> in config to activate.
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Create Webhook</h3>
+    <form hx-post="/webhooks/create" hx-target="#webhook-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div>
+            <label>Name</label>
+            <input type="text" name="name" required placeholder="My webhook" style="width:160px">
+        </div>
+        <div>
+            <label>URL</label>
+            <input type="url" name="url" required placeholder="https://example.com/hook" style="width:280px">
+        </div>
+        <div>
+            <label>Direction</label>
+            <select name="direction">
+                <option value="outbound">Outbound</option>
+                <option value="inbound">Inbound</option>
+            </select>
+        </div>
+        <div>
+            <label>Events (comma-separated)</label>
+            <input type="text" name="event_types" placeholder="issue.published,subscriber.new" style="width:260px">
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+    <div id="webhook-result" style="margin-top:0.75rem"></div>
+</div>
+
+<div class="card">
+    <h3>Configured Webhooks</h3>
+    {% if webhooks %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Direction</th>
+                <th>Events</th>
+                <th>Active</th>
+                <th>Last Triggered</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for wh in webhooks %}
+            <tr>
+                <td>{{ wh.name }}</td>
+                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis">{{ wh.url }}</td>
+                <td><span class="badge">{{ wh.direction }}</span></td>
+                <td style="font-size:0.85em">{{ wh.event_types or '—' }}</td>
+                <td>{% if wh.is_active %}<span class="badge badge-success">Yes</span>{% else %}<span class="badge badge-muted">No</span>{% endif %}</td>
+                <td>{{ wh.last_triggered_at or '—' }}</td>
+                <td>
+                    <button hx-post="/webhooks/{{ wh.id }}/toggle" hx-target="closest tr" hx-swap="outerHTML" class="btn btn-sm">
+                        {% if wh.is_active %}Disable{% else %}Enable{% endif %}
+                    </button>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No webhooks configured yet.</p>
+    {% endif %}
+</div>
+
+{% if log_entries %}
+<div class="card" style="margin-top:2rem">
+    <h3>Recent Webhook Log</h3>
+    <table class="data-table">
+        <thead>
+            <tr><th>Time</th><th>Event</th><th>Status</th><th>Response</th></tr>
+        </thead>
+        <tbody>
+        {% for entry in log_entries %}
+            <tr>
+                <td>{{ entry.created_at }}</td>
+                <td>{{ entry.event_type }}</td>
+                <td>{{ entry.response_status }}</td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;font-size:0.85em">{{ entry.response_body[:100] if entry.response_body else '' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% endblock %}

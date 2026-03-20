@@ -1,0 +1,55 @@
+{# Email-safe reader content block for newsletters.
+   Render with: contributions (list of dicts), contribute_url (str)
+#}
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="max-width:560px;margin:20px auto;background-color:#f9fafb;
+              border-radius:8px;border:1px solid #e5e7eb;">
+    <tr>
+        <td style="padding:16px 24px 8px;text-align:center;">
+            <span style="font-family:Arial,sans-serif;font-size:12px;
+                         font-weight:700;text-transform:uppercase;
+                         letter-spacing:1px;color:#e8645a;">
+                FROM OUR READERS
+            </span>
+        </td>
+    </tr>
+
+    {% for contrib in contributions %}
+    <tr>
+        <td style="padding:12px 24px;border-bottom:1px solid #e5e7eb;">
+            <div style="margin-bottom:6px;">
+                {% if contrib.content_type == 'hot_take' %}
+                <span style="display:inline-block;padding:2px 8px;background-color:#EF4444;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;">Hot Take</span>
+                {% elif contrib.content_type == 'review' %}
+                <span style="display:inline-block;padding:2px 8px;background-color:#8B5CF6;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;">Album Review</span>
+                {% elif contrib.content_type == 'tip' %}
+                <span style="display:inline-block;padding:2px 8px;background-color:#10B981;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;">Tip</span>
+                {% elif contrib.content_type == 'question' %}
+                <span style="display:inline-block;padding:2px 8px;background-color:#3B82F6;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;">Question</span>
+                {% else %}
+                <span style="display:inline-block;padding:2px 8px;background-color:#F59E0B;color:#ffffff;font-family:Arial,sans-serif;font-size:11px;font-weight:700;border-radius:4px;text-transform:uppercase;letter-spacing:0.5px;">Story</span>
+                {% endif %}
+                <span style="font-family:Arial,sans-serif;font-size:13px;color:#6B7280;margin-left:8px;">
+                    from <strong style="color:#111827;">{{ contrib.name or 'Anonymous Reader' }}</strong>
+                </span>
+            </div>
+            <div style="font-family:Arial,sans-serif;font-size:15px;color:#374151;line-height:1.5;">
+                {{ contrib.content }}
+            </div>
+        </td>
+    </tr>
+    {% endfor %}
+
+    <tr>
+        <td style="padding:16px 24px;text-align:center;">
+            <a href="{{ contribute_url }}"
+               style="display:inline-block;padding:10px 24px;
+                      background-color:#e8645a;color:#ffffff;
+                      text-decoration:none;border-radius:6px;
+                      font-family:Arial,sans-serif;font-size:14px;
+                      font-weight:600;">
+                Submit Your Own &rarr;
+            </a>
+        </td>
+    </tr>
+</table>

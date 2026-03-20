@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ contest.title }} — TrueFans NEWSLETTERS Contest</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --gold: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+
+        .brand { text-align: center; margin-bottom: 32px; }
+        .brand h1 { font-size: 24px; font-weight: 800; }
+        .brand h1 span { color: var(--accent); }
+
+        .back-link {
+            display: inline-block;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .back-link:hover { text-decoration: underline; }
+
+        .contest-detail {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+        }
+        .contest-detail h2 { font-size: 26px; font-weight: 800; margin-bottom: 12px; }
+        .prize-badge {
+            display: inline-block;
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--gold);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .description { color: var(--text-dim); font-size: 15px; margin-bottom: 20px; line-height: 1.7; }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .meta-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            text-align: center;
+        }
+        .meta-item .label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); }
+        .meta-item .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
+
+        .entry-form { margin-top: 24px; }
+        .entry-form label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .entry-form input[type="email"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 15px;
+            font-family: var(--font);
+            margin-bottom: 12px;
+        }
+        .entry-form input[type="email"]:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+        .btn:hover { background: var(--accent-hover); }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        .alert-error { background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .alert-success { background: rgba(16, 185, 129, 0.15); color: var(--green); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .share-section {
+            margin-top: 24px;
+            text-align: center;
+        }
+        .share-section p { font-size: 13px; color: var(--text-dim); margin-bottom: 8px; }
+        .share-btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            margin: 0 4px;
+            transition: background 0.2s;
+        }
+        .share-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .closed-notice {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-dim);
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">
+            <h1>True<span>Fans</span> NEWSLETTERS</h1>
+        </div>
+
+        <a href="/contests" class="back-link">&larr; All Contests</a>
+
+        <div class="contest-detail">
+            <h2>{{ contest.title }}</h2>
+
+            {% if contest.prize_description %}
+            <div class="prize-badge">Prize: {{ contest.prize_description }}</div>
+            {% endif %}
+
+            {% if contest.description %}
+            <div class="description">{{ contest.description }}</div>
+            {% endif %}
+
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="label">Entries</div>
+                    <div class="value">{{ entry_count }}</div>
+                </div>
+                <div class="meta-item">
+                    <div class="label">{% if contest.end_date %}Deadline{% else %}Status{% endif %}</div>
+                    <div class="value" style="font-size:16px;">
+                        {% if contest.end_date %}{{ contest.end_date }}{% else %}{{ contest.status|title }}{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            {% if error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            {% if success %}
+            <div class="alert alert-success">{{ success }}</div>
+            {% endif %}
+
+            {% if contest.status == 'active' and enabled %}
+            <div class="entry-form">
+                <form action="/contests/{{ contest.id }}/enter" method="POST">
+                    <label for="email">Enter with your email</label>
+                    <input type="email" name="email" id="email" placeholder="your@email.com" required>
+                    {% if contest.entry_requirement %}
+                    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">
+                        {{ contest.entry_requirement }}
+                    </p>
+                    {% endif %}
+                    <button type="submit" class="btn">Enter to Win</button>
+                </form>
+            </div>
+            {% elif contest.status == 'awarded' %}
+            <div class="closed-notice">
+                This contest has ended. Winner: <strong>{{ contest.winner_name }}</strong>
+            </div>
+            {% else %}
+            <div class="closed-notice">
+                This contest is no longer accepting entries.
+            </div>
+            {% endif %}
+
+            <div class="share-section">
+                <p>Share this contest</p>
+                <a href="https://twitter.com/intent/tweet?text=Check out this contest from TrueFans NEWSLETTERS!&url={{ contest.id }}"
+                   target="_blank" rel="noopener" class="share-btn">Twitter</a>
+                <a href="mailto:?subject=TrueFans Contest&body=Check out this contest!"
+                   class="share-btn">Email</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

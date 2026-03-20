@@ -16,18 +16,18 @@ subs_app = typer.Typer(name="subs", help="Subscriber management.")
 
 @subs_app.command("sync")
 def sync() -> None:
-    """Pull subscribers from Beehiiv into local database."""
+    """Pull subscribers from GoHighLevel into local database."""
     cfg = load_config()
 
-    if not cfg.beehiiv.api_key or not cfg.beehiiv.publication_id:
-        console.print("[red]Beehiiv not configured.[/red] Set BEEHIIV_API_KEY and BEEHIIV_PUBLICATION_ID in .env")
+    if not cfg.ghl.api_key or not cfg.ghl.location_id:
+        console.print("[red]GoHighLevel not configured.[/red] Set GHL_API_KEY and GHL_LOCATION_ID in .env")
         raise typer.Exit(1)
 
     repo = Repository(cfg.db_path)
-    console.print("[bold]Syncing subscribers from Beehiiv...[/bold]")
+    console.print("[bold]Syncing subscribers from GoHighLevel...[/bold]")
 
     try:
-        result = sync_subscribers(repo, cfg.beehiiv)
+        result = sync_subscribers(repo, cfg.ghl)
         console.print(f"[green]Synced![/green] {result['synced']} processed, {result['new']} new, {result['total']} total active")
     except Exception as exc:
         console.print(f"[red]Sync failed:[/red] {exc}")

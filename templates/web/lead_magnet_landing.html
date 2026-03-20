@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ magnet.title }} — TrueFans NEWSLETTERS</title>
+    <meta name="description" content="{{ magnet.description[:160] }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --gold: #f59e0b;
+            --green: #10b981;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 16px 40px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.9); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .top-nav .brand { font-weight: 800; font-size: 1.1rem; color: var(--text); text-decoration: none; }
+        .top-nav .nav-links { display: flex; gap: 24px; align-items: center; }
+        .top-nav .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .top-nav .nav-links .btn-sm { background: var(--accent); color: #fff; padding: 8px 20px; border-radius: 8px; font-weight: 600; }
+
+        .container { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+        .landing { padding-top: 120px; padding-bottom: 80px; }
+
+        .cover-hero {
+            width: 100%; max-height: 400px; object-fit: cover; border-radius: 16px;
+            margin-bottom: 40px; border: 1px solid var(--border);
+        }
+        .cover-placeholder {
+            width: 100%; height: 280px; border-radius: 16px; margin-bottom: 40px;
+            background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(232,100,90,0.1));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 5rem; color: var(--text-dim); border: 1px solid var(--border);
+        }
+
+        .edition-badge {
+            display: inline-block; padding: 4px 14px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .badge-fan { background: rgba(232,100,90,0.15); color: var(--accent); }
+        .badge-artist { background: rgba(124,92,252,0.15); color: var(--purple); }
+        .badge-industry { background: rgba(245,158,11,0.15); color: var(--gold); }
+
+        h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); font-weight: 900; margin-bottom: 16px; line-height: 1.2; }
+
+        .description { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 32px; line-height: 1.7; }
+
+        .learn-list { margin-bottom: 36px; }
+        .learn-list h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+        .learn-list ul { list-style: none; padding: 0; }
+        .learn-list li {
+            padding: 8px 0; padding-left: 24px; position: relative;
+            color: var(--text-dim); font-size: 0.95rem;
+        }
+        .learn-list li::before {
+            content: '\2713'; position: absolute; left: 0; color: var(--green); font-weight: 700;
+        }
+
+        .download-form {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px; text-align: center;
+        }
+        .download-form h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 16px; }
+        .download-form .input-row {
+            display: flex; gap: 12px; margin-bottom: 16px;
+        }
+        .download-form input[type="email"] {
+            flex: 1; padding: 14px 16px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg);
+            color: var(--text); font-family: var(--font); font-size: 0.95rem;
+        }
+        .download-form input[type="email"]:focus { outline: none; border-color: var(--accent); }
+        .download-form .btn-download {
+            background: var(--accent); color: #fff; border: none;
+            padding: 14px 28px; border-radius: 8px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; white-space: nowrap;
+        }
+        .download-form .btn-download:hover { background: var(--accent-hover); }
+        .subscribe-opt {
+            display: flex; align-items: center; justify-content: center;
+            gap: 8px; margin-bottom: 16px; font-size: 0.9rem; color: var(--text-dim);
+        }
+        .subscribe-opt input { accent-color: var(--accent); }
+
+        .social-proof {
+            margin-top: 16px; font-size: 0.85rem; color: var(--text-dim);
+        }
+
+        .back-link {
+            display: inline-block; margin-top: 40px; color: var(--text-dim);
+            text-decoration: none; font-size: 0.9rem;
+        }
+        .back-link:hover { color: var(--text); }
+
+        @media (max-width: 768px) {
+            .top-nav { padding: 12px 20px; }
+            .download-form .input-row { flex-direction: column; }
+            .download-form .btn-download { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/" class="brand">TrueFans NEWSLETTERS</a>
+        <div class="nav-links">
+            <a href="/resources">Resources</a>
+            <a href="/subscribe" class="btn-sm">Subscribe</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="landing">
+            {% if magnet.cover_image_url %}
+            <img src="{{ magnet.cover_image_url }}" alt="{{ magnet.title }}" class="cover-hero">
+            {% else %}
+            <div class="cover-placeholder">&#128218;</div>
+            {% endif %}
+
+            {% if magnet.edition_slug %}
+            <span class="edition-badge badge-{{ magnet.edition_slug }}">{{ magnet.edition_slug }} edition</span>
+            {% endif %}
+
+            <h1>{{ magnet.title }}</h1>
+            <div class="description">{{ magnet.description }}</div>
+
+            <div class="learn-list">
+                <h3>What you'll learn</h3>
+                <ul>
+                    <li>Actionable strategies you can apply immediately</li>
+                    <li>Expert insights from music industry professionals</li>
+                    <li>Real-world examples and case studies</li>
+                    <li>Templates and frameworks to accelerate your progress</li>
+                </ul>
+            </div>
+
+            <div class="download-form">
+                <h3>Enter your email to download free</h3>
+                <form method="POST" action="/resources/{{ magnet.slug }}/download">
+                    <div class="input-row">
+                        <input type="email" name="email" placeholder="you@example.com" required>
+                        <button type="submit" class="btn-download">Download Now</button>
+                    </div>
+                    <label class="subscribe-opt">
+                        <input type="checkbox" name="subscribe" value="1" checked>
+                        Also subscribe to the {{ magnet.edition_slug or 'TrueFans' }} newsletter
+                    </label>
+                </form>
+                {% if magnet.download_count and magnet.download_count > 0 %}
+                <div class="social-proof">
+                    Downloaded by {{ "{:,}".format(magnet.download_count) }} music professionals
+                </div>
+                {% endif %}
+            </div>
+
+            <a href="/resources" class="back-link">&larr; Back to all resources</a>
+        </div>
+    </div>
+</body>
+</html>

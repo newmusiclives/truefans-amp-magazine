@@ -1,0 +1,48 @@
+{# Email-safe trivia/poll block for embedding in newsletters.
+   Variables: poll (dict), site_domain (str), subscriber_id_placeholder (str, default "{{subscriber_id}}")
+#}
+{% set poll_id = poll.id %}
+{% set options = poll.options_json | default('[]') %}
+{% if options is string %}
+{% set options = options | tojson | default([]) %}
+{% endif %}
+{% set is_trivia = (poll.question_type == 'trivia') %}
+{% set header_text = "Test your music knowledge!" if is_trivia else "Have your say!" %}
+{% set header_color = "#6C3AED" if is_trivia else "#2563EB" %}
+{% set domain = site_domain | default('') %}
+{% set sub_placeholder = subscriber_id_placeholder | default('{{subscriber_id}}') %}
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="max-width:560px;margin:20px auto;background-color:#f9fafb;border-radius:8px;border:1px solid #e5e7eb;">
+    <tr>
+        <td style="padding:20px 24px 8px;text-align:center;">
+            <span style="font-family:Arial,sans-serif;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:{{ header_color }};">
+                {{ header_text }}
+            </span>
+        </td>
+    </tr>
+    <tr>
+        <td style="padding:8px 24px 16px;text-align:center;">
+            <span style="font-family:Arial,sans-serif;font-size:18px;font-weight:700;color:#111827;line-height:1.4;">
+                {{ poll.question_text }}
+            </span>
+        </td>
+    </tr>
+    {% for option in poll.options_list | default([]) %}
+    <tr>
+        <td align="center" style="padding:4px 0;">
+            <a href="{{ domain }}/t/vote/{{ poll_id }}/{{ loop.index0 }}/{{ sub_placeholder }}"
+               style="display:inline-block;width:90%;padding:12px 20px;background-color:{{ header_color }};color:#ffffff;text-decoration:none;border-radius:6px;font-family:Arial,sans-serif;font-size:15px;font-weight:600;text-align:center;">
+                {{ option }}
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td style="padding:12px 24px 16px;text-align:center;">
+            <span style="font-family:Arial,sans-serif;font-size:11px;color:#9ca3af;">
+                Tap your answer above &mdash; results in the next issue!
+            </span>
+        </td>
+    </tr>
+</table>

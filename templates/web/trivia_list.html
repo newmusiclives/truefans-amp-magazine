@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Trivia &amp; Polls — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_trivia %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Trivia &amp; Polls</h2>
+    <p>
+        {% if enabled %}
+            <span class="badge badge-success">Active</span>
+        {% else %}
+            <span class="badge badge-muted">Inactive</span> Enable in config &rarr; trivia_polls.enabled
+        {% endif %}
+        &mdash; {{ polls | length }} total
+    </p>
+</div>
+
+{% if message is defined and message %}
+<div class="alert alert-{{ level | default('info') }}">{{ message }}</div>
+{% endif %}
+
+<!-- Create form -->
+<div class="card">
+    <div class="card-header" style="cursor:pointer;" onclick="this.nextElementSibling.classList.toggle('hidden')">
+        <span class="card-title">+ New Trivia / Poll</span>
+    </div>
+    <div class="hidden" style="padding:16px;">
+        <form method="post" action="/trivia/create"
+              style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+                <label>Type</label>
+                <select name="question_type">
+                    <option value="trivia">Trivia (has correct answer)</option>
+                    <option value="poll">Poll (opinion)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Target Issue</label>
+                <select name="target_issue_id">
+                    {% for issue in issues %}
+                    <option value="{{ issue.id }}">#{{ issue.issue_number }} {{ issue.title }} ({{ issue.edition_slug }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+                <label>Question</label>
+                <input type="text" name="question_text" placeholder="What year was Spotify launched?" required>
+            </div>
+            <div class="form-group" style="grid-column:1/-1;">
+                <label>Options (comma-separated)</label>
+                <input type="text" name="options" placeholder="2006, 2008, 2010, 2012" required>
+            </div>
+            <div class="form-group">
+                <label>Correct Answer Index (0-based, trivia only)</label>
+                <input type="number" name="correct_index" value="-1" min="-1" max="10">
+            </div>
+            <div class="form-group">
+                <label>Explanation (trivia only)</label>
+                <input type="text" name="explanation" placeholder="Spotify launched in October 2008 in Sweden.">
+            </div>
+            <div style="grid-column:1/-1;">
+                <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Polls table -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">All Trivia &amp; Polls</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Question</th>
+                    <th>Type</th>
+                    <th>Issue</th>
+                    <th>Status</th>
+                    <th>Votes</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in polls %}
+                <tr>
+                    <td>{{ p.id }}</td>
+                    <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                        {{ p.question_text }}
+                    </td>
+                    <td>
+                        {% if p.question_type == 'trivia' %}
+                            <span class="badge badge-primary">Trivia</span>
+                        {% else %}
+                            <span class="badge badge-info">Poll</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.target_issue_id or '—' }}</td>
+                    <td>
+                        {% if p.status == 'active' %}
+                            <span class="badge badge-success">Active</span>
+                        {% elif p.status == 'closed' %}
+                            <span class="badge badge-muted">Closed</span>
+                        {% else %}
+                            <span class="badge badge-warning">Draft</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.total_votes }}</td>
+                    <td>
+                        <a href="/trivia/{{ p.id }}" class="btn btn-sm btn-secondary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not polls %}
+                <tr>
+                    <td colspan="7" style="text-align:center;color:#9ca3af;">No trivia or polls yet.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

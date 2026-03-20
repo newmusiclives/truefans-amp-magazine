@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ referrer_name }} thinks you'll love TrueFans NEWSLETTERS</title>
+    <meta name="description" content="Join {{ subscriber_count | default(0) }}+ music lovers who read TrueFans NEWSLETTERS every week.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --gold: #f59e0b;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+        .nav-brand span { color: var(--accent); }
+
+        .hero {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 160px 24px 60px;
+            text-align: center;
+        }
+        .referrer-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(232, 100, 90, 0.12);
+            border: 1px solid rgba(232, 100, 90, 0.25);
+            border-radius: 100px; padding: 8px 20px;
+            font-size: 14px; font-weight: 600; color: var(--accent);
+            margin-bottom: 24px;
+        }
+        .hero h1 {
+            font-size: 44px; font-weight: 900; letter-spacing: -1.5px;
+            line-height: 1.15; margin-bottom: 20px;
+        }
+        .hero h1 em {
+            font-style: normal;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero .subtitle {
+            font-size: 18px; color: var(--text-dim); max-width: 540px;
+            margin: 0 auto 40px; line-height: 1.7;
+        }
+        .social-proof {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-dim); margin-bottom: 48px;
+        }
+        .social-proof .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+
+        /* Edition Cards */
+        .editions-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px; max-width: 900px; margin: 0 auto 60px; padding: 0 24px;
+        }
+        .edition-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 28px;
+            text-align: left; transition: all 0.2s;
+        }
+        .edition-card:hover {
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+        .edition-badge {
+            display: inline-block;
+            font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+            text-transform: uppercase; padding: 4px 12px;
+            border-radius: 20px; margin-bottom: 12px; color: #fff;
+        }
+        .edition-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+        .edition-card p { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+
+        /* Subscribe Form */
+        .subscribe-section {
+            max-width: 560px; margin: 0 auto; padding: 0 24px 80px;
+        }
+        .subscribe-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px; padding: 36px;
+        }
+        .subscribe-box h2 {
+            font-size: 22px; font-weight: 800; margin-bottom: 8px; text-align: center;
+        }
+        .subscribe-box .sub-desc {
+            font-size: 14px; color: var(--text-dim); text-align: center; margin-bottom: 24px;
+        }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 600;
+            color: var(--text-dim); margin-bottom: 6px;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="email"] {
+            width: 100%; padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text); font-size: 15px; font-family: var(--font);
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-group input:focus { border-color: var(--accent); }
+        .editions-checkboxes {
+            display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px;
+        }
+        .edition-check {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 14px; border-radius: 8px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border); cursor: pointer; transition: all 0.2s;
+        }
+        .edition-check:hover { border-color: rgba(255,255,255,0.15); }
+        .edition-check input[type="checkbox"] { accent-color: var(--accent); }
+        .edition-check span { font-size: 14px; font-weight: 500; }
+        .btn-subscribe {
+            width: 100%; padding: 14px; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-size: 16px;
+            font-weight: 700; font-family: var(--font); cursor: pointer;
+            transition: background 0.2s; margin-top: 8px;
+        }
+        .btn-subscribe:hover { background: var(--accent-hover); }
+
+        footer {
+            padding: 40px 24px; text-align: center;
+            border-top: 1px solid var(--border); color: var(--text-dim); font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            .hero { padding: 120px 20px 40px; }
+            .hero h1 { font-size: 30px; }
+            .editions-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">True<span>Fans</span> NEWSLETTERS</a>
+    </nav>
+
+    <div class="hero">
+        <div class="referrer-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Referred by {{ referrer_name }}
+        </div>
+        <h1>{{ referrer_name }} thinks you'll love <em>TrueFans NEWSLETTERS</em></h1>
+        <p class="subtitle">The music industry's most-read weekly newsletters. Curated insights, exclusive content, and actionable advice — delivered to your inbox.</p>
+        {% if subscriber_count and subscriber_count > 0 %}
+        <div class="social-proof">
+            <div class="dot"></div>
+            Join {{ "{:,}".format(subscriber_count) }}+ music lovers already reading
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="editions-grid">
+        {% for ed in editions %}
+        <div class="edition-card">
+            <div class="edition-badge" style="background: {{ ed.color | default('#e8645a') }}">{{ ed.slug | upper }}</div>
+            <h3 style="color: {{ ed.color | default('#e8645a') }}">{{ ed.name }}</h3>
+            <p>{{ ed.description | default('Curated music industry insights delivered weekly.') }}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="subscribe-section">
+        <div class="subscribe-box">
+            <h2>Subscribe for Free</h2>
+            <p class="sub-desc">Pick the editions you want. Unsubscribe anytime.</p>
+            <form action="/subscribe" method="POST">
+                <input type="hidden" name="ref" value="{{ code }}">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <input type="text" id="first_name" name="first_name" placeholder="Your first name">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Choose Your Editions</label>
+                    <div class="editions-checkboxes">
+                        {% for ed in editions %}
+                        <label class="edition-check">
+                            <input type="checkbox" name="editions" value="{{ ed.slug }}" checked>
+                            <span style="color: {{ ed.color | default('#e8645a') }}">{{ ed.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="submit" class="btn-subscribe">Subscribe Now</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; TrueFans NEWSLETTERS. All rights reserved.</p>
+    </footer>
+</body>
+</html>

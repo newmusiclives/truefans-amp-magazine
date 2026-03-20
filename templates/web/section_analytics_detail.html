@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ section_name }} Analytics — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_section_analytics %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ section_name }}</h2>
+    <p>
+        {% if section_desc %}{{ section_desc }} &mdash; {% endif %}
+        Section engagement detail
+    </p>
+</div>
+
+{% if genres %}
+<div style="margin-bottom:16px;">
+    {% for genre in genres %}
+    <span class="badge badge-primary" style="margin-right:4px;">{{ genre }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Per-Issue Breakdown</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Issue</th>
+                    <th>Edition</th>
+                    <th>Clicks</th>
+                    <th>Unique Clicks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in per_issue %}
+                <tr>
+                    <td>
+                        {% if item.issue_number is defined %}
+                            #{{ item.issue_number }}
+                            {% if item.issue_title %} — {{ item.issue_title }}{% endif %}
+                        {% else %}
+                            Issue {{ item.issue_id }}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.edition_slug if item.edition_slug is defined else '—' }}</td>
+                    <td>{{ item.clicks }}</td>
+                    <td>{{ item.unique_clicks }}</td>
+                </tr>
+                {% endfor %}
+                {% if not per_issue %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:#9ca3af;">
+                        No engagement data for this section yet.
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div style="margin-top:16px;">
+    <a href="/sections/analytics" class="btn btn-secondary">&larr; Back to dashboard</a>
+</div>
+{% endblock %}

@@ -13,9 +13,13 @@ ai:
   max_tokens: 2000
   temperature: 0.7
 
-beehiiv:
-  api_key: ""
-  publication_id: ""
+ghl:
+  api_key: ""            # GoHighLevel API key (Bearer token)
+  location_id: ""        # GHL sub-account / location ID
+  edition_tags:
+    fan: "newsletter-fan"
+    artist: "newsletter-artist"
+    industry: "newsletter-industry"
 
 schedule:
   frequency: 3
@@ -52,6 +56,151 @@ email:
 
 analytics:
   plausible_domain: ""  # e.g. "truefansnewsletters.com" — leave empty to disable
+  tracking_enabled: false
+  utm_auto_tag: false
+  utm_source: "truefans_newsletter"
+  utm_medium: "email"
+
+# --- Email open/click tracking (INACTIVE — set to true to activate) ---
+tracking:
+  open_tracking: false
+  click_tracking: false
+  tracking_domain: ""  # e.g. "trk.truefansnewsletters.com"
+
+# --- A/B testing for subject lines (INACTIVE) ---
+ab_testing:
+  enabled: false
+  default_sample_percent: 20
+  default_measurement_hours: 4
+  auto_send_winner: true
+
+# --- Deliverability: bounce handling + warm-up (INACTIVE) ---
+deliverability:
+  bounce_handling: false
+  hard_bounce_threshold: 1     # suppress after N hard bounces
+  soft_bounce_threshold: 3     # suppress after N soft bounces
+  auto_suppress: false
+  warmup_enabled: false
+  warmup_daily_start: 50       # emails per day on day 1
+  warmup_ramp_increment: 50   # increase per day
+
+# --- Scheduled publishing (INACTIVE) ---
+scheduler:
+  enabled: false
+  check_interval_seconds: 60
+  default_send_hour: 9
+  default_timezone: "America/New_York"
+
+# --- Webhooks inbound/outbound (INACTIVE) ---
+webhooks:
+  enabled: false
+  inbound_secret: ""
+  max_retries: 3
+  timeout_seconds: 10
+
+# --- Referral system (INACTIVE) ---
+referrals:
+  enabled: false
+  reward_threshold: 3
+  code_prefix: "TF"
+
+# --- Welcome drip sequence for new subscribers (INACTIVE) ---
+welcome_sequence:
+  enabled: false
+  default_steps: 3
+
+# --- Re-engagement automation (INACTIVE) ---
+reengagement:
+  enabled: false
+  inactive_days: 30
+  suppress_after_days: 60
+
+# --- Team roles & access control (INACTIVE) ---
+roles:
+  enabled: false
+  require_login: true
+
+# ===================================================================
+# MUSIC-SPECIFIC FEATURES (all INACTIVE — enable to activate)
+# ===================================================================
+
+# --- Spotify API integration for artist data & streaming stats ---
+spotify:
+  enabled: false
+  client_id: ""       # Spotify Developer App client ID
+  client_secret: ""   # Spotify Developer App client secret
+  cache_ttl_hours: 24
+  auto_lookup_submissions: false  # auto-search Spotify when artist submits
+
+# --- Public artist profile pages at /artists/{slug} ---
+artist_profiles:
+  enabled: false
+  allow_self_service: false  # let artists edit their own profiles
+  require_approval: true
+
+# --- Genre preference system for subscriber personalization ---
+genre_preferences:
+  enabled: false
+  available_genres:
+    - hip-hop
+    - rock
+    - pop
+    - country
+    - electronic
+    - jazz
+    - r&b
+    - latin
+    - metal
+    - indie
+    - classical
+    - folk
+    - reggae
+    - punk
+    - world
+  weight_sections_by_genre: false
+  max_genres_per_subscriber: 5
+
+# --- Section-level engagement scoring ---
+section_engagement:
+  enabled: false
+  score_decay_days: 90
+  min_events_for_profile: 5
+  reorder_by_engagement: false
+
+# --- Music trivia & polls embedded in newsletters ---
+trivia_polls:
+  enabled: false
+  max_options: 6
+  show_results_in_next_issue: true
+  leaderboard_size: 25
+
+# ===================================================================
+# GROWTH & MONETIZATION (all INACTIVE — enable to activate)
+# ===================================================================
+
+# --- Lead magnets: gated downloads to drive signups ---
+lead_magnets:
+  enabled: false
+
+# --- Sponsor self-service portal + public advertise page ---
+sponsor_portal:
+  enabled: false
+  public_rates_visible: false
+  base_cpm: 30.0
+  premium_position_multiplier: 1.5
+  weekly_discount: 0.9
+  monthly_discount: 0.8
+
+# --- Contests & giveaways ---
+contests:
+  enabled: false
+  max_active: 3
+
+# --- Reader-submitted content (hot takes, reviews) ---
+reader_content:
+  enabled: false
+  auto_approve: false
+  max_per_issue: 2
 
 rate_limits:
   login_max: 5

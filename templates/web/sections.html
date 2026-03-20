@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>Sections</h2>
-    <p>Configure your newsletter sections</p>
+    <p>{{ sections | selectattr('section_type', 'ne', 'suggested') | list | length }} sections across {{ editions | length }} editions</p>
 </div>
 
 <!-- Add section form -->
@@ -31,7 +31,7 @@
     </form>
 </div>
 
-<!-- Sections table -->
+<!-- Sections grouped by edition -->
 <div id="sections-table">
     {% include "partials/sections_table.html" %}
 </div>

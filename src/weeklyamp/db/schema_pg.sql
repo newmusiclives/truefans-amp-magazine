@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS assembled_issues (
     issue_id INTEGER NOT NULL REFERENCES issues(id),
     html_content TEXT DEFAULT '',
     plain_text TEXT DEFAULT '',
-    beehiiv_post_id TEXT DEFAULT '',
+    ghl_campaign_id TEXT DEFAULT '',
     assembled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     published_at TIMESTAMP
 );
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
     id SERIAL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     first_name TEXT DEFAULT '',
-    beehiiv_id TEXT DEFAULT '',
+    ghl_contact_id TEXT DEFAULT '',
     status TEXT DEFAULT 'active',
     source_channel TEXT DEFAULT '',
     email_verified INTEGER DEFAULT 0,
@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS subscribers (
 CREATE TABLE IF NOT EXISTS engagement_metrics (
     id SERIAL PRIMARY KEY,
     issue_id INTEGER NOT NULL REFERENCES issues(id),
-    beehiiv_post_id TEXT DEFAULT '',
+    ghl_campaign_id TEXT DEFAULT '',
     sends INTEGER DEFAULT 0,
     opens INTEGER DEFAULT 0,
     clicks INTEGER DEFAULT 0,
@@ -397,3 +397,27 @@ INSERT INTO schema_version (version) VALUES (11) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (12) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (13) ON CONFLICT DO NOTHING;
 INSERT INTO schema_version (version) VALUES (14) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (15) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (16) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (17) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (18) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (19) ON CONFLICT DO NOTHING;
+INSERT INTO schema_version (version) VALUES (20) ON CONFLICT DO NOTHING;
+
+-- Editor articles
+CREATE TABLE IF NOT EXISTS editor_articles (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL DEFAULT '',
+    content TEXT DEFAULT '',
+    author_name TEXT DEFAULT 'John',
+    edition_slug TEXT DEFAULT '',
+    target_issue_id INTEGER REFERENCES issues(id),
+    target_section_slug TEXT DEFAULT '',
+    draft_id INTEGER REFERENCES drafts(id),
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','ready','assigned','published')),
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_editor_articles_edition ON editor_articles(edition_slug);
+CREATE INDEX IF NOT EXISTS idx_editor_articles_status ON editor_articles(status);

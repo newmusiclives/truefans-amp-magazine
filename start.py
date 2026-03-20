@@ -1,7 +1,7 @@
 """Railway/production entrypoint — reads PORT and starts uvicorn."""
 import os
 
-port = int(os.environ.get("PORT", 8000))
+port = int(os.environ.get("PORT", 8888))
 workers = int(os.environ.get("WEB_CONCURRENCY", 1))
 is_prod = os.environ.get("WEEKLYAMP_ENV", "development").lower() in ("production", "prod")
 

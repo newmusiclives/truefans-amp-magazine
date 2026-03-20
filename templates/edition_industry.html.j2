@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ newsletter_name }} — Industry Edition — Issue #{{ issue_number }}</title>
+    <style>
+        {{ css }}
+        /* Industry Edition overrides — Amber (#f59e0b) */
+        .header { border-bottom: 3px solid #f59e0b; }
+        .header h1 { color: #d97706; }
+        .section-title { border-bottom: 2px solid #f59e0b; }
+        .footer { border-top: 2px solid #f59e0b; }
+        .ps-closing { border-left: 4px solid #f59e0b; }
+        .edition-badge {
+            display: inline-block;
+            background: #f59e0b;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+        .section-content a { color: #b45309; }
+        .section-content blockquote { border-left: 3px solid #f59e0b; background-color: #fffbeb; }
+    </style>
+</head>
+<body>
+    <div class="newsletter-wrapper">
+        <div class="header">
+            {% if header_image_url %}
+            <img src="{{ header_image_url }}" alt="{{ newsletter_name }}" class="header-image">
+            {% else %}
+            <h1>{{ newsletter_name }}</h1>
+            {% endif %}
+            <div class="edition-badge">&#128200; Industry Edition</div>
+        </div>
+
+        {% if intro_copy %}
+        <div class="intro-copy" style="padding: 24px 0 16px; border-bottom: 1px solid #fde68a; margin-bottom: 24px;">
+            {{ intro_copy }}
+        </div>
+        {% endif %}
+
+        {% for section in sections %}
+        {{ section.html }}
+        {% endfor %}
+
+        {% if ps_closing %}
+        <div class="ps-closing" style="margin-top: 32px; padding: 24px; background: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <p style="font-size: 15px; line-height: 1.7; color: #374151; margin: 0; font-style: italic;">{{ ps_closing }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Share This Issue -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 32px; border-top: 2px solid #f59e0b; padding-top: 28px;">
+            <tr>
+                <td align="center" style="padding-bottom: 16px;">
+                    <h3 style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0;">Share This Issue</h3>
+                    <p style="font-size: 14px; color: #6b7280; margin: 6px 0 0;">Know someone who'd love this? Spread the word.</p>
+                </td>
+            </tr>
+            <tr>
+                <td align="center" style="padding-bottom: 24px;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                            <td style="padding: 0 6px;">
+                                <a href="https://twitter.com/intent/tweet?text=Great%20read%20from%20TrueFans%20NEWSLETTERS%20%F0%9F%8E%B5&url={{ archive_url | default('#') }}" target="_blank" style="display: inline-block; padding: 10px 16px; background: #1da1f2; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">Twitter</a>
+                            </td>
+                            <td style="padding: 0 6px;">
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ archive_url | default('#') }}" target="_blank" style="display: inline-block; padding: 10px 16px; background: #0a66c2; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">LinkedIn</a>
+                            </td>
+                            <td style="padding: 0 6px;">
+                                <a href="https://wa.me/?text=Check%20out%20this%20issue%20of%20TrueFans%20NEWSLETTERS%20{{ archive_url | default('#') }}" target="_blank" style="display: inline-block; padding: 10px 16px; background: #25d366; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">WhatsApp</a>
+                            </td>
+                            <td style="padding: 0 6px;">
+                                <a href="mailto:?subject=You'll%20love%20this%20newsletter&body=Check%20out%20this%20issue%20of%20TrueFans%20NEWSLETTERS%3A%20{{ archive_url | default('#') }}" style="display: inline-block; padding: 10px 16px; background: #6b7280; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">Email</a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Referral Section -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 8px; background: #fffbeb; border-radius: 8px;">
+            <tr>
+                <td style="padding: 24px;">
+                    <h3 style="font-size: 16px; font-weight: 700; color: #1f2937; margin: 0 0 8px;">Your Referral Link</h3>
+                    <p style="font-size: 14px; color: #6b7280; margin: 0 0 12px;">Share your personal link and earn exclusive rewards.</p>
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                            <td style="background: #ffffff; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px 16px;">
+                                <a href="{{ referral_url }}" style="font-size: 14px; color: #d97706; text-decoration: none; word-break: break-all;">{{ referral_url }}</a>
+                            </td>
+                        </tr>
+                    </table>
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 16px;">
+                        <tr>
+                            <td>
+                                <p style="font-size: 14px; color: #374151; margin: 0 0 8px; font-weight: 600;">Refer 3 friends and unlock exclusive content</p>
+                                <p style="font-size: 13px; color: #6b7280; margin: 0;">You've referred {{ referral_count | default(0) }} friend{{ 's' if referral_count | default(0) != 1 else '' }} so far.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Forward CTA -->
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 16px; margin-bottom: 24px;">
+            <tr>
+                <td align="center" style="padding: 20px; background: #f9fafb; border-radius: 8px; border: 1px dashed #d1d5db;">
+                    <p style="font-size: 15px; color: #374151; margin: 0; font-weight: 600;">Know someone who'd love this?</p>
+                    <p style="font-size: 13px; color: #6b7280; margin: 6px 0 0;">Forward this email to a friend — they can subscribe in one click.</p>
+                </td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            {% if footer_html %}
+            {{ footer_html }}
+            {% else %}
+            <p>&copy; {{ newsletter_name }} — Industry Edition | You received this because you subscribed.</p>
+            {% endif %}
+            <p><a href="{{ unsubscribe_url | default('#') }}" style="color: #d97706;">Unsubscribe</a> | <a href="{{ preferences_url | default('#') }}" style="color: #d97706;">Manage Preferences</a></p>
+        </div>
+    </div>
+</body>
+</html>

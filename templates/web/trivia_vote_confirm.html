@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vote Recorded — TrueFans NEWSLETTERS</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f9fafb;
+            color: #111827;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            max-width: 480px;
+            width: 100%;
+            padding: 32px;
+            text-align: center;
+        }
+        .brand {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #6C3AED;
+            margin-bottom: 16px;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #6B7280;
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+        .correct { color: #065F46; }
+        .incorrect { color: #991B1B; }
+        .question {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .option-label {
+            flex: 0 0 auto;
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 120px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .option-label.is-correct { color: #065F46; }
+        .bar-wrap {
+            flex: 1;
+            background: #F3F4F6;
+            border-radius: 4px;
+            height: 10px;
+        }
+        .bar {
+            height: 10px;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .bar-default { background: #6C3AED; }
+        .bar-correct { background: #10B981; }
+        .pct {
+            flex: 0 0 60px;
+            text-align: right;
+            font-size: 13px;
+            color: #6B7280;
+        }
+        .explanation {
+            margin-top: 16px;
+            padding: 12px;
+            background: #ECFDF5;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #065F46;
+            text-align: left;
+        }
+        .total {
+            margin-top: 16px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+        .cta {
+            display: inline-block;
+            margin-top: 24px;
+            padding: 12px 28px;
+            background: #6C3AED;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .cta:hover { background: #5B21B6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">TrueFans NEWSLETTERS</div>
+
+        {% if vote_result.already_voted %}
+            <h1>Already Voted!</h1>
+            <p class="subtitle">You have already submitted your answer for this question.</p>
+        {% else %}
+            <h1>Thanks for voting!</h1>
+            {% if poll.question_type == 'trivia' %}
+                {% if vote_result.is_correct %}
+                    <p class="subtitle correct">&#10003; Correct! Nice work.</p>
+                {% else %}
+                    <p class="subtitle incorrect">&#10007; Not quite — see the correct answer below.</p>
+                {% endif %}
+            {% else %}
+                <p class="subtitle">Your vote has been recorded.</p>
+            {% endif %}
+        {% endif %}
+
+        <div class="question">{{ poll.question_text }}</div>
+
+        {% set results = vote_result.results %}
+        {% for option in poll.options %}
+        {% set idx = loop.index0 %}
+        {% set pct = results.percentages.get(idx, 0.0) if results.percentages is defined else 0.0 %}
+        {% set is_correct = (poll.question_type == 'trivia' and idx == poll.correct_option_index) %}
+        <div class="option-row">
+            <span class="option-label {% if is_correct %}is-correct{% endif %}">
+                {% if is_correct %}&#10003; {% endif %}{{ option }}
+            </span>
+            <div class="bar-wrap">
+                <div class="bar {% if is_correct %}bar-correct{% else %}bar-default{% endif %}"
+                     style="width:{{ [pct, 2] | max }}%"></div>
+            </div>
+            <span class="pct">{{ pct }}%</span>
+        </div>
+        {% endfor %}
+
+        {% if poll.question_type == 'trivia' and poll.explanation %}
+        <div class="explanation">
+            <strong>Explanation:</strong> {{ poll.explanation }}
+        </div>
+        {% endif %}
+
+        <div class="total">
+            {{ results.total_votes if results.total_votes is defined else 0 }} total vote{{ 's' if (results.total_votes if results.total_votes is defined else 0) != 1 else '' }}
+        </div>
+
+        <a href="/subscribe" class="cta">Subscribe to TrueFans NEWSLETTERS</a>
+    </div>
+</body>
+</html>

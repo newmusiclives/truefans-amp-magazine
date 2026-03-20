@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Editor's Articles — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_editor_articles %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Editor's Articles</h2>
+    <p>Write and assign articles directly to editions and issues</p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<!-- New article form -->
+<div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+        <span class="card-title">New Article</span>
+    </div>
+    <form method="post" action="/editor-articles/create">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Title</label>
+                <input name="title" required placeholder="Article title">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Author</label>
+                <input name="author_name" value="John" placeholder="Author name">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Edition</label>
+                <select name="edition_slug">
+                    <option value="">— No edition —</option>
+                    {% for ed in editions %}
+                    <option value="{{ ed.slug }}">{{ ed.icon | safe }} {{ ed.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Issue</label>
+                <select name="target_issue_id">
+                    <option value="0">— Assign later —</option>
+                    {% for issue in upcoming_issues %}
+                    <option value="{{ issue.id }}">#{{ issue.issue_number }}{% if issue.edition_slug %} ({{ issue.edition_slug }}){% endif %}{% if issue.send_day %} — {{ issue.send_day }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Section</label>
+                <select name="target_section_slug">
+                    <option value="">— Assign later —</option>
+                    {% for sec in sections %}
+                    <option value="{{ sec.slug }}">{{ sec.display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+            <label>Content <span style="font-weight:400;color:var(--text-muted)">(Markdown supported)</span></label>
+            <textarea name="content" rows="8" placeholder="Write or paste your article here..." style="width:100%;font-family:var(--font-mono);font-size:14px"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+            <label>Notes <span style="font-weight:400;color:var(--text-muted)">(internal only)</span></label>
+            <input name="notes" placeholder="Optional notes about this article">
+        </div>
+        <button type="submit" class="btn btn-primary">Create Article</button>
+    </form>
+</div>
+
+<!-- Articles list -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Articles ({{ articles | length }})</span>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Author</th>
+                    <th>Edition</th>
+                    <th>Issue</th>
+                    <th>Section</th>
+                    <th>Status</th>
+                    <th>Updated</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in articles %}
+                <tr>
+                    <td><strong>{{ a.title or '(untitled)' }}</strong></td>
+                    <td>{{ a.author_name }}</td>
+                    <td>
+                        {% if a.edition_slug %}
+                        <span class="badge" style="
+                            {% if a.edition_slug == 'fan' %}background:#fef5f4;color:#e8645a{% endif %}
+                            {% if a.edition_slug == 'artist' %}background:#f5f3ff;color:#7c5cfc{% endif %}
+                            {% if a.edition_slug == 'industry' %}background:#fffbeb;color:#d97706{% endif %}
+                        ">{{ a.edition_slug }}</span>
+                        {% else %}
+                        <span style="color:var(--text-dim)">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if a.target_issue_id %}#{{ a.target_issue_id }}{% else %}<span style="color:var(--text-dim)">—</span>{% endif %}</td>
+                    <td style="font-size:12px">{{ a.target_section_slug or '—' }}</td>
+                    <td><span class="badge badge-{{ a.status }}">{{ a.status }}</span></td>
+                    <td style="font-size:12px;color:var(--text-muted)">{{ a.updated_at[:10] if a.updated_at else '' }}</td>
+                    <td><a href="/editor-articles/{{ a.id }}" class="btn btn-ghost btn-sm">Edit</a></td>
+                </tr>
+                {% endfor %}
+                {% if not articles %}
+                <tr><td colspan="8" style="text-align:center;color:var(--text-dim)">No articles yet. Create one above.</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

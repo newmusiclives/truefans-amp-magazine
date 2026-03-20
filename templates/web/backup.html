@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Backup & Export — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_backup %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Backup & Export</h2>
+    <p class="subtitle">Export subscribers, content, and configuration data</p>
+</div>
+
+<div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-bottom:2rem">
+    <div class="card">
+        <h3>Export Subscribers</h3>
+        <p>Download all subscribers as a CSV file.</p>
+        <form method="POST" action="/backup/subscribers">
+            <button type="submit" class="btn btn-primary">Export CSV</button>
+        </form>
+        <div id="export-sub-result" style="margin-top:0.5rem"></div>
+    </div>
+
+    <div class="card">
+        <h3>Export Content</h3>
+        <p>Download all drafts and assembled issues as JSON.</p>
+        <form hx-post="/backup/content" hx-target="#export-content-result" hx-swap="innerHTML">
+            <button type="submit" class="btn btn-primary">Export JSON</button>
+        </form>
+        <div id="export-content-result" style="margin-top:0.5rem"></div>
+    </div>
+
+    <div class="card">
+        <h3>Full Backup</h3>
+        <p>Export everything: subscribers, content, and config.</p>
+        <form hx-post="/backup/full" hx-target="#export-full-result" hx-swap="innerHTML">
+            <button type="submit" class="btn btn-primary">Full Backup</button>
+        </form>
+        <div id="export-full-result" style="margin-top:0.5rem"></div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Export History</h3>
+    {% if exports %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Records</th>
+                <th>Size</th>
+                <th>File</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for exp in exports %}
+            <tr>
+                <td>{{ exp.created_at }}</td>
+                <td><span class="badge">{{ exp.export_type }}</span></td>
+                <td>{{ exp.record_count }}</td>
+                <td>{{ "%.1f KB"|format(exp.file_size_bytes / 1024) if exp.file_size_bytes else '—' }}</td>
+                <td style="font-size:0.85em;max-width:300px;overflow:hidden;text-overflow:ellipsis">{{ exp.file_path or '—' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No exports yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

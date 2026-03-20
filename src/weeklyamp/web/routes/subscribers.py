@@ -19,14 +19,14 @@ async def subscribers_page():
     subs = repo.get_subscribers("active")
     issue = repo.get_current_issue()
     engagement = repo.get_engagement(issue["id"]) if issue else None
-    has_beehiiv = bool(cfg.beehiiv.api_key and cfg.beehiiv.publication_id)
+    has_ghl = bool(cfg.ghl.api_key and cfg.ghl.location_id)
 
     return render("subscribers.html",
         active=active,
         subscribers=subs,
         engagement=engagement,
         issue=issue,
-        has_beehiiv=has_beehiiv,
+        has_ghl=has_ghl,
     )
 
 
@@ -35,11 +35,11 @@ async def sync():
     cfg = get_config()
     repo = get_repo()
 
-    if not cfg.beehiiv.api_key:
-        return render("partials/alert.html", message="Beehiiv not configured.", level="error")
+    if not cfg.ghl.api_key:
+        return render("partials/alert.html", message="GoHighLevel not configured.", level="error")
 
     try:
-        result = sync_subscribers(repo, cfg.beehiiv)
+        result = sync_subscribers(repo, cfg.ghl)
         return render("partials/alert.html",
             message=f"Synced {result['synced']} subscribers ({result['new']} new, {result['total']} total).",
             level="success")

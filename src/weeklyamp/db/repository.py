@@ -123,6 +123,18 @@ class Repository:
             "platform", "content", "issue_id", "status",
             "scheduled_at", "posted_at", "agent_task_id",
         },
+        "webhooks": {
+            "name", "url", "direction", "event_types", "secret", "is_active",
+        },
+        "reusable_blocks": {
+            "name", "html_content", "plain_text", "block_type", "is_active",
+        },
+        "ab_tests": {
+            "status", "winner", "started_at", "completed_at",
+        },
+        "scheduled_sends": {
+            "status", "error_message", "sent_at",
+        },
     }
 
     @staticmethod
@@ -572,27 +584,36 @@ class Repository:
         conn.close()
         return dict(row) if row else None
 
-    def update_assembled_beehiiv(self, assembled_id: int, post_id: str) -> None:
+    def update_assembled_ghl(self, assembled_id: int, campaign_id: str) -> None:
         conn = self._conn()
         conn.execute(
-            "UPDATE assembled_issues SET beehiiv_post_id = ?, published_at = CURRENT_TIMESTAMP WHERE id = ?",
-            (post_id, assembled_id),
+            "UPDATE assembled_issues SET ghl_campaign_id = ?, published_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (campaign_id, assembled_id),
         )
         conn.commit()
         conn.close()
 
     # ---- Subscribers ----
 
-    def upsert_subscriber(self, email: str, beehiiv_id: str = "", status: str = "active") -> None:
+    def upsert_subscriber(self, email: str, ghl_contact_id: str = "", status: str = "active") -> None:
         conn = self._conn()
         conn.execute(
-            """INSERT INTO subscribers (email, beehiiv_id, status, synced_at)
+            """INSERT INTO subscribers (email, ghl_contact_id, status, synced_at)
                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
                ON CONFLICT(email) DO UPDATE SET
-                   beehiiv_id = excluded.beehiiv_id,
+                   ghl_contact_id = excluded.ghl_contact_id,
                    status = excluded.status,
                    synced_at = CURRENT_TIMESTAMP""",
-            (email, beehiiv_id, status),
+            (email, ghl_contact_id, status),
+        )
+        conn.commit()
+        conn.close()
+
+    def update_subscriber_ghl_id(self, subscriber_id: int, ghl_contact_id: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE subscribers SET ghl_contact_id = ? WHERE id = ?",
+            (ghl_contact_id, subscriber_id),
         )
         conn.commit()
         conn.close()
@@ -700,16 +721,16 @@ class Repository:
     # ---- Engagement Metrics ----
 
     def save_engagement(
-        self, issue_id: int, beehiiv_post_id: str,
+        self, issue_id: int, ghl_campaign_id: str,
         sends: int = 0, opens: int = 0, clicks: int = 0,
         open_rate: float = 0.0, click_rate: float = 0.0,
     ) -> int:
         conn = self._conn()
         cur = conn.execute(
             """INSERT INTO engagement_metrics
-               (issue_id, beehiiv_post_id, sends, opens, clicks, open_rate, click_rate)
+               (issue_id, ghl_campaign_id, sends, opens, clicks, open_rate, click_rate)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (issue_id, beehiiv_post_id, sends, opens, clicks, open_rate, click_rate),
+            (issue_id, ghl_campaign_id, sends, opens, clicks, open_rate, click_rate),
         )
         conn.commit()
         row_id = cur.lastrowid
@@ -1674,9 +1695,1588 @@ class Repository:
         conn.commit()
         conn.close()
 
+    # ---- Editor Articles ----
+
+    def create_editor_article(
+        self, title: str, content: str = "", author_name: str = "John",
+        edition_slug: str = "", target_issue_id: int = 0,
+        target_section_slug: str = "", notes: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO editor_articles
+               (title, content, author_name, edition_slug, target_issue_id,
+                target_section_slug, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (title, content, author_name, edition_slug,
+             target_issue_id or None, target_section_slug, notes),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_editor_articles(self, status: str = "") -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute(
+                "SELECT * FROM editor_articles WHERE status = ? ORDER BY updated_at DESC",
+                (status,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM editor_articles ORDER BY updated_at DESC"
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_editor_article(self, article_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM editor_articles WHERE id = ?", (article_id,)
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_editor_article(self, article_id: int, **fields) -> None:
+        if not fields:
+            return
+        allowed = {
+            "title", "content", "author_name", "edition_slug",
+            "target_issue_id", "target_section_slug", "status", "notes", "draft_id",
+        }
+        filtered = {k: v for k, v in fields.items() if k in allowed}
+        if not filtered:
+            return
+        filtered["updated_at"] = "CURRENT_TIMESTAMP"
+        set_parts = []
+        values = []
+        for k, v in filtered.items():
+            if v == "CURRENT_TIMESTAMP":
+                set_parts.append(f"{k} = CURRENT_TIMESTAMP")
+            else:
+                set_parts.append(f"{k} = ?")
+                values.append(v)
+        values.append(article_id)
+        conn = self._conn()
+        conn.execute(
+            f"UPDATE editor_articles SET {', '.join(set_parts)} WHERE id = ?",
+            tuple(values),
+        )
+        conn.commit()
+        conn.close()
+
+    def delete_editor_article(self, article_id: int) -> None:
+        conn = self._conn()
+        conn.execute("DELETE FROM editor_articles WHERE id = ?", (article_id,))
+        conn.commit()
+        conn.close()
+
+    # ====================================================================
+    # Advanced features (v21+) — all inactive by default
+    # ====================================================================
+
+    # ---- Email Tracking Events ----
+
+    def record_tracking_event(
+        self, subscriber_id: int, issue_id: int, event_type: str,
+        link_url: str = "", ip_address: str = "", user_agent: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO email_tracking_events
+               (subscriber_id, issue_id, event_type, link_url, ip_address, user_agent)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (subscriber_id, issue_id, event_type, link_url, ip_address, user_agent),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_tracking_events(self, issue_id: int, event_type: str = "", limit: int = 500) -> list[dict]:
+        conn = self._conn()
+        q = "SELECT * FROM email_tracking_events WHERE issue_id = ?"
+        params: list = [issue_id]
+        if event_type:
+            q += " AND event_type = ?"
+            params.append(event_type)
+        q += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(q, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_tracking_stats(self, issue_id: int) -> dict:
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT
+                COUNT(DISTINCT CASE WHEN event_type='open' THEN subscriber_id END) as unique_opens,
+                COUNT(DISTINCT CASE WHEN event_type='click' THEN subscriber_id END) as unique_clicks,
+                COUNT(CASE WHEN event_type='open' THEN 1 END) as total_opens,
+                COUNT(CASE WHEN event_type='click' THEN 1 END) as total_clicks
+               FROM email_tracking_events WHERE issue_id = ?""",
+            (issue_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else {"unique_opens": 0, "unique_clicks": 0, "total_opens": 0, "total_clicks": 0}
+
+    def get_subscriber_last_event(self, subscriber_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM email_tracking_events WHERE subscriber_id = ? ORDER BY created_at DESC LIMIT 1",
+            (subscriber_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    # ---- A/B Tests ----
+
+    def create_ab_test(
+        self, issue_id: int, test_type: str, variant_a: str, variant_b: str,
+        sample_size_percent: int = 20, auto_send_winner: bool = True,
+        measurement_hours: int = 4,
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO ab_tests
+               (issue_id, test_type, variant_a, variant_b, sample_size_percent,
+                auto_send_winner, measurement_hours)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (issue_id, test_type, variant_a, variant_b, sample_size_percent,
+             int(auto_send_winner), measurement_hours),
+        )
+        test_id = cur.lastrowid
+        # Create result rows for each variant
+        conn.execute(
+            "INSERT INTO ab_test_results (test_id, variant) VALUES (?, 'a')",
+            (test_id,),
+        )
+        conn.execute(
+            "INSERT INTO ab_test_results (test_id, variant) VALUES (?, 'b')",
+            (test_id,),
+        )
+        conn.commit()
+        conn.close()
+        return test_id
+
+    def get_ab_test(self, test_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM ab_tests WHERE id = ?", (test_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_ab_tests(self, issue_id: Optional[int] = None, status: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        q = "SELECT * FROM ab_tests WHERE 1=1"
+        params: list = []
+        if issue_id is not None:
+            q += " AND issue_id = ?"
+            params.append(issue_id)
+        if status:
+            q += " AND status = ?"
+            params.append(status)
+        q += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(q, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_ab_test_results(self, test_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM ab_test_results WHERE test_id = ? ORDER BY variant",
+            (test_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_ab_test_result(self, test_id: int, variant: str, **kwargs) -> None:
+        allowed = {"sends", "opens", "clicks", "unsubscribes"}
+        filtered = {k: v for k, v in kwargs.items() if k in allowed}
+        if not filtered:
+            return
+        sets = ", ".join(f"{k} = {k} + ?" for k in filtered)
+        vals = list(filtered.values()) + [test_id, variant]
+        conn = self._conn()
+        conn.execute(f"UPDATE ab_test_results SET {sets} WHERE test_id = ? AND variant = ?", vals)
+        conn.commit()
+        conn.close()
+
+    def update_ab_test(self, test_id: int, **kwargs) -> None:
+        allowed = {"status", "winner", "started_at", "completed_at"}
+        filtered = {k: v for k, v in kwargs.items() if k in allowed}
+        if not filtered:
+            return
+        sets = ", ".join(f"{k} = ?" for k in filtered)
+        vals = list(filtered.values()) + [test_id]
+        conn = self._conn()
+        conn.execute(f"UPDATE ab_tests SET {sets} WHERE id = ?", vals)
+        conn.commit()
+        conn.close()
+
+    # ---- Bounce Log ----
+
+    def record_bounce(self, email: str, bounce_type: str, raw_response: str = "",
+                      subscriber_id: Optional[int] = None) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO bounce_log (subscriber_id, email, bounce_type, raw_response)
+               VALUES (?, ?, ?, ?)""",
+            (subscriber_id, email, bounce_type, raw_response),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_bounce_counts(self, email: str) -> dict:
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT
+                COUNT(CASE WHEN bounce_type='hard' THEN 1 END) as hard,
+                COUNT(CASE WHEN bounce_type='soft' THEN 1 END) as soft,
+                COUNT(CASE WHEN bounce_type='complaint' THEN 1 END) as complaint
+               FROM bounce_log WHERE email = ?""",
+            (email,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else {"hard": 0, "soft": 0, "complaint": 0}
+
+    def get_bounce_stats(self) -> dict:
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT
+                COUNT(CASE WHEN bounce_type='hard' THEN 1 END) as hard,
+                COUNT(CASE WHEN bounce_type='soft' THEN 1 END) as soft,
+                COUNT(CASE WHEN bounce_type='complaint' THEN 1 END) as complaint,
+                COUNT(*) as total
+               FROM bounce_log""",
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else {"hard": 0, "soft": 0, "complaint": 0, "total": 0}
+
+    # ---- Warmup Config ----
+
+    def get_warmup(self, domain: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM warmup_config WHERE domain = ? AND is_active = 1",
+            (domain,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_warmup_day(self, domain: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE warmup_config SET current_day = current_day + 1 WHERE domain = ?",
+            (domain,),
+        )
+        conn.commit()
+        conn.close()
+
+    # ---- Scheduled Sends ----
+
+    def create_scheduled_send(
+        self, issue_id: int, edition_slug: str, subject: str, scheduled_at: str,
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO scheduled_sends (issue_id, edition_slug, subject, scheduled_at)
+               VALUES (?, ?, ?, ?)""",
+            (issue_id, edition_slug, subject, scheduled_at),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_pending_scheduled_sends(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT * FROM scheduled_sends
+               WHERE status = 'pending' AND scheduled_at <= CURRENT_TIMESTAMP
+               ORDER BY scheduled_at""",
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_upcoming_scheduled_sends(self, limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT ss.*, i.issue_number, i.title as issue_title
+               FROM scheduled_sends ss
+               LEFT JOIN issues i ON ss.issue_id = i.id
+               WHERE ss.status IN ('pending','processing')
+               ORDER BY ss.scheduled_at LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_scheduled_send(self, send_id: int, status: str, error_message: str = "") -> None:
+        conn = self._conn()
+        if status == "sent":
+            conn.execute(
+                "UPDATE scheduled_sends SET status = ?, sent_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (status, send_id),
+            )
+        else:
+            conn.execute(
+                "UPDATE scheduled_sends SET status = ?, error_message = ? WHERE id = ?",
+                (status, error_message, send_id),
+            )
+        conn.commit()
+        conn.close()
+
+    # ---- Webhooks ----
+
+    def create_webhook(
+        self, name: str, url: str, direction: str = "outbound",
+        event_types: str = "", secret: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO webhooks (name, url, direction, event_types, secret)
+               VALUES (?, ?, ?, ?, ?)""",
+            (name, url, direction, event_types, secret),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_webhooks(self, direction: str = "") -> list[dict]:
+        conn = self._conn()
+        if direction:
+            rows = conn.execute(
+                "SELECT * FROM webhooks WHERE direction = ? ORDER BY name",
+                (direction,),
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM webhooks ORDER BY name").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_active_webhooks(self, event_type: str) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM webhooks WHERE is_active = 1 AND direction = 'outbound'",
+        ).fetchall()
+        conn.close()
+        # Filter by event_type match (comma-separated list)
+        return [dict(r) for r in rows if event_type in (r["event_types"] or "").split(",")]
+
+    def toggle_webhook(self, webhook_id: int) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE webhooks SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?",
+            (webhook_id,),
+        )
+        conn.commit()
+        conn.close()
+
+    def log_webhook(self, webhook_id: int, event_type: str, payload_json: str,
+                    response_status: int = 0, response_body: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO webhook_log (webhook_id, event_type, payload_json, response_status, response_body)
+               VALUES (?, ?, ?, ?, ?)""",
+            (webhook_id, event_type, payload_json, response_status, response_body),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_webhook_log(self, webhook_id: Optional[int] = None, limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        if webhook_id:
+            rows = conn.execute(
+                "SELECT * FROM webhook_log WHERE webhook_id = ? ORDER BY created_at DESC LIMIT ?",
+                (webhook_id, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM webhook_log ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Referral Codes ----
+
+    def create_referral_code(self, subscriber_id: int, code: str) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO referral_codes (subscriber_id, code) VALUES (?, ?)",
+            (subscriber_id, code),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_referral_code(self, subscriber_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM referral_codes WHERE subscriber_id = ?",
+            (subscriber_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_referral_by_code(self, code: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM referral_codes WHERE code = ?", (code,)
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def increment_referral_count(self, code: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE referral_codes SET referral_count = referral_count + 1 WHERE code = ?",
+            (code,),
+        )
+        conn.commit()
+        conn.close()
+
+    def log_referral(self, referrer_code: str, referred_subscriber_id: Optional[int],
+                     referred_email: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO referral_log (referrer_code, referred_subscriber_id, referred_email)
+               VALUES (?, ?, ?)""",
+            (referrer_code, referred_subscriber_id, referred_email),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_top_referrers(self, limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT rc.*, s.email as subscriber_email
+               FROM referral_codes rc
+               JOIN subscribers s ON rc.subscriber_id = s.id
+               WHERE rc.referral_count > 0
+               ORDER BY rc.referral_count DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Subscriber Preferences ----
+
+    def get_subscriber_preferences(self, subscriber_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM subscriber_preferences WHERE subscriber_id = ?",
+            (subscriber_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def upsert_subscriber_preferences(
+        self, subscriber_id: int, content_frequency: str = "all",
+        preferred_send_hour: int = -1, timezone: str = "", interests: str = "",
+    ) -> None:
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO subscriber_preferences
+               (subscriber_id, content_frequency, preferred_send_hour, timezone, interests)
+               VALUES (?, ?, ?, ?, ?)
+               ON CONFLICT(subscriber_id) DO UPDATE SET
+                   content_frequency = excluded.content_frequency,
+                   preferred_send_hour = excluded.preferred_send_hour,
+                   timezone = excluded.timezone,
+                   interests = excluded.interests,
+                   updated_at = CURRENT_TIMESTAMP""",
+            (subscriber_id, content_frequency, preferred_send_hour, timezone, interests),
+        )
+        conn.commit()
+        conn.close()
+
+    # ---- Welcome Sequence ----
+
+    def get_welcome_steps(self, edition_slug: str = "") -> list[dict]:
+        conn = self._conn()
+        if edition_slug:
+            rows = conn.execute(
+                "SELECT * FROM welcome_sequence_steps WHERE edition_slug = ? AND is_active = 1 ORDER BY step_number",
+                (edition_slug,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM welcome_sequence_steps WHERE is_active = 1 ORDER BY edition_slug, step_number",
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_welcome_step(
+        self, edition_slug: str, step_number: int, delay_hours: int,
+        subject: str, html_content: str, plain_text: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO welcome_sequence_steps
+               (edition_slug, step_number, delay_hours, subject, html_content, plain_text)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (edition_slug, step_number, delay_hours, subject, html_content, plain_text),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def log_welcome_send(self, subscriber_id: int, step_id: int) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO welcome_sequence_log (subscriber_id, step_id) VALUES (?, ?)",
+            (subscriber_id, step_id),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_welcome_sends_for_subscriber(self, subscriber_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT wl.*, ws.step_number, ws.subject
+               FROM welcome_sequence_log wl
+               JOIN welcome_sequence_steps ws ON wl.step_id = ws.id
+               WHERE wl.subscriber_id = ? ORDER BY ws.step_number""",
+            (subscriber_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Re-engagement ----
+
+    def create_reengagement_entry(self, subscriber_id: int, campaign_type: str = "winback") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO reengagement_log (subscriber_id, campaign_type) VALUES (?, ?)",
+            (subscriber_id, campaign_type),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def update_reengagement(self, log_id: int, opened: bool = False, clicked: bool = False) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE reengagement_log SET opened = ?, clicked = ? WHERE id = ?",
+            (int(opened), int(clicked), log_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_inactive_subscribers(self, days: int = 30) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT s.* FROM subscribers s
+               WHERE s.status = 'active'
+               AND s.id NOT IN (
+                   SELECT DISTINCT subscriber_id FROM email_tracking_events
+                   WHERE created_at >= datetime('now', ?)
+               )""",
+            (f"-{days} days",),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_reengagement_stats(self) -> dict:
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT
+                COUNT(*) as total_sent,
+                COUNT(CASE WHEN opened = 1 THEN 1 END) as opened,
+                COUNT(CASE WHEN clicked = 1 THEN 1 END) as clicked
+               FROM reengagement_log""",
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else {"total_sent": 0, "opened": 0, "clicked": 0}
+
+    # ---- Reusable Blocks ----
+
+    def create_reusable_block(
+        self, name: str, slug: str, block_type: str = "content",
+        html_content: str = "", plain_text: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO reusable_blocks (name, slug, block_type, html_content, plain_text)
+               VALUES (?, ?, ?, ?, ?)""",
+            (name, slug, block_type, html_content, plain_text),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_reusable_block(self, slug: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM reusable_blocks WHERE slug = ?", (slug,)
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_reusable_blocks(self, block_type: str = "") -> list[dict]:
+        conn = self._conn()
+        if block_type:
+            rows = conn.execute(
+                "SELECT * FROM reusable_blocks WHERE block_type = ? AND is_active = 1 ORDER BY name",
+                (block_type,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM reusable_blocks WHERE is_active = 1 ORDER BY block_type, name",
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_reusable_block(self, block_id: int, **kwargs) -> None:
+        allowed = {"name", "html_content", "plain_text", "block_type", "is_active"}
+        filtered = {k: v for k, v in kwargs.items() if k in allowed}
+        if not filtered:
+            return
+        sets = ", ".join(f"{k} = ?" for k in filtered)
+        vals = list(filtered.values()) + [block_id]
+        conn = self._conn()
+        conn.execute(f"UPDATE reusable_blocks SET {sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?", vals)
+        conn.commit()
+        conn.close()
+
+    def delete_reusable_block(self, block_id: int) -> None:
+        conn = self._conn()
+        conn.execute("DELETE FROM reusable_blocks WHERE id = ?", (block_id,))
+        conn.commit()
+        conn.close()
+
+    # ---- User Roles ----
+
+    def create_user_role(
+        self, username: str, password_hash: str, role: str = "viewer",
+        display_name: str = "", email: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO user_roles (username, password_hash, role, display_name, email)
+               VALUES (?, ?, ?, ?, ?)""",
+            (username, password_hash, role, display_name, email),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_user_by_username(self, username: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM user_roles WHERE username = ? AND is_active = 1",
+            (username,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_all_users(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT id, username, role, display_name, email, is_active, last_login_at, created_at FROM user_roles ORDER BY username",
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_user_role(self, username: str, role: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE user_roles SET role = ? WHERE username = ?",
+            (role, username),
+        )
+        conn.commit()
+        conn.close()
+
+    def deactivate_user(self, username: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE user_roles SET is_active = 0 WHERE username = ?",
+            (username,),
+        )
+        conn.commit()
+        conn.close()
+
+    def update_user_login(self, username: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE user_roles SET last_login_at = CURRENT_TIMESTAMP WHERE username = ?",
+            (username,),
+        )
+        conn.commit()
+        conn.close()
+
+    # ---- Export Log ----
+
+    def log_export(self, export_type: str, file_path: str = "",
+                   file_size_bytes: int = 0, record_count: int = 0) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO export_log (export_type, file_path, file_size_bytes, record_count)
+               VALUES (?, ?, ?, ?)""",
+            (export_type, file_path, file_size_bytes, record_count),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_export_history(self, limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM export_log ORDER BY created_at DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Send Time History ----
+
+    def record_send_time(self, subscriber_id: int, issue_id: int, sent_at: str,
+                         hour_of_day: int, day_of_week: str) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO send_time_history (subscriber_id, issue_id, sent_at, hour_of_day, day_of_week)
+               VALUES (?, ?, ?, ?, ?)""",
+            (subscriber_id, issue_id, sent_at, hour_of_day, day_of_week),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def record_open_time(self, subscriber_id: int, issue_id: int) -> None:
+        conn = self._conn()
+        conn.execute(
+            """UPDATE send_time_history SET opened_at = CURRENT_TIMESTAMP
+               WHERE subscriber_id = ? AND issue_id = ? AND opened_at IS NULL""",
+            (subscriber_id, issue_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_optimal_send_hour(self, subscriber_id: int) -> Optional[int]:
+        """Get the hour of day when this subscriber most often opens emails."""
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT CAST(strftime('%%H', opened_at) AS INTEGER) as hour, COUNT(*) as cnt
+               FROM send_time_history
+               WHERE subscriber_id = ? AND opened_at IS NOT NULL
+               GROUP BY hour ORDER BY cnt DESC LIMIT 1""",
+            (subscriber_id,),
+        ).fetchone()
+        conn.close()
+        return row["hour"] if row else None
+
+    # ====================================================================
+    # Music-specific features (v22) — all inactive by default
+    # ====================================================================
+
+    # ---- Spotify Cache ----
+
+    def upsert_spotify_artist(
+        self, spotify_artist_id: str, artist_name: str = "", genres: str = "",
+        followers: int = 0, popularity: int = 0, image_url: str = "",
+        monthly_listeners: int = 0, data_json: str = "{}",
+    ) -> int:
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO spotify_artist_cache
+               (spotify_artist_id, artist_name, genres, followers, popularity,
+                image_url, monthly_listeners, data_json, fetched_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+               ON CONFLICT(spotify_artist_id) DO UPDATE SET
+                   artist_name=excluded.artist_name, genres=excluded.genres,
+                   followers=excluded.followers, popularity=excluded.popularity,
+                   image_url=excluded.image_url, monthly_listeners=excluded.monthly_listeners,
+                   data_json=excluded.data_json, fetched_at=CURRENT_TIMESTAMP""",
+            (spotify_artist_id, artist_name, genres, followers, popularity,
+             image_url, monthly_listeners, data_json),
+        )
+        conn.commit()
+        row = conn.execute(
+            "SELECT id FROM spotify_artist_cache WHERE spotify_artist_id = ?",
+            (spotify_artist_id,),
+        ).fetchone()
+        conn.close()
+        return row["id"] if row else 0
+
+    def get_spotify_artist(self, spotify_artist_id: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM spotify_artist_cache WHERE spotify_artist_id = ?",
+            (spotify_artist_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def search_spotify_cache(self, name: str, limit: int = 10) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM spotify_artist_cache WHERE artist_name LIKE ? ORDER BY popularity DESC LIMIT ?",
+            (f"%{name}%", limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Spotify Releases ----
+
+    def upsert_spotify_release(
+        self, spotify_artist_id: str, album_id: str, album_name: str = "",
+        release_date: str = "", album_type: str = "single",
+        image_url: str = "", external_url: str = "",
+    ) -> None:
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO spotify_releases
+               (spotify_artist_id, album_id, album_name, release_date, album_type, image_url, external_url)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(spotify_artist_id, album_id) DO UPDATE SET
+                   album_name=excluded.album_name, release_date=excluded.release_date,
+                   image_url=excluded.image_url, external_url=excluded.external_url""",
+            (spotify_artist_id, album_id, album_name, release_date, album_type, image_url, external_url),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_recent_releases(self, limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT r.*, a.artist_name, a.image_url as artist_image
+               FROM spotify_releases r
+               JOIN spotify_artist_cache a ON r.spotify_artist_id = a.spotify_artist_id
+               ORDER BY r.release_date DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Audio Embeds ----
+
+    def create_audio_embed(
+        self, embed_type: str, external_id: str, embed_url: str = "",
+        thumbnail_url: str = "", title: str = "", artist_name: str = "",
+        draft_id: Optional[int] = None, issue_id: Optional[int] = None,
+        section_slug: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO audio_embeds
+               (draft_id, issue_id, section_slug, embed_type, external_id,
+                embed_url, thumbnail_url, title, artist_name)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (draft_id, issue_id, section_slug, embed_type, external_id,
+             embed_url, thumbnail_url, title, artist_name),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_embeds_for_issue(self, issue_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM audio_embeds WHERE issue_id = ? ORDER BY section_slug",
+            (issue_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_embeds_for_draft(self, draft_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM audio_embeds WHERE draft_id = ?", (draft_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Artist Profiles ----
+
+    def create_artist_profile(
+        self, slug: str, artist_name: str, email: str = "", bio: str = "",
+        website: str = "", social_links_json: str = "{}", image_url: str = "",
+        spotify_artist_id: str = "", genres: str = "", submission_id: Optional[int] = None,
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO artist_profiles
+               (slug, artist_name, email, bio, website, social_links_json,
+                image_url, spotify_artist_id, genres, submission_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (slug, artist_name, email, bio, website, social_links_json,
+             image_url, spotify_artist_id, genres, submission_id),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_artist_profile(self, slug: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM artist_profiles WHERE slug = ?", (slug,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_artist_profiles(self, published_only: bool = True, limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        q = "SELECT * FROM artist_profiles"
+        if published_only:
+            q += " WHERE is_published = 1"
+        q += " ORDER BY artist_name LIMIT ?"
+        rows = conn.execute(q, (limit,)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_artist_profile(self, profile_id: int, **kwargs) -> None:
+        allowed = {
+            "artist_name", "email", "bio", "website", "social_links_json",
+            "image_url", "spotify_artist_id", "genres", "music_embeds_json",
+            "is_published", "is_approved", "self_service_token",
+        }
+        filtered = {k: v for k, v in kwargs.items() if k in allowed}
+        if not filtered:
+            return
+        sets = ", ".join(f"{k} = ?" for k in filtered)
+        vals = list(filtered.values()) + [profile_id]
+        conn = self._conn()
+        conn.execute(f"UPDATE artist_profiles SET {sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?", vals)
+        conn.commit()
+        conn.close()
+
+    def get_artist_profile_by_token(self, token: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM artist_profiles WHERE self_service_token = ? AND self_service_token != ''",
+            (token,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    # ---- Artist Followers ----
+
+    def follow_artist(self, subscriber_id: int, artist_profile_id: int) -> None:
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO artist_followers (subscriber_id, artist_profile_id)
+               VALUES (?, ?) ON CONFLICT(subscriber_id, artist_profile_id) DO NOTHING""",
+            (subscriber_id, artist_profile_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def unfollow_artist(self, subscriber_id: int, artist_profile_id: int) -> None:
+        conn = self._conn()
+        conn.execute(
+            "DELETE FROM artist_followers WHERE subscriber_id = ? AND artist_profile_id = ?",
+            (subscriber_id, artist_profile_id),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_artist_follower_count(self, artist_profile_id: int) -> int:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT COUNT(*) as c FROM artist_followers WHERE artist_profile_id = ?",
+            (artist_profile_id,),
+        ).fetchone()
+        conn.close()
+        return row["c"] if row else 0
+
+    def get_followed_artists(self, subscriber_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT ap.* FROM artist_profiles ap
+               JOIN artist_followers af ON ap.id = af.artist_profile_id
+               WHERE af.subscriber_id = ? ORDER BY ap.artist_name""",
+            (subscriber_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Artist Features ----
+
+    def link_artist_feature(self, artist_profile_id: int, issue_id: int,
+                            section_slug: str = "", draft_id: Optional[int] = None) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO artist_newsletter_features
+               (artist_profile_id, issue_id, section_slug, draft_id)
+               VALUES (?, ?, ?, ?)""",
+            (artist_profile_id, issue_id, section_slug, draft_id),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_artist_features(self, artist_profile_id: int, limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT anf.*, i.issue_number, i.title as issue_title, i.edition_slug
+               FROM artist_newsletter_features anf
+               JOIN issues i ON anf.issue_id = i.id
+               WHERE anf.artist_profile_id = ?
+               ORDER BY anf.featured_at DESC LIMIT ?""",
+            (artist_profile_id, limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Subscriber Genres ----
+
+    def set_subscriber_genres(self, subscriber_id: int, genres: list[str]) -> None:
+        conn = self._conn()
+        conn.execute("DELETE FROM subscriber_genres WHERE subscriber_id = ?", (subscriber_id,))
+        for i, genre in enumerate(genres):
+            conn.execute(
+                "INSERT INTO subscriber_genres (subscriber_id, genre, priority) VALUES (?, ?, ?)",
+                (subscriber_id, genre.strip().lower(), i + 1),
+            )
+        conn.commit()
+        conn.close()
+
+    def get_subscriber_genres(self, subscriber_id: int) -> list[str]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT genre FROM subscriber_genres WHERE subscriber_id = ? ORDER BY priority",
+            (subscriber_id,),
+        ).fetchall()
+        conn.close()
+        return [r["genre"] for r in rows]
+
+    def get_genre_subscriber_counts(self) -> dict:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT genre, COUNT(*) as c FROM subscriber_genres GROUP BY genre ORDER BY c DESC",
+        ).fetchall()
+        conn.close()
+        return {r["genre"]: r["c"] for r in rows}
+
+    # ---- Section Genres ----
+
+    def set_section_genres(self, section_slug: str, genres: list[str]) -> None:
+        conn = self._conn()
+        conn.execute("DELETE FROM section_genres WHERE section_slug = ?", (section_slug,))
+        for genre in genres:
+            conn.execute(
+                "INSERT INTO section_genres (section_slug, genre) VALUES (?, ?)",
+                (section_slug, genre.strip().lower()),
+            )
+        conn.commit()
+        conn.close()
+
+    def get_section_genres(self, section_slug: str) -> list[str]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT genre FROM section_genres WHERE section_slug = ?", (section_slug,),
+        ).fetchall()
+        conn.close()
+        return [r["genre"] for r in rows]
+
+    # ---- Section Engagement ----
+
+    def record_section_engagement(
+        self, subscriber_id: int, issue_id: int, section_slug: str,
+        event_type: str = "click", link_url: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO section_engagement_events
+               (subscriber_id, issue_id, section_slug, event_type, link_url)
+               VALUES (?, ?, ?, ?, ?)""",
+            (subscriber_id, issue_id, section_slug, event_type, link_url),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_section_engagement_stats(self, issue_id: Optional[int] = None) -> list[dict]:
+        conn = self._conn()
+        if issue_id:
+            rows = conn.execute(
+                """SELECT section_slug,
+                    COUNT(*) as total_clicks,
+                    COUNT(DISTINCT subscriber_id) as unique_clickers
+                   FROM section_engagement_events WHERE issue_id = ?
+                   GROUP BY section_slug ORDER BY total_clicks DESC""",
+                (issue_id,),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """SELECT section_slug,
+                    COUNT(*) as total_clicks,
+                    COUNT(DISTINCT subscriber_id) as unique_clickers
+                   FROM section_engagement_events
+                   GROUP BY section_slug ORDER BY total_clicks DESC""",
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_section_performance(self, section_slug: str, limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT issue_id, COUNT(*) as clicks, COUNT(DISTINCT subscriber_id) as unique_clicks
+               FROM section_engagement_events WHERE section_slug = ?
+               GROUP BY issue_id ORDER BY issue_id DESC LIMIT ?""",
+            (section_slug, limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def upsert_subscriber_interest(
+        self, subscriber_id: int, section_slug: str,
+        engagement_score: float, click_count: int,
+    ) -> None:
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO subscriber_interest_profiles
+               (subscriber_id, section_slug, engagement_score, click_count, last_engaged_at, updated_at)
+               VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+               ON CONFLICT(subscriber_id, section_slug) DO UPDATE SET
+                   engagement_score=excluded.engagement_score,
+                   click_count=excluded.click_count,
+                   last_engaged_at=CURRENT_TIMESTAMP,
+                   updated_at=CURRENT_TIMESTAMP""",
+            (subscriber_id, section_slug, engagement_score, click_count),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_subscriber_interests(self, subscriber_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT * FROM subscriber_interest_profiles
+               WHERE subscriber_id = ? ORDER BY engagement_score DESC""",
+            (subscriber_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Trivia / Polls ----
+
+    def create_trivia_poll(
+        self, question_type: str, question_text: str, options_json: str = "[]",
+        correct_option_index: int = -1, explanation: str = "",
+        target_issue_id: Optional[int] = None, edition_slug: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO trivia_polls
+               (question_type, question_text, options_json, correct_option_index,
+                explanation, target_issue_id, edition_slug)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (question_type, question_text, options_json, correct_option_index,
+             explanation, target_issue_id, edition_slug),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_trivia_poll(self, poll_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM trivia_polls WHERE id = ?", (poll_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_trivia_polls(self, status: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute(
+                "SELECT * FROM trivia_polls WHERE status = ? ORDER BY created_at DESC LIMIT ?",
+                (status, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM trivia_polls ORDER BY created_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_trivia_for_issue(self, issue_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM trivia_polls WHERE target_issue_id = ? ORDER BY id",
+            (issue_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_trivia_poll(self, poll_id: int, **kwargs) -> None:
+        allowed = {"status", "closes_at", "results_issue_id", "question_text",
+                    "options_json", "correct_option_index", "explanation", "edition_slug"}
+        filtered = {k: v for k, v in kwargs.items() if k in allowed}
+        if not filtered:
+            return
+        sets = ", ".join(f"{k} = ?" for k in filtered)
+        vals = list(filtered.values()) + [poll_id]
+        conn = self._conn()
+        conn.execute(f"UPDATE trivia_polls SET {sets}, updated_at = CURRENT_TIMESTAMP WHERE id = ?", vals)
+        conn.commit()
+        conn.close()
+
+    def record_trivia_vote(self, poll_id: int, subscriber_id: int,
+                           option_index: int, is_correct: bool = False) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO trivia_poll_votes
+               (trivia_poll_id, subscriber_id, selected_option_index, is_correct)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(trivia_poll_id, subscriber_id) DO NOTHING""",
+            (poll_id, subscriber_id, option_index, int(is_correct)),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id or 0
+
+    def get_trivia_results(self, poll_id: int) -> dict:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT selected_option_index, COUNT(*) as votes
+               FROM trivia_poll_votes WHERE trivia_poll_id = ?
+               GROUP BY selected_option_index ORDER BY selected_option_index""",
+            (poll_id,),
+        ).fetchall()
+        total = conn.execute(
+            "SELECT COUNT(*) as c FROM trivia_poll_votes WHERE trivia_poll_id = ?",
+            (poll_id,),
+        ).fetchone()
+        conn.close()
+        return {
+            "votes_by_option": {r["selected_option_index"]: r["votes"] for r in rows},
+            "total_votes": total["c"] if total else 0,
+        }
+
+    def has_voted(self, poll_id: int, subscriber_id: int) -> bool:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT 1 FROM trivia_poll_votes WHERE trivia_poll_id = ? AND subscriber_id = ?",
+            (poll_id, subscriber_id),
+        ).fetchone()
+        conn.close()
+        return row is not None
+
+    def update_trivia_leaderboard(self, subscriber_id: int, correct: bool) -> None:
+        conn = self._conn()
+        conn.execute(
+            """INSERT INTO trivia_leaderboard (subscriber_id, correct_count, total_answered, streak, score)
+               VALUES (?, ?, 1, ?, ?)
+               ON CONFLICT(subscriber_id) DO UPDATE SET
+                   correct_count = correct_count + ?,
+                   total_answered = total_answered + 1,
+                   streak = CASE WHEN ? = 1 THEN streak + 1 ELSE 0 END,
+                   score = score + CASE WHEN ? = 1 THEN 10 + (CASE WHEN ? = 1 THEN streak ELSE 0 END) ELSE 1 END,
+                   updated_at = CURRENT_TIMESTAMP""",
+            (subscriber_id, int(correct), int(correct), 10 if correct else 1,
+             int(correct), int(correct), int(correct), int(correct)),
+        )
+        conn.commit()
+        conn.close()
+
+    def get_trivia_leaderboard(self, limit: int = 25) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT tl.*, s.email, s.first_name
+               FROM trivia_leaderboard tl
+               JOIN subscribers s ON tl.subscriber_id = s.id
+               ORDER BY tl.score DESC LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ====================================================================
+    # Growth & monetization (v23) — all inactive by default
+    # ====================================================================
+
+    # ---- Lead Magnets ----
+
+    def create_lead_magnet(self, title: str, slug: str, description: str = "",
+                           edition_slug: str = "", file_url: str = "", cover_image_url: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO lead_magnets (title, slug, description, edition_slug, file_url, cover_image_url)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (title, slug, description, edition_slug, file_url, cover_image_url),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_lead_magnet(self, slug: str) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM lead_magnets WHERE slug = ?", (slug,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_lead_magnets(self, active_only: bool = True) -> list[dict]:
+        conn = self._conn()
+        q = "SELECT * FROM lead_magnets"
+        if active_only:
+            q += " WHERE is_active = 1"
+        q += " ORDER BY created_at DESC"
+        rows = conn.execute(q).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def record_lead_magnet_download(self, lead_magnet_id: int, email: str,
+                                    subscriber_id: Optional[int] = None) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO lead_magnet_downloads (lead_magnet_id, email, subscriber_id) VALUES (?, ?, ?)",
+            (lead_magnet_id, email, subscriber_id),
+        )
+        conn.execute(
+            "UPDATE lead_magnets SET download_count = download_count + 1 WHERE id = ?",
+            (lead_magnet_id,),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    # ---- Sponsor Inquiries ----
+
+    def create_sponsor_inquiry(self, company_name: str, contact_email: str,
+                               contact_name: str = "", website: str = "",
+                               budget_range: str = "", message: str = "",
+                               editions_interested: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO sponsor_inquiries
+               (company_name, contact_name, contact_email, website, budget_range, message, editions_interested)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (company_name, contact_name, contact_email, website, budget_range, message, editions_interested),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_sponsor_inquiries(self, status: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute(
+                "SELECT * FROM sponsor_inquiries WHERE status = ? ORDER BY created_at DESC LIMIT ?",
+                (status, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM sponsor_inquiries ORDER BY created_at DESC LIMIT ?", (limit,),
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_sponsor_inquiry(self, inquiry_id: int, status: str, notes: str = "") -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE sponsor_inquiries SET status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (status, notes, inquiry_id),
+        )
+        conn.commit()
+        conn.close()
+
+    # ---- Contests ----
+
+    def create_contest(self, title: str, description: str = "", prize_description: str = "",
+                       contest_type: str = "referral", entry_requirement: str = "",
+                       edition_slug: str = "", start_date: str = "", end_date: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO contests (title, description, prize_description, contest_type,
+               entry_requirement, edition_slug, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (title, description, prize_description, contest_type, entry_requirement,
+             edition_slug, start_date, end_date),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_contests(self, status: str = "", limit: int = 20) -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute(
+                "SELECT * FROM contests WHERE status = ? ORDER BY created_at DESC LIMIT ?",
+                (status, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM contests ORDER BY created_at DESC LIMIT ?", (limit,),
+            ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_contest(self, contest_id: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM contests WHERE id = ?", (contest_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_contest(self, contest_id: int, **kwargs) -> None:
+        allowed = {"title", "description", "prize_description", "status",
+                    "winner_subscriber_id", "winner_name", "start_date", "end_date"}
+        filtered = {k: v for k, v in kwargs.items() if k in allowed}
+        if not filtered:
+            return
+        sets = ", ".join(f"{k} = ?" for k in filtered)
+        vals = list(filtered.values()) + [contest_id]
+        conn = self._conn()
+        conn.execute(f"UPDATE contests SET {sets} WHERE id = ?", vals)
+        conn.commit()
+        conn.close()
+
+    def enter_contest(self, contest_id: int, subscriber_id: int, email: str = "",
+                      entry_data_json: str = "{}") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO contest_entries (contest_id, subscriber_id, email, entry_data_json)
+               VALUES (?, ?, ?, ?) ON CONFLICT(contest_id, subscriber_id) DO NOTHING""",
+            (contest_id, subscriber_id, email, entry_data_json),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id or 0
+
+    def get_contest_entry_count(self, contest_id: int) -> int:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT COUNT(*) as c FROM contest_entries WHERE contest_id = ?", (contest_id,),
+        ).fetchone()
+        conn.close()
+        return row["c"] if row else 0
+
+    # ---- Reader Contributions ----
+
+    def create_reader_contribution(self, email: str, name: str = "", content_type: str = "hot_take",
+                                   content: str = "", edition_slug: str = "",
+                                   subscriber_id: Optional[int] = None) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO reader_contributions (subscriber_id, email, name, content_type, content, edition_slug)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (subscriber_id, email, name, content_type, content, edition_slug),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_reader_contributions(self, status: str = "", content_type: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        q = "SELECT * FROM reader_contributions WHERE 1=1"
+        params: list = []
+        if status:
+            q += " AND status = ?"
+            params.append(status)
+        if content_type:
+            q += " AND content_type = ?"
+            params.append(content_type)
+        q += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(q, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_reader_contribution(self, contrib_id: int, status: str,
+                                   featured_in_issue_id: Optional[int] = None) -> None:
+        conn = self._conn()
+        if featured_in_issue_id:
+            conn.execute(
+                "UPDATE reader_contributions SET status = ?, featured_in_issue_id = ? WHERE id = ?",
+                (status, featured_in_issue_id, contrib_id),
+            )
+        else:
+            conn.execute(
+                "UPDATE reader_contributions SET status = ? WHERE id = ?", (status, contrib_id),
+            )
+        conn.commit()
+        conn.close()
+
+    # ---- Referral Rewards ----
+
+    def get_referral_rewards(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM referral_rewards WHERE is_active = 1 ORDER BY sort_order, referrals_required",
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_referral_reward(self, tier_name: str, referrals_required: int,
+                               reward_description: str = "", reward_type: str = "badge",
+                               sort_order: int = 0) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO referral_rewards (tier_name, referrals_required, reward_description, reward_type, sort_order)
+               VALUES (?, ?, ?, ?, ?)""",
+            (tier_name, referrals_required, reward_description, reward_type, sort_order),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    # ---- Newsletter Milestones ----
+
+    def get_milestones(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM newsletter_milestones ORDER BY target_subscribers",
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_current_milestone(self, subscriber_count: int) -> Optional[dict]:
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM newsletter_milestones WHERE target_subscribers > ? ORDER BY target_subscribers LIMIT 1",
+            (subscriber_count,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def create_milestone(self, target_subscribers: int, title: str = "",
+                         description: str = "", unlock_description: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO newsletter_milestones (target_subscribers, title, description, unlock_description)
+               VALUES (?, ?, ?, ?)""",
+            (target_subscribers, title, description, unlock_description),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
     # ---- Stats ----
 
-    def get_table_counts(self) -> dict[str, int]:
+    def get_table_counts(self) -> dict:
         conn = self._conn()
         tables = [
             "issues", "section_definitions", "sources", "raw_content",

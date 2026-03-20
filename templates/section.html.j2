@@ -1,5 +1,8 @@
 <div class="section">
     <div class="section-title">{{ display_name }}</div>
+    {% if headline %}
+    <div class="section-headline">{{ headline }}</div>
+    {% endif %}
     <div class="section-content">
         {{ content }}
     </div>

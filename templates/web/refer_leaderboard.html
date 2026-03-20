@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Top Referrers — TrueFans NEWSLETTERS</title>
+    <meta name="description" content="See the top referrers in the TrueFans NEWSLETTERS community.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --gold: #f59e0b;
+            --silver: #94a3b8;
+            --bronze: #d97706;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+        .nav-brand span { color: var(--accent); }
+        .nav-link {
+            color: var(--text-dim); text-decoration: none; font-size: 14px; font-weight: 500;
+            padding: 8px 20px; border-radius: 8px; border: 1px solid var(--border); transition: all 0.2s;
+        }
+        .nav-link:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+        .page {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 140px 24px 80px;
+        }
+        .page-header {
+            text-align: center; margin-bottom: 48px;
+        }
+        .page-header h1 {
+            font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 12px;
+        }
+        .page-header p {
+            font-size: 16px; color: var(--text-dim);
+        }
+        {% if subscriber_count and subscriber_count > 0 %}
+        .social-proof {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 14px; color: var(--text-dim); margin-top: 12px;
+        }
+        .social-proof .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+        {% endif %}
+
+        .leaderboard {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden;
+        }
+        .lb-header {
+            display: grid; grid-template-columns: 60px 1fr 100px;
+            padding: 14px 20px; font-size: 12px; font-weight: 700;
+            color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 1px solid var(--border);
+        }
+        .lb-row {
+            display: grid; grid-template-columns: 60px 1fr 100px;
+            align-items: center; padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row:hover { background: rgba(255,255,255,0.02); }
+        .lb-rank {
+            font-size: 18px; font-weight: 800;
+        }
+        .lb-rank.gold { color: var(--gold); }
+        .lb-rank.silver { color: var(--silver); }
+        .lb-rank.bronze { color: var(--bronze); }
+        .lb-email {
+            font-size: 14px; font-weight: 500;
+        }
+        .lb-count {
+            font-size: 16px; font-weight: 700; color: var(--accent); text-align: right;
+        }
+        .lb-empty {
+            padding: 40px 20px; text-align: center;
+            color: var(--text-dim); font-size: 15px;
+        }
+
+        .cta-section {
+            text-align: center; margin-top: 48px;
+        }
+        .cta-section p {
+            font-size: 16px; color: var(--text-dim); margin-bottom: 16px;
+        }
+        .btn-cta {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 32px; border-radius: 10px; font-size: 16px;
+            font-weight: 600; text-decoration: none; transition: all 0.2s;
+            background: var(--accent); color: #fff;
+        }
+        .btn-cta:hover { background: var(--accent-hover); }
+
+        footer {
+            padding: 40px 24px; text-align: center;
+            border-top: 1px solid var(--border); color: var(--text-dim); font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            .page { padding: 110px 16px 60px; }
+            .page-header h1 { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">True<span>Fans</span> NEWSLETTERS</a>
+        <a href="/subscribe" class="nav-link">Subscribe</a>
+    </nav>
+
+    <div class="page">
+        <div class="page-header">
+            <h1>Top Referrers</h1>
+            <p>Our most passionate community ambassadors</p>
+            {% if subscriber_count and subscriber_count > 0 %}
+            <div class="social-proof">
+                <div class="dot"></div>
+                {{ "{:,}".format(subscriber_count) }}+ subscribers and growing
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="leaderboard">
+            {% if top_referrers %}
+            <div class="lb-header">
+                <div>Rank</div>
+                <div>Referrer</div>
+                <div style="text-align:right">Referrals</div>
+            </div>
+            {% for referrer in top_referrers %}
+            {% if referrer.referral_count > 0 %}
+            <div class="lb-row">
+                <div class="lb-rank {{ 'gold' if loop.index == 1 else ('silver' if loop.index == 2 else ('bronze' if loop.index == 3 else '')) }}">
+                    {% if loop.index == 1 %}&#127942;{% elif loop.index == 2 %}&#129352;{% elif loop.index == 3 %}&#129353;{% else %}{{ loop.index }}{% endif %}
+                </div>
+                <div class="lb-email">{{ referrer.anonymized_email }}</div>
+                <div class="lb-count">{{ referrer.referral_count }}</div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% else %}
+            <div class="lb-empty">
+                No referrals yet. Be the first to share and climb the leaderboard!
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="cta-section">
+            <p>Want to see your name here?</p>
+            <a href="/subscribe" class="btn-cta">Subscribe and Start Referring</a>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; TrueFans NEWSLETTERS. All rights reserved.</p>
+    </footer>
+</body>
+</html>

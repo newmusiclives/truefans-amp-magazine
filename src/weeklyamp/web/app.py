@@ -254,6 +254,13 @@ def create_app() -> FastAPI:
             "Disallow: /security\n"
             "Disallow: /login\n"
             "Disallow: /logout\n"
+            "Disallow: /ab-tests\n"
+            "Disallow: /webhooks\n"
+            "Disallow: /backup\n"
+            "Disallow: /editor-articles\n"
+            "Disallow: /spotify\n"
+            "Disallow: /admin/artists\n"
+            "Disallow: /sections/analytics\n"
             "\n"
             f"Sitemap: {site_domain}/sitemap.xml\n"
         )
@@ -267,6 +274,13 @@ def create_app() -> FastAPI:
             f"{site_domain}/newsletters",
             f"{site_domain}/subscribe",
             f"{site_domain}/submit",
+            f"{site_domain}/artists",
+            f"{site_domain}/trivia/leaderboard",
+            f"{site_domain}/advertise",
+            f"{site_domain}/resources",
+            f"{site_domain}/contests",
+            f"{site_domain}/contribute",
+            f"{site_domain}/refer/stats",
         ]
         xml_urls = "\n".join(
             f"  <url><loc>{u}</loc></url>" for u in urls
@@ -304,11 +318,30 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import agents as agents_routes
     from weeklyamp.web.routes import calendar as calendar_routes
     from weeklyamp.web.routes import growth as growth_routes
+    from weeklyamp.web.routes import editor_articles as editor_articles_routes
     from weeklyamp.web.routes import guests as guests_routes
     from weeklyamp.web.routes import submissions as submissions_routes
     from weeklyamp.web.routes import newsletters as newsletters_routes
     from weeklyamp.web.routes import submit as submit_routes
     from weeklyamp.web.routes import subscribe as subscribe_routes
+    # v21+ advanced features (inactive by default)
+    from weeklyamp.web.routes import tracking as tracking_routes
+    from weeklyamp.web.routes import preferences as preferences_routes
+    from weeklyamp.web.routes import ab_tests as ab_tests_routes
+    from weeklyamp.web.routes import webhooks as webhooks_routes
+    from weeklyamp.web.routes import backup as backup_routes
+    # v22+ music-specific features (inactive by default)
+    from weeklyamp.web.routes import spotify as spotify_routes
+    from weeklyamp.web.routes import artists as artists_routes
+    from weeklyamp.web.routes import section_analytics as section_analytics_routes
+    from weeklyamp.web.routes import trivia as trivia_routes
+    # v23+ growth & monetization features (inactive by default)
+    from weeklyamp.web.routes import refer as refer_routes
+    from weeklyamp.web.routes import advertise as advertise_routes
+    from weeklyamp.web.routes import lead_magnets as lead_magnets_routes
+    from weeklyamp.web.routes import contests as contests_routes
+    from weeklyamp.web.routes import reader_content as reader_content_routes
+    from weeklyamp.web.routes import embed as embed_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -326,9 +359,28 @@ def create_app() -> FastAPI:
     app.include_router(submit_routes.router)
     app.include_router(subscribe_routes.router)
     app.include_router(newsletters_routes.router)
+    app.include_router(editor_articles_routes.router, prefix="/editor-articles")
     app.include_router(guests_routes.router, prefix="/guests")
     app.include_router(calendar_routes.router, prefix="/calendar")
     app.include_router(growth_routes.router, prefix="/growth")
+    # v21+ advanced feature routes
+    app.include_router(tracking_routes.router)
+    app.include_router(preferences_routes.router)
+    app.include_router(ab_tests_routes.router, prefix="/ab-tests")
+    app.include_router(webhooks_routes.router, prefix="/webhooks")
+    app.include_router(backup_routes.router, prefix="/backup")
+    # v22+ music-specific feature routes
+    app.include_router(spotify_routes.router, prefix="/spotify")
+    app.include_router(artists_routes.router)
+    app.include_router(section_analytics_routes.router, prefix="/sections/analytics")
+    app.include_router(trivia_routes.router)
+    # v23+ growth & monetization routes
+    app.include_router(refer_routes.router)
+    app.include_router(advertise_routes.router)
+    app.include_router(lead_magnets_routes.router)
+    app.include_router(contests_routes.router)
+    app.include_router(reader_content_routes.router)
+    app.include_router(embed_routes.router)
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

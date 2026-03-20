@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Sponsor Inquiries — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_sponsor_inquiries %}active{% endblock %}
+
+{% block content %}
+<div style="padding: 24px;">
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 24px;">Sponsor Inquiries</h1>
+
+    {% if message %}
+    <div class="alert alert-{{ level or 'info' }}" style="padding: 12px 16px; border-radius: 8px; margin-bottom: 20px;
+        background: {% if level == 'success' %}rgba(16,185,129,0.1){% elif level == 'error' %}rgba(239,68,68,0.1){% else %}rgba(124,92,252,0.1){% endif %};
+        color: {% if level == 'success' %}#10b981{% elif level == 'error' %}#ef4444{% else %}#7c5cfc{% endif %};
+        border: 1px solid {% if level == 'success' %}rgba(16,185,129,0.3){% elif level == 'error' %}rgba(239,68,68,0.3){% else %}rgba(124,92,252,0.3){% endif %};">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    {% if inquiries %}
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+                <tr style="border-bottom: 2px solid rgba(255,255,255,0.1);">
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em;">Company</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Contact</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Email</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Budget</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Editions</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Status</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Date</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 600; color: #9ca3af; text-transform: uppercase; font-size: 0.75rem;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inq in inquiries %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                    <td style="padding: 12px;">
+                        <strong>{{ inq.company_name }}</strong>
+                        {% if inq.website %}
+                        <br><a href="{{ inq.website }}" target="_blank" style="color: #7c5cfc; font-size: 0.8rem;">{{ inq.website }}</a>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px;">{{ inq.contact_name }}</td>
+                    <td style="padding: 12px;"><a href="mailto:{{ inq.contact_email }}" style="color: #e8645a;">{{ inq.contact_email }}</a></td>
+                    <td style="padding: 12px;">{{ inq.budget_range or '—' }}</td>
+                    <td style="padding: 12px;">{{ inq.editions_interested or '—' }}</td>
+                    <td style="padding: 12px;">
+                        <span style="display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+                            {% if inq.status == 'new' %}background: rgba(124,92,252,0.15); color: #7c5cfc;
+                            {% elif inq.status == 'contacted' %}background: rgba(59,130,246,0.15); color: #3b82f6;
+                            {% elif inq.status == 'negotiating' %}background: rgba(245,158,11,0.15); color: #f59e0b;
+                            {% elif inq.status == 'booked' %}background: rgba(16,185,129,0.15); color: #10b981;
+                            {% elif inq.status == 'declined' %}background: rgba(239,68,68,0.15); color: #ef4444;
+                            {% else %}background: rgba(255,255,255,0.08); color: #9ca3af;
+                            {% endif %}">
+                            {{ inq.status }}
+                        </span>
+                    </td>
+                    <td style="padding: 12px; font-size: 0.85rem; color: #9ca3af;">{{ inq.created_at[:10] if inq.created_at else '—' }}</td>
+                    <td style="padding: 12px;">
+                        <form method="POST" action="/advertise/inquiries/{{ inq.id }}/status"
+                              hx-post="/advertise/inquiries/{{ inq.id }}/status"
+                              hx-target="body" hx-swap="innerHTML"
+                              style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                            <select name="status" style="padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #13131f; color: #f0f0f5; font-size: 0.8rem;">
+                                {% for s in statuses %}
+                                <option value="{{ s }}" {% if s == inq.status %}selected{% endif %}>{{ s }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="text" name="notes" placeholder="Notes..." value="{{ inq.notes or '' }}"
+                                   style="padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: #13131f; color: #f0f0f5; font-size: 0.8rem; width: 120px;">
+                            <button type="submit" style="padding: 6px 12px; border-radius: 6px; border: none; background: #7c5cfc; color: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer;">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% if inq.message %}
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+                    <td colspan="8" style="padding: 8px 12px 16px; color: #9ca3af; font-size: 0.85rem; font-style: italic;">
+                        {{ inq.message }}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 60px 20px; color: #9ca3af;">
+        <p style="font-size: 1.1rem;">No sponsor inquiries yet.</p>
+        <p style="margin-top: 8px; font-size: 0.9rem;">Share the <a href="/advertise" style="color: #e8645a;">/advertise</a> page to attract sponsors.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

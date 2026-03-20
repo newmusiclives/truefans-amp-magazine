@@ -26,10 +26,20 @@
         <div class="value"><span class="badge badge-{{ issue.status }}">{{ issue.status }}</span></div>
     </div>
     <div class="stat-card">
-        <div class="label">Beehiiv</div>
+        <div class="label">GoHighLevel</div>
         <div class="value" style="font-size:14px">
-            {% if has_beehiiv %}
+            {% if has_ghl %}
             <span class="badge badge-active">Connected</span>
+            {% else %}
+            <span class="badge badge-inactive">Not configured</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Email (SMTP)</div>
+        <div class="value" style="font-size:14px">
+            {% if has_email %}
+            <span class="badge badge-active">Ready</span>
             {% else %}
             <span class="badge badge-inactive">Not configured</span>
             {% endif %}
@@ -52,14 +62,23 @@
             Assemble Newsletter
         </button>
         {% if assembled %}
+        <button class="btn btn-outline"
+                hx-post="/publish/test-send"
+                hx-target="#publish-alerts"
+                hx-confirm="Send a test email to your from address?"
+                hx-indicator="#test-spinner"
+                {% if not has_email %}disabled{% endif %}>
+            <span class="spinner htmx-indicator" id="test-spinner"></span>
+            Send Test Email
+        </button>
         <button class="btn btn-success"
                 hx-post="/publish/push"
                 hx-target="#publish-alerts"
-                hx-confirm="Push to Beehiiv as draft?"
+                hx-confirm="Send newsletter to all subscribers?"
                 hx-indicator="#push-spinner"
-                {% if not has_beehiiv %}disabled{% endif %}>
+                {% if not has_email %}disabled{% endif %}>
             <span class="spinner htmx-indicator" id="push-spinner"></span>
-            Push to Beehiiv
+            Send Newsletter
         </button>
         {% endif %}
     </div>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Referral Dashboard — TrueFans NEWSLETTERS</title>
+    <meta name="robots" content="noindex">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --gold: #f59e0b;
+            --green: #22c55e;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 20px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-brand { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+        .nav-brand span { color: var(--accent); }
+
+        .dashboard {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 120px 24px 80px;
+        }
+        .dashboard h1 {
+            font-size: 32px; font-weight: 900; letter-spacing: -1px;
+            margin-bottom: 8px;
+        }
+        .dashboard .greeting {
+            font-size: 16px; color: var(--text-dim); margin-bottom: 36px;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px; text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 32px; font-weight: 900; color: var(--accent);
+        }
+        .stat-card .stat-label {
+            font-size: 12px; font-weight: 600; color: var(--text-dim);
+            text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
+        }
+
+        /* Referral Link */
+        .referral-link-box {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; margin-bottom: 24px;
+        }
+        .referral-link-box h3 {
+            font-size: 16px; font-weight: 700; margin-bottom: 12px;
+        }
+        .link-row {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .link-input {
+            flex: 1; padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); border-radius: 10px;
+            color: var(--text); font-size: 14px; font-family: var(--font);
+        }
+        .btn-copy {
+            padding: 12px 20px; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-size: 14px;
+            font-weight: 600; font-family: var(--font); cursor: pointer;
+            transition: background 0.2s; white-space: nowrap;
+        }
+        .btn-copy:hover { background: var(--accent-hover); }
+        .btn-copy.copied { background: var(--green); }
+
+        /* Share Buttons */
+        .share-section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; margin-bottom: 24px;
+        }
+        .share-section h3 {
+            font-size: 16px; font-weight: 700; margin-bottom: 16px;
+        }
+        .share-buttons {
+            display: flex; flex-wrap: wrap; gap: 10px;
+        }
+        .share-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 18px; border-radius: 10px; font-size: 13px;
+            font-weight: 600; text-decoration: none; transition: all 0.2s;
+            border: 1px solid var(--border); color: var(--text);
+        }
+        .share-btn:hover { border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.05); }
+        .share-btn.twitter { color: #1da1f2; border-color: rgba(29,161,242,0.3); }
+        .share-btn.twitter:hover { background: rgba(29,161,242,0.1); }
+        .share-btn.facebook { color: #1877f2; border-color: rgba(24,119,242,0.3); }
+        .share-btn.facebook:hover { background: rgba(24,119,242,0.1); }
+        .share-btn.whatsapp { color: #25d366; border-color: rgba(37,211,102,0.3); }
+        .share-btn.whatsapp:hover { background: rgba(37,211,102,0.1); }
+        .share-btn.linkedin { color: #0a66c2; border-color: rgba(10,102,194,0.3); }
+        .share-btn.linkedin:hover { background: rgba(10,102,194,0.1); }
+        .share-btn.email-share { color: var(--gold); border-color: rgba(245,158,11,0.3); }
+        .share-btn.email-share:hover { background: rgba(245,158,11,0.1); }
+
+        /* Progress Bar */
+        .progress-section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; margin-bottom: 24px;
+        }
+        .progress-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+        .progress-bar-outer {
+            width: 100%; height: 12px; background: rgba(255,255,255,0.06);
+            border-radius: 6px; overflow: hidden; margin-bottom: 8px;
+        }
+        .progress-bar-inner {
+            height: 100%; border-radius: 6px;
+            background: linear-gradient(90deg, var(--accent), var(--purple));
+            transition: width 0.5s ease;
+        }
+        .progress-label {
+            font-size: 13px; color: var(--text-dim);
+        }
+
+        /* Reward Tiers */
+        .tiers-section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; margin-bottom: 24px;
+        }
+        .tiers-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+        .tier-row {
+            display: flex; align-items: center; gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .tier-row:last-child { border-bottom: none; }
+        .tier-count {
+            width: 44px; height: 44px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 800; flex-shrink: 0;
+        }
+        .tier-count.achieved { background: var(--accent); color: #fff; }
+        .tier-count.pending { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+        .tier-info { flex: 1; }
+        .tier-info .tier-label { font-size: 14px; font-weight: 600; }
+        .tier-info .tier-reward { font-size: 13px; color: var(--text-dim); }
+        .tier-check { color: var(--green); font-size: 18px; }
+
+        /* Referral Log */
+        .log-section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; margin-bottom: 24px;
+        }
+        .log-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+        .log-entry {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .log-entry:last-child { border-bottom: none; }
+        .log-email { color: var(--text); font-weight: 500; }
+        .log-date { color: var(--text-dim); font-size: 13px; }
+        .log-empty { color: var(--text-dim); font-size: 14px; text-align: center; padding: 20px 0; }
+
+        footer {
+            padding: 40px 24px; text-align: center;
+            border-top: 1px solid var(--border); color: var(--text-dim); font-size: 13px;
+        }
+
+        @media (max-width: 768px) {
+            nav { padding: 16px 20px; }
+            .dashboard { padding: 100px 16px 60px; }
+            .dashboard h1 { font-size: 26px; }
+            .stats-row { grid-template-columns: 1fr; }
+            .link-row { flex-direction: column; }
+            .share-buttons { flex-direction: column; }
+            .share-btn { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="nav-brand">True<span>Fans</span> NEWSLETTERS</a>
+    </nav>
+
+    <div class="dashboard">
+        <h1>Your Referral Dashboard</h1>
+        <p class="greeting">Hi {{ subscriber.first_name | default('there') }}! Share your link and earn rewards.</p>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value">{{ stats.count | default(0) }}</div>
+                <div class="stat-label">Referrals</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">#{{ leaderboard_position if leaderboard_position > 0 else '-' }}</div>
+                <div class="stat-label">Leaderboard</div>
+            </div>
+            <div class="stat-card">
+                {% set next_tier = 3 %}
+                {% for tier in reward_tiers %}
+                    {% if stats.count | default(0) < tier.count %}
+                        {% if loop.first or stats.count | default(0) >= reward_tiers[loop.index0 - 1].count %}
+                            {% set next_tier = tier.count %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+                <div class="stat-value">{{ [next_tier - stats.count | default(0), 0] | max }}</div>
+                <div class="stat-label">Until Next Reward</div>
+            </div>
+        </div>
+
+        <!-- Referral Link -->
+        {% if referral_url %}
+        <div class="referral-link-box">
+            <h3>Your Personal Referral Link</h3>
+            <div class="link-row">
+                <input type="text" class="link-input" id="referral-link" value="{{ referral_url }}" readonly>
+                <button class="btn-copy" id="copy-btn" onclick="copyLink()">Copy Link</button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Share Buttons -->
+        <div class="share-section">
+            <h3>Share With Friends</h3>
+            <div class="share-buttons">
+                <a href="https://twitter.com/intent/tweet?text=I%20love%20reading%20TrueFans%20NEWSLETTERS%20%E2%80%94%20the%20best%20music%20industry%20insights%20delivered%20weekly.%20Subscribe%20here%3A&url={{ referral_url | urlencode }}" target="_blank" rel="noopener" class="share-btn twitter">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    Twitter
+                </a>
+                <a href="https://www.facebook.com/sharer/sharer.php?u={{ referral_url | urlencode }}" target="_blank" rel="noopener" class="share-btn facebook">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                    Facebook
+                </a>
+                <a href="https://wa.me/?text=Check%20out%20TrueFans%20NEWSLETTERS%20%E2%80%94%20the%20best%20music%20industry%20insights%20delivered%20weekly!%20{{ referral_url | urlencode }}" target="_blank" rel="noopener" class="share-btn whatsapp">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    WhatsApp
+                </a>
+                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ referral_url | urlencode }}" target="_blank" rel="noopener" class="share-btn linkedin">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    LinkedIn
+                </a>
+                <a href="mailto:?subject=You'll%20love%20TrueFans%20NEWSLETTERS&body=I've%20been%20reading%20TrueFans%20NEWSLETTERS%20and%20I%20think%20you'd%20really%20enjoy%20it.%20It's%20the%20best%20music%20industry%20newsletter%20out%20there.%0A%0ASubscribe%20here%3A%20{{ referral_url | urlencode }}" class="share-btn email-share">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    Email
+                </a>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-section">
+            <h3>Reward Progress</h3>
+            {% set count = stats.count | default(0) %}
+            {% set next_milestone = 3 %}
+            {% for tier in reward_tiers %}
+                {% if count < tier.count and next_milestone == 3 %}
+                    {% set next_milestone = tier.count %}
+                {% endif %}
+            {% endfor %}
+            {% set progress_pct = [(count / next_milestone * 100) | int, 100] | min if next_milestone > 0 else 0 %}
+            <div class="progress-bar-outer">
+                <div class="progress-bar-inner" style="width: {{ progress_pct }}%"></div>
+            </div>
+            <p class="progress-label">{{ count }} of {{ next_milestone }} referrals to your next reward</p>
+        </div>
+
+        <!-- Reward Tiers -->
+        <div class="tiers-section">
+            <h3>Reward Tiers</h3>
+            {% for tier in reward_tiers %}
+            <div class="tier-row">
+                <div class="tier-count {{ 'achieved' if stats.count | default(0) >= tier.count else 'pending' }}">{{ tier.count }}</div>
+                <div class="tier-info">
+                    <div class="tier-label">{{ tier.label }}</div>
+                    <div class="tier-reward">{{ tier.reward }}</div>
+                </div>
+                {% if stats.count | default(0) >= tier.count %}
+                <div class="tier-check">&#10003;</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Referral Log -->
+        <div class="log-section">
+            <h3>Your Referrals</h3>
+            {% if referral_log %}
+                {% for entry in referral_log %}
+                <div class="log-entry">
+                    <span class="log-email">{{ entry.anonymized_email }}</span>
+                    <span class="log-date">{{ entry.created_at | default('') }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="log-empty">No referrals yet. Share your link to get started!</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; TrueFans NEWSLETTERS. All rights reserved.</p>
+    </footer>
+
+    <script>
+    function copyLink() {
+        var input = document.getElementById('referral-link');
+        var btn = document.getElementById('copy-btn');
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(input.value).then(function() {
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(function() {
+                    btn.textContent = 'Copy Link';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        } else {
+            input.select();
+            document.execCommand('copy');
+            btn.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(function() {
+                btn.textContent = 'Copy Link';
+                btn.classList.remove('copied');
+            }, 2000);
+        }
+    }
+    </script>
+</body>
+</html>

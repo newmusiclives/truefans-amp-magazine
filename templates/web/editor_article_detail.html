@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}{{ article.title or 'Editor Article' }} — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_editor_articles %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Editor's Article</h2>
+    <p><a href="/editor-articles" style="color:var(--accent)">&larr; Back to articles</a></p>
+</div>
+
+{% if message %}
+<div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
+{% endif %}
+
+<form method="post" action="/editor-articles/{{ article.id }}/save">
+    <div class="card" style="margin-bottom:24px">
+        <div class="card-header">
+            <span class="card-title">{{ article.title or '(untitled)' }}</span>
+            <span class="badge badge-{{ article.status }}">{{ article.status }}</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Title</label>
+                <input name="title" value="{{ article.title }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Author</label>
+                <input name="author_name" value="{{ article.author_name }}">
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+            <div class="form-group" style="margin-bottom:0">
+                <label>Edition</label>
+                <select name="edition_slug">
+                    <option value="">— None —</option>
+                    {% for ed in editions %}
+                    <option value="{{ ed.slug }}" {% if article.edition_slug == ed.slug %}selected{% endif %}>{{ ed.icon | safe }} {{ ed.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Issue</label>
+                <select name="target_issue_id">
+                    <option value="0">— Assign later —</option>
+                    {% for issue in upcoming_issues %}
+                    <option value="{{ issue.id }}" {% if article.target_issue_id == issue.id %}selected{% endif %}>#{{ issue.issue_number }}{% if issue.edition_slug %} ({{ issue.edition_slug }}){% endif %}{% if issue.send_day %} — {{ issue.send_day }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Section</label>
+                <select name="target_section_slug">
+                    <option value="">— None —</option>
+                    {% for sec in sections %}
+                    <option value="{{ sec.slug }}" {% if article.target_section_slug == sec.slug %}selected{% endif %}>{{ sec.display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+                <label>Status</label>
+                <select name="status">
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if article.status == s %}selected{% endif %}>{{ s | capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px">
+            <label>Content <span style="font-weight:400;color:var(--text-muted)">(Markdown supported)</span></label>
+            <textarea name="content" rows="20" style="width:100%;font-family:var(--font-mono);font-size:14px;line-height:1.6">{{ article.content }}</textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px">
+            <label>Notes</label>
+            <input name="notes" value="{{ article.notes }}" placeholder="Internal notes">
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center">
+            <button type="submit" class="btn btn-primary">Save Article</button>
+
+            {% if article.status in ('draft', 'ready') and article.target_issue_id and article.target_section_slug %}
+            <button type="button" class="btn btn-success"
+                    hx-post="/editor-articles/{{ article.id }}/assign"
+                    hx-confirm="Create draft and assign to issue? The article will be auto-approved."
+                    hx-target="body">
+                Assign to Issue &amp; Create Draft
+            </button>
+            {% endif %}
+
+            <button type="button" class="btn btn-ghost"
+                    hx-post="/editor-articles/{{ article.id }}/delete"
+                    hx-confirm="Delete this article? This cannot be undone."
+                    hx-target="body"
+                    style="margin-left:auto;color:var(--red)">
+                Delete
+            </button>
+        </div>
+    </div>
+</form>
+
+{% if article.draft_id %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Linked Draft</span>
+    </div>
+    <p style="padding:0 16px 16px">This article has been assigned as Draft #{{ article.draft_id }}.
+        <a href="/review" style="color:var(--accent)">View in Review</a>
+    </p>
+</div>
+{% endif %}
+
+{% if article.content %}
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Preview</span>
+        <span style="color:var(--text-muted);font-size:12px">{{ article.content | length }} chars</span>
+    </div>
+    <div style="padding:16px;line-height:1.7;font-size:15px" class="section-content">
+        {{ article.content | markdown | safe }}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

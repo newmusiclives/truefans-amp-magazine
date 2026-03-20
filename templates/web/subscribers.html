@@ -27,19 +27,19 @@
 
 <div class="card">
     <div class="card-header">
-        <span class="card-title">Beehiiv Sync</span>
+        <span class="card-title">GoHighLevel Sync</span>
         <button class="btn btn-primary btn-sm"
                 hx-post="/subscribers/sync"
                 hx-target="#sync-results"
                 hx-indicator="#sync-spinner"
-                {% if not has_beehiiv %}disabled{% endif %}>
+                {% if not has_ghl %}disabled{% endif %}>
             <span class="spinner htmx-indicator" id="sync-spinner"></span>
-            Sync from Beehiiv
+            Sync from GoHighLevel
         </button>
     </div>
     <div id="sync-results">
-        {% if not has_beehiiv %}
-        <p style="color:var(--text-dim);font-size:13px">Set BEEHIIV_API_KEY and BEEHIIV_PUBLICATION_ID in .env to enable sync.</p>
+        {% if not has_ghl %}
+        <p style="color:var(--text-dim);font-size:13px">Set GHL_API_KEY and GHL_LOCATION_ID in .env to enable sync.</p>
         {% endif %}
     </div>
 </div>
