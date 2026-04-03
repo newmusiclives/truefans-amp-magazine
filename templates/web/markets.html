@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Markets — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_markets %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Market Editions</h2>
+    <p class="subtitle">Manage genre/market focus options per edition</p>
+</div>
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Create Market</h3>
+    <form hx-post="/markets/create" hx-target="#market-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div>
+            <label>Edition</label>
+            <select name="edition_slug" required>
+                <option value="">Select edition...</option>
+                {% for ed in editions %}
+                <option value="{{ ed.slug }}">{{ ed.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Market Slug</label>
+            <input type="text" name="market_slug" required placeholder="e.g. hip-hop" style="width:160px">
+        </div>
+        <div>
+            <label>Market Name</label>
+            <input type="text" name="market_name" required placeholder="e.g. Hip-Hop" style="width:160px">
+        </div>
+        <div>
+            <label>Description</label>
+            <input type="text" name="description" placeholder="Optional description" style="width:220px">
+        </div>
+        <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+    <div id="market-result" style="margin-top:0.75rem"></div>
+</div>
+
+{% for ed in editions %}
+<div class="card" style="margin-bottom:1.5rem">
+    <h3>{{ ed.name }}</h3>
+    {% if by_edition.get(ed.slug) %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Description</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for m in by_edition[ed.slug] %}
+            <tr>
+                <td>{{ m.market_name }}</td>
+                <td><code>{{ m.market_slug }}</code></td>
+                <td>{{ m.description or '—' }}</td>
+                <td>
+                    <button hx-post="/markets/{{ m.id }}/toggle" hx-target="closest tr" hx-swap="outerHTML" class="btn btn-sm">
+                        {% if m.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}
+                    </button>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No markets configured for this edition yet.</p>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Revenue Dashboard — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_revenue %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Revenue Dashboard</h2>
+    <p class="subtitle">Unified view of all revenue streams</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:2rem">
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Sponsor Revenue (Paid)</div>
+        <div style="font-size:2rem;font-weight:700;color:var(--accent)">${{ "%.2f"|format(summary.sponsor.paid_cents / 100) }}</div>
+        <div style="font-size:0.8em;color:var(--text-dim);margin-top:0.25rem">{{ summary.sponsor.total_bookings }} total bookings</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Sponsor Pipeline</div>
+        <div style="font-size:2rem;font-weight:700;color:#f0ad4e">${{ "%.2f"|format(summary.sponsor.pipeline_cents / 100) }}</div>
+        <div style="font-size:0.8em;color:var(--text-dim);margin-top:0.25rem">Booked / Confirmed / Invoiced</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Affiliate Clicks</div>
+        <div style="font-size:2rem;font-weight:700;color:#5bc0de">{{ summary.affiliate.total_clicks }}</div>
+        <div style="font-size:0.8em;color:var(--text-dim);margin-top:0.25rem">${{ "%.2f"|format(summary.affiliate.total_revenue / 100) }} revenue</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Tier MRR</div>
+        <div style="font-size:2rem;font-weight:700;color:#5cb85c">${{ "%.2f"|format(summary.tier.mrr_cents / 100) }}</div>
+        <div style="font-size:0.8em;color:var(--text-dim);margin-top:0.25rem">{{ summary.tier.active_subs }} active subscribers</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Revenue by Edition</h3>
+    {% if by_edition %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Edition</th>
+                <th>Total Revenue</th>
+                <th>Bookings</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in by_edition %}
+            <tr>
+                <td>{{ row.edition_slug or '(unassigned)' }}</td>
+                <td>${{ "%.2f"|format(row.total_cents / 100) }}</td>
+                <td>{{ row.booking_count }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No sponsor bookings yet.</p>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Tier Breakdown</h3>
+    {% if tier_breakdown %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Tier Name</th>
+                <th>Price / mo</th>
+                <th>Active Subscribers</th>
+                <th>MRR</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for tier in tier_breakdown %}
+            <tr>
+                <td>{{ tier.name }}</td>
+                <td>${{ "%.2f"|format(tier.price_cents / 100) }}</td>
+                <td>{{ tier.subscriber_count }}</td>
+                <td>${{ "%.2f"|format(tier.mrr_cents / 100) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No tiers configured yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Revenue per Subscriber</h3>
+    {% set total_revenue = summary.sponsor.paid_cents + summary.affiliate.total_revenue + summary.tier.mrr_cents %}
+    {% if subscriber_count > 0 %}
+    <div style="font-size:1.5rem;font-weight:700;color:var(--accent);padding:1rem 0">
+        ${{ "%.2f"|format(total_revenue / 100 / subscriber_count) }} <span style="font-size:0.85rem;font-weight:400;color:var(--text-dim)">per subscriber ({{ subscriber_count }} total)</span>
+    </div>
+    {% else %}
+    <p class="text-muted">No subscribers yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

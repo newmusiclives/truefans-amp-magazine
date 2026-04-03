@@ -1,0 +1,54 @@
+<div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+        <span class="card-title">Auto-Plan: Week {{ target_week }}</span>
+    </div>
+
+    {% if plan %}
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Edition</th>
+                    <th>Day</th>
+                    <th>Sections</th>
+                    <th>Research Available</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for entry in plan %}
+                <tr>
+                    <td><strong>{{ entry.edition }}</strong></td>
+                    <td><span class="badge">{{ entry.day | capitalize }}</span></td>
+                    <td>
+                        {% if entry.sections %}
+                            {% for sec in entry.sections %}
+                            <span class="badge badge-muted" style="margin:2px">{{ sec }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="text-muted">No sections assigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if entry.research_available > 0 %}
+                        <span style="color:var(--accent);font-weight:600">{{ entry.research_available }} items</span>
+                        {% else %}
+                        <span class="text-muted">0</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="padding:1rem;display:flex;gap:0.75rem">
+        <button class="btn btn-primary btn-sm" disabled title="Coming soon: creates calendar entries from this plan">Accept Plan</button>
+        <button class="btn btn-sm" onclick="this.closest('.card').remove()">Dismiss</button>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No editions found</h3>
+        <p>Create editions first to generate a content plan.</p>
+    </div>
+    {% endif %}
+</div>

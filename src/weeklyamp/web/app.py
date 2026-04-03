@@ -354,6 +354,12 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import advertiser_portal as advertiser_portal_routes
     from weeklyamp.web.routes import affiliates as affiliates_routes
     from weeklyamp.web.routes import community as community_routes
+    from weeklyamp.web.routes import revenue as revenue_routes
+    # v28+ markets & artist newsletters
+    from weeklyamp.web.routes import markets as markets_routes
+    from weeklyamp.web.routes import artist_newsletters as artist_newsletters_routes
+    from weeklyamp.web.routes import segments as segments_routes
+    from weeklyamp.web.routes import mobile_app as mobile_app_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -403,6 +409,15 @@ def create_app() -> FastAPI:
     app.include_router(community_routes.router)
     # v27+ affiliate programs
     app.include_router(affiliates_routes.router, prefix="/affiliates")
+    # v28+ revenue dashboard
+    app.include_router(revenue_routes.router, prefix="/revenue")
+    # v28+ markets & artist newsletters
+    app.include_router(markets_routes.router, prefix="/markets")
+    app.include_router(artist_newsletters_routes.router)
+    # v28+ subscriber segmentation
+    app.include_router(segments_routes.router, prefix="/admin/segments")
+    # Mobile app waitlist
+    app.include_router(mobile_app_routes.router)
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

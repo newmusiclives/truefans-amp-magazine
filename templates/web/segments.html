@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Subscriber Segments — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_segments %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Subscriber Segments</h2>
+    <p class="subtitle">Audience breakdown by edition, genre, cohort retention, and engagement risk.</p>
+</div>
+
+<!-- Row 1: KPI + Edition distribution -->
+<div style="display:grid;grid-template-columns:240px 1fr;gap:1.5rem;margin-bottom:1.5rem">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem">
+        <div style="font-size:2.5rem;font-weight:800;color:var(--accent)">{{ summary.total }}</div>
+        <div style="font-size:0.9rem;color:var(--text-dim);margin-top:0.25rem">Active Subscribers</div>
+    </div>
+
+    <div class="card">
+        <h3>Edition Distribution</h3>
+        {% if summary.by_edition %}
+        <table class="data-table">
+            <thead>
+                <tr><th>Edition</th><th>Subscribers</th><th style="width:40%">Distribution</th></tr>
+            </thead>
+            <tbody>
+            {% for ed in summary.by_edition %}
+                <tr>
+                    <td><strong>{{ ed.name }}</strong></td>
+                    <td>{{ ed.count }}</td>
+                    <td>
+                        {% if summary.total > 0 %}
+                        <div style="background:var(--accent);height:8px;width:{{ (ed.count / summary.total * 100) | round(1) }}%;border-radius:4px;min-width:2px"></div>
+                        <span style="font-size:0.8em;color:var(--text-dim)">{{ (ed.count / summary.total * 100) | round(1) }}%</span>
+                        {% else %}
+                        <span class="text-muted">--</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No edition data available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Row 2: Genre distribution -->
+<div class="card" style="margin-bottom:1.5rem">
+    <h3>Genre Distribution</h3>
+    {% if summary.by_genre %}
+    <table class="data-table">
+        <thead>
+            <tr><th>Genre</th><th>Subscribers</th><th style="width:40%">Distribution</th></tr>
+        </thead>
+        <tbody>
+        {% for g in summary.by_genre %}
+            <tr>
+                <td><strong>{{ g.genre }}</strong></td>
+                <td>{{ g.count }}</td>
+                <td>
+                    {% if summary.total > 0 %}
+                    <div style="background:var(--accent);height:8px;width:{{ (g.count / summary.total * 100) | round(1) }}%;border-radius:4px;min-width:2px"></div>
+                    <span style="font-size:0.8em;color:var(--text-dim)">{{ (g.count / summary.total * 100) | round(1) }}%</span>
+                    {% else %}
+                    <span class="text-muted">--</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No genre data available.</p>
+    {% endif %}
+</div>
+
+<!-- Row 3: Cohort retention -->
+<div class="card" style="margin-bottom:1.5rem">
+    <h3>Cohort Retention</h3>
+    {% if cohorts %}
+    <table class="data-table">
+        <thead>
+            <tr><th>Cohort</th><th>Signups</th><th>Still Active</th><th>Retention</th><th style="width:30%"></th></tr>
+        </thead>
+        <tbody>
+        {% for c in cohorts %}
+            <tr>
+                <td><strong>{{ c.cohort }}</strong></td>
+                <td>{{ c.total_signups }}</td>
+                <td>{{ c.still_active }}</td>
+                <td>{{ c.retention_pct }}%</td>
+                <td>
+                    <div style="background:{% if c.retention_pct >= 70 %}#22c55e{% elif c.retention_pct >= 40 %}#eab308{% else %}#ef4444{% endif %};height:8px;width:{{ c.retention_pct }}%;border-radius:4px;min-width:2px"></div>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No cohort data available yet.</p>
+    {% endif %}
+</div>
+
+<!-- Row 4: At-risk subscribers -->
+<div class="card">
+    <h3>At-Risk Subscribers</h3>
+    <p class="subtitle" style="margin-bottom:1rem">Subscribers with no activity in the last 30 days.</p>
+    {% if at_risk %}
+    <table class="data-table">
+        <thead>
+            <tr><th>Email</th><th>Name</th><th>Subscribed</th><th>Last Activity</th><th>Days Inactive</th></tr>
+        </thead>
+        <tbody>
+        {% for sub in at_risk %}
+            <tr>
+                <td>{{ sub.email }}</td>
+                <td>{{ sub.first_name or '—' }}</td>
+                <td>{{ sub.subscribed_at or '—' }}</td>
+                <td>{{ sub.last_activity or 'Never' }}</td>
+                <td>
+                    {% if sub.last_activity %}
+                    <span class="badge badge-muted">30+</span>
+                    {% else %}
+                    <span class="badge" style="background:#ef4444;color:#fff">Never</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No at-risk subscribers detected. All subscribers have recent activity.</p>
+    {% endif %}
+</div>
+{% endblock %}

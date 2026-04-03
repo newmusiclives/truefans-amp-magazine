@@ -222,6 +222,15 @@ community:
   require_verified_email: true
   moderation_enabled: true
 
+# --- Market-specific sub-editions ---
+edition_markets:
+  enabled: true
+
+# --- Artist newsletters (coming soon) ---
+artist_newsletters:
+  enabled: false
+  waitlist_enabled: true
+
 rate_limits:
   login_max: 5
   login_window: 900

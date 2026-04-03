@@ -8,6 +8,11 @@
     <p>Plan upcoming issues with themes, sections, and agent assignments.</p>
 </div>
 
+<form hx-post="/calendar/auto-plan" hx-target="#plan-result" style="margin-bottom:1rem">
+    <button type="submit" class="btn btn-primary">Plan Next Week</button>
+</form>
+<div id="plan-result"></div>
+
 {% if message %}
 <div class="alert alert-{{ level or 'info' }}">{{ message }}</div>
 {% endif %}

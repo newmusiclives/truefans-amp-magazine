@@ -751,6 +751,42 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
             except integrity:
                 pass
 
+    # --- Edition markets ---
+    markets = [
+        ("fan", "hip-hop", "Hip-Hop & Rap", "Hip-hop culture, rap releases, and urban music news", 1),
+        ("fan", "country", "Country & Americana", "Country music, Americana, bluegrass, and roots", 2),
+        ("fan", "latin", "Latin Music", "Reggaeton, Latin pop, regional Mexican, and tropical", 3),
+        ("fan", "rock", "Rock & Alternative", "Rock, punk, metal, and alternative music", 4),
+        ("fan", "electronic", "Electronic & Dance", "EDM, house, techno, and electronic artists", 5),
+        ("fan", "pop", "Pop & Mainstream", "Pop hits, chart-toppers, and mainstream releases", 6),
+        ("fan", "r-and-b", "R&B & Soul", "R&B, soul, neo-soul, and contemporary groove", 7),
+        ("fan", "indie", "Indie & Underground", "Independent artists and underground discoveries", 8),
+        ("artist", "singer-songwriter", "Singer-Songwriter", "Acoustic, folk-influenced, and lyric-driven artists", 1),
+        ("artist", "producer-electronic", "Producer & Electronic", "Beat-makers, producers, and electronic music creators", 2),
+        ("artist", "rapper", "Rapper & MC", "Hip-hop artists, rappers, and lyricists", 3),
+        ("artist", "band", "Band & Ensemble", "Bands, duos, and collaborative groups", 4),
+        ("artist", "solo-pop", "Solo Pop Artist", "Solo artists in pop, R&B, and mainstream genres", 5),
+        ("industry", "streaming-platforms", "Streaming & Platforms", "Spotify, Apple Music, YouTube, and platform strategy", 1),
+        ("industry", "sync-licensing", "Sync & Licensing", "Music in film, TV, ads, and gaming", 2),
+        ("industry", "live-events", "Live & Touring", "Concerts, festivals, touring economics, and live revenue", 3),
+        ("industry", "emerging-markets", "Emerging Markets", "Africa, Latin America, Southeast Asia, and growing music markets", 4),
+        ("industry", "ai-and-tech", "AI & Music Tech", "Artificial intelligence, music tech startups, and innovation", 5),
+    ]
+    for edition, slug, name, desc, sort in markets:
+        exists = conn.execute(
+            f"SELECT id FROM edition_markets WHERE edition_slug = {ph} AND market_slug = {ph}",
+            (edition, slug),
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO edition_markets (edition_slug, market_slug, market_name, description, sort_order) VALUES ({ph}, {ph}, {ph}, {ph}, {ph})",
+                    (edition, slug, name, desc, sort),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
     conn.commit()
     conn.close()
     if seeded:

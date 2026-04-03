@@ -866,6 +866,14 @@ class CommunityConfig(BaseModel):
     moderation_enabled: bool = True
 
 
+class EditionMarketsConfig(BaseModel):
+    enabled: bool = False
+
+class ArtistNewslettersConfig(BaseModel):
+    enabled: bool = False
+    waitlist_enabled: bool = True
+
+
 class RateLimitConfig(BaseModel):
     login_max: int = 5
     login_window: int = 900
@@ -906,6 +914,8 @@ class AppConfig(BaseModel):
     paid_tiers: PaidTiersConfig = Field(default_factory=PaidTiersConfig)
     audio: AudioConfig = Field(default_factory=AudioConfig)
     community: CommunityConfig = Field(default_factory=CommunityConfig)
+    edition_markets: EditionMarketsConfig = Field(default_factory=EditionMarketsConfig)
+    artist_newsletters: ArtistNewslettersConfig = Field(default_factory=ArtistNewslettersConfig)
     rate_limits: RateLimitConfig = Field(default_factory=RateLimitConfig)
     db_path: str = "data/weeklyamp.db"
     db_backend: str = "sqlite"  # "sqlite" or "postgres"

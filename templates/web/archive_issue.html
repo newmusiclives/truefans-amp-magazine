@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Issue #{{ issue.issue_number }}{% if issue.title %} — {{ issue.title }}{% endif %} — TrueFans NEWSLETTERS</title>
+    {% if description %}
+    <meta name="description" content="{{ description }}">
+    <meta property="og:title" content="{{ issue.title or ('TrueFans Issue #' + issue.issue_number|string) }}">
+    <meta property="og:description" content="{{ description }}">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="{{ site_domain }}/newsletters/archive/{{ issue.issue_number }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ issue.title or ('TrueFans Issue #' + issue.issue_number|string) }}">
+    <meta name="twitter:description" content="{{ description }}">
+    <script type="application/ld+json">
+    {"@context":"https://schema.org","@type":"Article","headline":"{{ issue.title or ('Issue #' + issue.issue_number|string) }}","datePublished":"{{ issue.publish_date or '' }}","publisher":{"@type":"Organization","name":"TrueFans NEWSLETTERS"}}
+    </script>
+    {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
@@ -38,6 +51,7 @@
             <h1>Issue #{{ issue.issue_number }}{% if issue.title %} — {{ issue.title }}{% endif %}</h1>
             <div class="date">{{ issue.publish_date or issue.created_at }}</div>
         </div>
+        {% include "partials/audio_player.html" %}
         <div class="issue-content">
             {{ content | safe }}
         </div>

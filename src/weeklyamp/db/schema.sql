@@ -1165,3 +1165,55 @@ CREATE TABLE IF NOT EXISTS affiliate_placements (
 CREATE INDEX IF NOT EXISTS idx_affiliate_placements_issue ON affiliate_placements(issue_id);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (27);
+
+-- v28: Market editions, artist newsletters, mobile app waitlist
+
+CREATE TABLE IF NOT EXISTS edition_markets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    edition_slug TEXT NOT NULL,
+    market_slug TEXT NOT NULL,
+    market_name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(edition_slug, market_slug)
+);
+CREATE INDEX IF NOT EXISTS idx_edition_markets_edition ON edition_markets(edition_slug);
+
+CREATE TABLE IF NOT EXISTS artist_newsletters (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_profile_id INTEGER REFERENCES artist_profiles(id),
+    artist_name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    brand_color TEXT DEFAULT '#e8645a',
+    logo_url TEXT DEFAULT '',
+    tagline TEXT DEFAULT '',
+    template_style TEXT DEFAULT 'default',
+    schedule TEXT DEFAULT 'monthly',
+    subscriber_count INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'waitlist' CHECK (status IN ('waitlist','setup','active','paused')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS artist_newsletter_waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    artist_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    website TEXT DEFAULT '',
+    social_links TEXT DEFAULT '',
+    genre TEXT DEFAULT '',
+    fan_count TEXT DEFAULT '',
+    message TEXT DEFAULT '',
+    status TEXT DEFAULT 'new' CHECK (status IN ('new','contacted','approved','rejected')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS mobile_app_waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    platform TEXT DEFAULT 'both' CHECK (platform IN ('ios','android','both')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (28);

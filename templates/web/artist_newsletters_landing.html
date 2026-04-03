@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Newsletters — TrueFans NEWSLETTERS</title>
+    <meta name="description" content="Your music. Your fans. Your newsletter. Artist newsletters powered by TrueFans — coming soon.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        :root {
+            --bg: #0a0a12;
+            --bg-card: #13131f;
+            --bg-card-hover: #1a1a2e;
+            --border: rgba(255,255,255,0.08);
+            --text: #f0f0f5;
+            --text-dim: #9ca3af;
+            --accent: #e8645a;
+            --accent-hover: #f07a70;
+            --purple: #7c5cfc;
+            --purple-glow: rgba(124, 92, 252, 0.3);
+            --gold: #f59e0b;
+            --green: #10b981;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Nav */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 16px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 10, 18, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+        }
+        .top-nav .brand { font-weight: 800; font-size: 1.1rem; color: var(--text); text-decoration: none; }
+        .top-nav .nav-links { display: flex; gap: 24px; align-items: center; }
+        .top-nav .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; font-weight: 500; }
+        .top-nav .nav-links a:hover { color: var(--text); }
+        .top-nav .nav-links .btn-sm {
+            background: var(--accent); color: #fff; padding: 8px 20px;
+            border-radius: 8px; font-weight: 600;
+        }
+
+        /* Sections */
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+        section { padding: 80px 0; }
+
+        /* Hero */
+        .hero { padding-top: 140px; text-align: center; }
+        .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; line-height: 1.15; margin-bottom: 20px; }
+        .hero h1 span { color: var(--purple); }
+        .hero p { font-size: 1.15rem; color: var(--text-dim); max-width: 640px; margin: 0 auto 40px; }
+        .coming-soon-badge {
+            display: inline-block; background: rgba(124, 92, 252, 0.15); color: var(--purple);
+            font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+            padding: 6px 18px; border-radius: 20px; margin-bottom: 24px;
+        }
+
+        /* Feature cards */
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-top: 40px; }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px; transition: border-color 0.2s;
+        }
+        .feature-card:hover { border-color: var(--purple); }
+        .feature-card .icon { font-size: 2rem; margin-bottom: 12px; }
+        .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+        .feature-card p { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* Section headers */
+        .section-header { text-align: center; margin-bottom: 40px; }
+        .section-header h2 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+        .section-header p { color: var(--text-dim); font-size: 1.05rem; }
+
+        /* Waitlist form */
+        .waitlist-form {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 40px; max-width: 700px; margin: 0 auto;
+        }
+        .form-row { margin-bottom: 20px; }
+        .form-row label {
+            display: block; font-size: 0.85rem; font-weight: 600;
+            margin-bottom: 6px; color: var(--text-dim);
+        }
+        .form-row input, .form-row select, .form-row textarea {
+            width: 100%; padding: 12px 16px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg);
+            color: var(--text); font-family: var(--font); font-size: 0.95rem;
+        }
+        .form-row input:focus, .form-row select:focus, .form-row textarea:focus {
+            outline: none; border-color: var(--purple);
+        }
+        .form-row textarea { min-height: 100px; resize: vertical; }
+        .btn-submit {
+            background: var(--purple); color: #fff; border: none;
+            padding: 14px 40px; border-radius: 8px; font-size: 1rem;
+            font-weight: 700; cursor: pointer; width: 100%;
+            transition: background 0.2s;
+        }
+        .btn-submit:hover { background: #6a4ae0; }
+
+        /* Footer */
+        .artist-footer {
+            text-align: center; padding: 40px 0; border-top: 1px solid var(--border);
+            color: var(--text-dim); font-size: 0.9rem;
+        }
+        .artist-footer a { color: var(--accent); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .top-nav { padding: 12px 20px; }
+            .top-nav .nav-links { gap: 12px; }
+            section { padding: 48px 0; }
+            .waitlist-form { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/" class="brand">TrueFans NEWSLETTERS</a>
+        <div class="nav-links">
+            <a href="/newsletters">Archive</a>
+            <a href="/resources">Resources</a>
+            <a href="/subscribe" class="btn-sm">Subscribe</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <div class="coming-soon-badge">Coming Soon</div>
+            <h1>Artist Newsletters<br><span>Your music. Your fans. Your newsletter.</span></h1>
+            <p>Launch a branded newsletter for your fanbase — powered by TrueFans. We handle the tech, content, and delivery so you can focus on making music.</p>
+        </div>
+    </section>
+
+    <section>
+        <div class="container">
+            <div class="section-header">
+                <h2>What You Get</h2>
+                <p>Everything an artist needs to stay connected with fans.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon">&#127912;</div>
+                    <h3>Your Brand</h3>
+                    <p>Fully customized newsletter with your name, artwork, colors, and voice. It looks and feels like you.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#9889;</div>
+                    <h3>Auto-Generated Content</h3>
+                    <p>We pull in your latest releases, tour dates, social highlights, and industry news — automatically curated each week.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#128588;</div>
+                    <h3>Fan Engagement</h3>
+                    <p>Built-in polls, trivia, exclusive content drops, and reply-to-connect features that keep fans coming back.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon">&#128176;</div>
+                    <h3>Revenue Ready</h3>
+                    <p>Monetize with merch links, ticket pre-sales, premium tiers, and sponsor placements — all built in.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="waitlist">
+        <div class="container">
+            <div class="section-header">
+                <h2>Join the Waitlist</h2>
+                <p>Be among the first artists to launch a TrueFans-powered newsletter.</p>
+            </div>
+            <form class="waitlist-form" hx-post="/artist-newsletters/waitlist" hx-target="#waitlist-result" hx-swap="innerHTML">
+                <div class="form-row">
+                    <label for="artist_name">Artist / Band Name *</label>
+                    <input type="text" id="artist_name" name="artist_name" required placeholder="Your artist or band name">
+                </div>
+                <div class="form-row">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required placeholder="you@example.com">
+                </div>
+                <div class="form-row">
+                    <label for="website">Website</label>
+                    <input type="url" id="website" name="website" placeholder="https://yoursite.com">
+                </div>
+                <div class="form-row">
+                    <label for="genre">Primary Genre</label>
+                    <select id="genre" name="genre">
+                        <option value="">Select genre...</option>
+                        <option value="pop">Pop</option>
+                        <option value="rock">Rock</option>
+                        <option value="hip-hop">Hip-Hop / Rap</option>
+                        <option value="rnb">R&amp;B / Soul</option>
+                        <option value="electronic">Electronic / Dance</option>
+                        <option value="country">Country</option>
+                        <option value="indie">Indie / Alternative</option>
+                        <option value="metal">Metal / Punk</option>
+                        <option value="jazz">Jazz / Blues</option>
+                        <option value="classical">Classical</option>
+                        <option value="latin">Latin</option>
+                        <option value="world">World / Folk</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="fan_count">Estimated Fan / Follower Count</label>
+                    <select id="fan_count" name="fan_count">
+                        <option value="">Select range...</option>
+                        <option value="under-1k">Under 1,000</option>
+                        <option value="1k-10k">1,000 - 10,000</option>
+                        <option value="10k-50k">10,000 - 50,000</option>
+                        <option value="50k-100k">50,000 - 100,000</option>
+                        <option value="100k-500k">100,000 - 500,000</option>
+                        <option value="500k+">500,000+</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label for="message">Anything else you'd like us to know?</label>
+                    <textarea id="message" name="message" placeholder="Tell us about your goals, current fan engagement, or any questions..."></textarea>
+                </div>
+                <button type="submit" class="btn-submit">Join the Waitlist</button>
+                <div id="waitlist-result" style="margin-top:1rem"></div>
+            </form>
+        </div>
+    </section>
+
+    <footer class="artist-footer">
+        <div class="container">
+            <p>Powered by <a href="/">TrueFans NEWSLETTERS</a></p>
+            <p style="margin-top: 8px;">&copy; TrueFans NEWSLETTERS</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -921,6 +921,62 @@ class Repository:
         conn.close()
         return [dict(r) for r in rows]
 
+    # ---- Edition Markets ----
+
+    def get_edition_markets(self, edition_slug: str = "") -> list[dict]:
+        conn = self._conn()
+        if edition_slug:
+            rows = conn.execute("SELECT * FROM edition_markets WHERE edition_slug = ? AND is_active = 1 ORDER BY sort_order", (edition_slug,)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM edition_markets WHERE is_active = 1 ORDER BY edition_slug, sort_order").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_edition_market(self, edition_slug: str, market_slug: str, market_name: str, description: str = "", sort_order: int = 0) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO edition_markets (edition_slug, market_slug, market_name, description, sort_order) VALUES (?, ?, ?, ?, ?)",
+            (edition_slug, market_slug, market_name, description, sort_order),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def toggle_edition_market(self, market_id: int) -> None:
+        conn = self._conn()
+        conn.execute("UPDATE edition_markets SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END WHERE id = ?", (market_id,))
+        conn.commit()
+        conn.close()
+
+    # ---- Artist Newsletters ----
+
+    def create_artist_newsletter_waitlist(self, artist_name: str, email: str, website: str = "", social_links: str = "", genre: str = "", fan_count: str = "", message: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO artist_newsletter_waitlist (artist_name, email, website, social_links, genre, fan_count, message) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (artist_name, email, website, social_links, genre, fan_count, message),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_artist_newsletter_waitlist(self, status: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute("SELECT * FROM artist_newsletter_waitlist WHERE status = ? ORDER BY created_at DESC LIMIT ?", (status, limit)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM artist_newsletter_waitlist ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_waitlist_status(self, entry_id: int, status: str) -> None:
+        conn = self._conn()
+        conn.execute("UPDATE artist_newsletter_waitlist SET status = ? WHERE id = ?", (status, entry_id))
+        conn.commit()
+        conn.close()
+
     # ---- Edition Sponsors (main sponsors per newsletter x edition) ----
 
     def get_all_edition_sponsors(self) -> list[dict]:
@@ -3626,6 +3682,70 @@ class Repository:
         conn.close()
         return [dict(r) for r in rows]
 
+    # ---- Revenue Dashboard ----
+
+    def get_revenue_summary(self) -> dict:
+        conn = self._conn()
+        # Sponsor revenue by status
+        row = conn.execute(
+            """SELECT
+                COALESCE(SUM(CASE WHEN status = 'paid' THEN rate_cents ELSE 0 END), 0) as paid_cents,
+                COALESCE(SUM(CASE WHEN status IN ('booked','confirmed','delivered','invoiced') THEN rate_cents ELSE 0 END), 0) as pipeline_cents,
+                COUNT(*) as total_bookings
+               FROM sponsor_bookings"""
+        ).fetchone()
+        sponsor = dict(row) if row else {"paid_cents": 0, "pipeline_cents": 0, "total_bookings": 0}
+
+        # Affiliate revenue
+        aff_row = conn.execute("SELECT COALESCE(SUM(total_clicks), 0) as total_clicks, COALESCE(SUM(total_revenue_cents), 0) as total_revenue FROM affiliate_programs").fetchone()
+        affiliate = dict(aff_row) if aff_row else {"total_clicks": 0, "total_revenue": 0}
+
+        # Tier MRR
+        tier_row = conn.execute(
+            """SELECT COALESCE(SUM(st.price_cents), 0) as mrr_cents, COUNT(*) as active_subs
+               FROM subscriber_billing sb
+               JOIN subscriber_tiers st ON st.id = sb.tier_id
+               WHERE sb.status = 'active'"""
+        ).fetchone()
+        tier = dict(tier_row) if tier_row else {"mrr_cents": 0, "active_subs": 0}
+
+        conn.close()
+        return {"sponsor": sponsor, "affiliate": affiliate, "tier": tier}
+
+    def get_revenue_by_edition(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT i.edition_slug, COALESCE(SUM(sb.rate_cents), 0) as total_cents, COUNT(sb.id) as booking_count
+               FROM sponsor_bookings sb
+               LEFT JOIN issues i ON i.id = sb.issue_id
+               GROUP BY i.edition_slug
+               ORDER BY total_cents DESC"""
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_tier_breakdown(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT st.name, st.price_cents, COUNT(sb.id) as subscriber_count,
+                      COUNT(sb.id) * st.price_cents as mrr_cents
+               FROM subscriber_tiers st
+               LEFT JOIN subscriber_billing sb ON sb.tier_id = st.id AND sb.status = 'active'
+               GROUP BY st.id
+               ORDER BY st.sort_order"""
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_related_issues(self, edition_slug: str, exclude_id: int, limit: int = 3) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM issues WHERE edition_slug = ? AND id != ? AND status = 'published' ORDER BY publish_date DESC LIMIT ?",
+            (edition_slug, exclude_id, limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
     # ---- Stats ----
 
     def get_table_counts(self) -> dict:
@@ -3640,3 +3760,98 @@ class Repository:
             counts[t] = row["c"]
         conn.close()
         return counts
+
+    # ---- Mobile App Waitlist ----
+
+    def create_mobile_waitlist(self, email: str, platform: str = "both") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO mobile_app_waitlist (email, platform) VALUES (?, ?)",
+            (email, platform),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_mobile_waitlist(self, limit: int = 100) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute("SELECT * FROM mobile_app_waitlist ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_mobile_waitlist_count(self) -> int:
+        conn = self._conn()
+        row = conn.execute("SELECT COUNT(*) as count FROM mobile_app_waitlist").fetchone()
+        conn.close()
+        return dict(row)["count"] if row else 0
+
+    # ---- Subscriber Segments ----
+
+    def get_subscriber_segments_summary(self) -> dict:
+        conn = self._conn()
+        # By edition
+        by_edition = conn.execute(
+            """SELECT ne.slug, ne.name, COUNT(se.id) as count
+               FROM newsletter_editions ne
+               LEFT JOIN subscriber_editions se ON se.edition_id = ne.id
+               LEFT JOIN subscribers s ON s.id = se.subscriber_id AND s.status = 'active'
+               WHERE ne.is_active = 1
+               GROUP BY ne.id ORDER BY ne.sort_order"""
+        ).fetchall()
+
+        # By genre
+        by_genre = conn.execute(
+            """SELECT sg.genre, COUNT(DISTINCT sg.subscriber_id) as count
+               FROM subscriber_genres sg
+               JOIN subscribers s ON s.id = sg.subscriber_id AND s.status = 'active'
+               GROUP BY sg.genre ORDER BY count DESC"""
+        ).fetchall()
+
+        # Total
+        total = conn.execute("SELECT COUNT(*) as count FROM subscribers WHERE status = 'active'").fetchone()
+
+        conn.close()
+        return {
+            "by_edition": [dict(r) for r in by_edition],
+            "by_genre": [dict(r) for r in by_genre],
+            "total": dict(total)["count"] if total else 0,
+        }
+
+    def get_cohort_retention(self, months: int = 6) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT strftime('%%Y-%%m', subscribed_at) as cohort,
+                      COUNT(*) as total_signups,
+                      SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as still_active
+               FROM subscribers
+               WHERE subscribed_at IS NOT NULL
+               GROUP BY cohort
+               ORDER BY cohort DESC
+               LIMIT ?""",
+            (months,),
+        ).fetchall()
+        conn.close()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["retention_pct"] = round(100 * d["still_active"] / d["total_signups"], 1) if d["total_signups"] > 0 else 0
+            result.append(d)
+        return result
+
+    def get_at_risk_subscribers(self, days_inactive: int = 30, limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT s.id, s.email, s.subscribed_at,
+                      MAX(ete.created_at) as last_activity
+               FROM subscribers s
+               LEFT JOIN email_tracking_events ete ON ete.subscriber_id = s.id
+               WHERE s.status = 'active'
+               GROUP BY s.id
+               HAVING last_activity IS NULL OR last_activity < datetime('now', ? || ' days')
+               ORDER BY last_activity ASC NULLS FIRST
+               LIMIT ?""",
+            (f"-{days_inactive}", limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]

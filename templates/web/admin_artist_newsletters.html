@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Artist Newsletters — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_artist_newsletters %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Artist Newsletters</h2>
+    <p class="subtitle">Waitlist management for artist-branded newsletters</p>
+</div>
+
+<div class="card">
+    <h3>Waitlist Entries</h3>
+    {% if waitlist %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Artist Name</th>
+                <th>Email</th>
+                <th>Genre</th>
+                <th>Fan Count</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for entry in waitlist %}
+            <tr>
+                <td>{{ entry.artist_name }}</td>
+                <td>{{ entry.email }}</td>
+                <td>{{ entry.genre or '—' }}</td>
+                <td>{{ entry.fan_count or '—' }}</td>
+                <td id="status-{{ entry.id }}">
+                    {% if entry.status == 'approved' %}
+                    <span class="badge badge-success">{{ entry.status }}</span>
+                    {% elif entry.status == 'rejected' %}
+                    <span class="badge badge-muted">{{ entry.status }}</span>
+                    {% elif entry.status == 'contacted' %}
+                    <span class="badge badge-info">{{ entry.status }}</span>
+                    {% else %}
+                    <span class="badge">{{ entry.status or 'pending' }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ entry.created_at or '—' }}</td>
+                <td>
+                    <form hx-post="/admin/artist-newsletters/{{ entry.id }}/status" hx-target="#status-{{ entry.id }}" hx-swap="innerHTML" style="display:flex;gap:0.5rem;align-items:center">
+                        <select name="status" style="font-size:0.85rem;padding:4px 8px">
+                            <option value="contacted">Contacted</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm">Update</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No waitlist entries yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

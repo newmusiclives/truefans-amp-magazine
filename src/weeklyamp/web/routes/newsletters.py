@@ -30,6 +30,7 @@ async def newsletters_archive():
 @router.get("/newsletters/archive/{issue_number}", response_class=HTMLResponse)
 async def newsletter_issue(issue_number: int):
     repo = _get_repo()
+    cfg = load_config()
     # Find the issue by number
     issues = repo.get_published_issues(limit=100)
     issue = next((i for i in issues if i["issue_number"] == issue_number), None)
@@ -40,8 +41,18 @@ async def newsletter_issue(issue_number: int):
     if not assembled:
         from fastapi import HTTPException
         raise HTTPException(status_code=404)
+    # Audio player
+    audio = repo.get_audio_issue(issue["id"])
+    audio_url = audio.get("audio_url", "") if audio and audio.get("status") == "complete" else ""
+    # SEO description from plain text
+    plain = assembled.get("plain_content") or ""
+    description = " ".join(plain.split())[:200].rsplit(" ", 1)[0] if plain.strip() else ""
+    # Related issues
+    related = repo.get_related_issues(issue.get("edition_slug", ""), issue["id"], limit=3)
     tpl = _env.get_template("archive_issue.html")
-    return tpl.render(issue=issue, content=assembled["html_content"])
+    return tpl.render(issue=issue, content=assembled["html_content"],
+        description=description, site_domain=cfg.site_domain, related_issues=related,
+        audio_url=audio_url)
 
 
 @router.get("/feed.xml")
@@ -142,3 +153,40 @@ async def podcast_feed(request: Request):
 </rss>"""
     from fastapi.responses import Response
     return Response(content=feed, media_type="application/rss+xml")
+
+
+@router.get("/articles/{edition_slug}/{section_slug}/{issue_number}", response_class=HTMLResponse)
+async def standalone_article(edition_slug: str, section_slug: str, issue_number: int, request: Request):
+    repo = _get_repo()
+    config = load_config()
+    # Find the issue
+    conn = repo._conn()
+    issue = conn.execute("SELECT * FROM issues WHERE issue_number = ? AND edition_slug = ?", (issue_number, edition_slug)).fetchone()
+    if not issue:
+        conn.close()
+        return HTMLResponse("Article not found", status_code=404)
+    issue = dict(issue)
+    # Find the draft for this section
+    draft = conn.execute(
+        "SELECT * FROM drafts WHERE issue_id = ? AND section_slug = ? AND status IN ('approved','revised') ORDER BY version DESC LIMIT 1",
+        (issue["id"], section_slug),
+    ).fetchone()
+    conn.close()
+    if not draft:
+        return HTMLResponse("Article not found", status_code=404)
+    draft = dict(draft)
+    # Get section display name
+    sections = repo.get_all_sections()
+    section = next((s for s in sections if s.get("slug") == section_slug), {})
+    display_name = section.get("display_name", section_slug.replace("_", " ").title())
+
+    import markdown
+    from weeklyamp.web.sanitize import sanitize_html
+    content_html = sanitize_html(markdown.markdown(draft["content"] or "", extensions=["extra"]))
+    description = " ".join((draft["content"] or "").split()[:30])
+
+    tpl = _env.get_template("article.html")
+    return HTMLResponse(tpl.render(
+        issue=issue, section_slug=section_slug, display_name=display_name,
+        content_html=content_html, description=description,
+        site_domain=config.site_domain, edition_slug=edition_slug))
