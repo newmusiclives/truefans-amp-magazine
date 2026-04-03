@@ -26,21 +26,19 @@ _cached_admin_hash: str | None = None
 
 def _get_admin_hash() -> str:
     global _cached_admin_hash
-    if _cached_admin_hash is not None:
+    # Only use cache if we got a real hash (not empty)
+    if _cached_admin_hash:
         return _cached_admin_hash
-    h = os.environ.get("WEEKLYAMP_ADMIN_HASH", "")
+    h = os.environ.get("WEEKLYAMP_ADMIN_HASH", "").strip()
     if h:
         _cached_admin_hash = h
         return h
-    # Fallback: if a plaintext password is set, hash it once at runtime.
-    # This avoids issues with $ characters in bcrypt hashes being
-    # interpreted as variable references by platforms like Railway.
     pw = os.environ.get("WEEKLYAMP_ADMIN_PASSWORD", "").strip()
     if pw:
         _cached_admin_hash = bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
-        logger.info("WEEKLYAMP_ADMIN_PASSWORD set — hashed at runtime")
+        logger.info("WEEKLYAMP_ADMIN_PASSWORD set — hashed at runtime (pw length=%d)", len(pw))
         return _cached_admin_hash
-    _cached_admin_hash = ""
+    # Don't cache empty — re-check env vars on next call
     return ""
 
 
