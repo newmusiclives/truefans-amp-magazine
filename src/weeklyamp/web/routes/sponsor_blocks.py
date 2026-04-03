@@ -292,3 +292,12 @@ async def update_booking_status(booking_id: int, status: str = Form(...)):
     repo = get_repo()
     repo.update_booking_status(booking_id, status)
     return render("partials/alert.html", message=f"Status updated to {status}", level="success")
+
+
+# ---- Sponsor Performance Analytics ----
+
+@router.get("/analytics", response_class=HTMLResponse)
+async def sponsor_analytics():
+    repo = get_repo()
+    performance = repo.get_sponsor_performance()
+    return render("sponsor_analytics.html", performance=performance)

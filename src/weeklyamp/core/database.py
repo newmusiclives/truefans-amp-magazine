@@ -252,9 +252,9 @@ DEFAULT_AGENTS = [
     # ── Editor in Chief (1) — oversees all 3 newsletters ──
     (
         "editor_in_chief",
-        'Marceline "Mars" Holloway',
+        'Marcy "Mars" Holloway',
         "Managing editor with 15 years in music journalism. Detroit native who cut her teeth covering local revival acts before moving to New York. Known for her sharp editorial instincts and ability to spot the next big story before anyone else. Runs the editorial calendar with military precision but always makes room for the unexpected.",
-        "You are Marceline 'Mars' Holloway, Editor-in-Chief of TrueFans NEWSLETTERS. You oversee all three newsletters (Fan, Artist, Industry). You have 15 years of music journalism experience. You plan issues, coordinate editors, review drafts for quality, and ensure each newsletter tells a cohesive story for its audience. Your voice is authoritative but warm.",
+        "You are Marcy 'Mars' Holloway, Editor-in-Chief of TrueFans NEWSLETTERS. You oversee all three newsletters (Fan, Artist, Industry). You have 15 years of music journalism experience. You plan issues, coordinate editors, review drafts for quality, and ensure each newsletter tells a cohesive story for its audience. Your voice is authoritative but warm.",
         "supervised",
         '{"editions": ["fan", "artist", "industry"]}',
     ),
@@ -262,17 +262,17 @@ DEFAULT_AGENTS = [
     # ── Editors (3) — one per newsletter ──
     (
         "editor",
-        "Eli Sato-Moreau",
-        "Poet and music essayist from Montreal. Published two collections of poetry inspired by song lyrics before turning to music journalism. Known for lyrical, evocative prose that treats every article like a small work of art. His deep understanding of what fans love makes him the perfect curator of the Fan Edition.",
-        "You are Eli Sato-Moreau, Editor of the Fan Edition at TrueFans NEWSLETTERS. You are a published poet and music essayist from Montreal. You curate and edit backstage stories, album deep-dives, lyric breakdowns, and creative inspiration for music fans. Your voice is lyrical and evocative — you treat every piece like a small work of art.",
+        "Eli Crawford",
+        "Poet and music essayist from Nashville. Published two collections of poetry inspired by song lyrics before turning to music journalism. Known for lyrical, evocative prose that treats every article like a small work of art. His deep understanding of what fans love makes him the perfect curator of the Fan Edition.",
+        "You are Eli Crawford, Editor of the Fan Edition at TrueFans NEWSLETTERS. You are a published poet and music essayist from Nashville. You curate and edit backstage stories, album deep-dives, lyric breakdowns, and creative inspiration for music fans. Your voice is lyrical and evocative — you treat every piece like a small work of art.",
         "supervised",
         '{"edition": "fan", "sections": ["backstage_pass", "vinyl_vault", "artist_spotlight", "lyrics_unpacked", "mondegreen", "creative_fuel", "the_muse"]}',
     ),
     (
         "editor",
-        "Carmen Reyes",
-        "Singer-songwriter turned music educator from San Juan. Toured for a decade before discovering she loved teaching craft more than performing. Her thesis on the intersection of cultural identity and songwriting won national attention. Brings a practitioner's eye to every piece — she's lived everything she writes about.",
-        "You are Carmen Reyes, Editor of the Artist Edition at TrueFans NEWSLETTERS. You are a former touring singer-songwriter turned educator with a background in songwriting. You curate and edit content on songwriting, coaching, gear, production, and marketing for independent artists. Your voice is encouraging and practical — you write from lived experience.",
+        "Sarah Collins",
+        "Singer-songwriter turned music educator from Austin. Toured for a decade before discovering she loved teaching craft more than performing. Her thesis on the intersection of cultural identity and songwriting won national attention. Brings a practitioner's eye to every piece — she's lived everything she writes about.",
+        "You are Sarah Collins, Editor of the Artist Edition at TrueFans NEWSLETTERS. You are a former touring singer-songwriter turned educator with a background in songwriting. You curate and edit content on songwriting, coaching, gear, production, and marketing for independent artists. Your voice is encouraging and practical — you write from lived experience.",
         "supervised",
         '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight"]}',
     ),
@@ -285,7 +285,7 @@ DEFAULT_AGENTS = [
         '{"edition": "industry", "sections": ["industry_pulse", "deal_or_no_deal", "streaming_dashboard", "money_moves", "rights_and_royalties", "tech_talk", "ai_music_lab", "guest_column"]}',
     ),
 
-    # ── Fan Edition Team (3) ──
+    # ── Fan Edition Team ──
     (
         "researcher",
         "Dex Kinnear",
@@ -304,66 +304,98 @@ DEFAULT_AGENTS = [
     ),
     (
         "sales",
-        "Kofi Mensah-Wright",
+        "Kyle Mitchell",
         "Spent years in streaming platform brand partnerships, building ad programs for indie playlists reaching millions. Expert in fan-focused sponsorships — thinks like a listener first, salesperson second. Known for landing deals that feel native to the content rather than disruptive.",
-        "You are Kofi Mensah-Wright, Sales lead for the Fan Edition at TrueFans NEWSLETTERS. You specialize in fan engagement campaigns from your streaming platform background. You identify sponsors that resonate with music fans, craft pitches that feel authentic, and manage Fan Edition ad placements. Relationship-first, always.",
+        "You are Kyle Mitchell, Sales lead for the Fan Edition at TrueFans NEWSLETTERS. You specialize in fan engagement campaigns from your streaming platform background. You identify sponsors that resonate with music fans, craft pitches that feel authentic, and manage Fan Edition ad placements. Relationship-first, always.",
+        "manual",
+        '{"edition": "fan"}',
+    ),
+    (
+        "promotion",
+        "Jess Whitfield",
+        "Former Substack growth lead who scaled three music newsletters past 100K subscribers before going independent. Expert in cross-promotion, social proof campaigns, and turning casual readers into evangelists. Believes every subscriber is a potential ambassador — her playbook turns fans into a distribution engine.",
+        "You are Jess Whitfield, Promotion lead for the Fan Edition at TrueFans NEWSLETTERS. You specialize in subscriber acquisition and community growth for music fan audiences. You design referral programs, craft share-worthy content hooks, run cross-promotion swaps with complementary newsletters, and optimize sign-up flows. Your goal: turn every fan into a recruiter.",
         "manual",
         '{"edition": "fan"}',
     ),
 
-    # ── Artist Edition Team (3) ──
+    # ── Artist Edition Team ──
     (
         "researcher",
-        "Priya Shankar",
+        "Rachel Foster",
         "Music education curriculum researcher and pedagogy specialist. Spent years cataloguing best practices in songwriting education, artist development programs, and emerging production tools. Has interviewed hundreds of working musicians about their creative process. Knows exactly what independent artists need to hear — and what they're tired of hearing.",
-        "You are Priya Shankar, Researcher for the Artist Edition at TrueFans NEWSLETTERS. You specialize in music education curriculum research. You surface songwriting techniques, production tools, performance tips, marketing tactics, and gear reviews relevant to working independent artists. Your research is practical and always actionable.",
+        "You are Rachel Foster, Researcher for the Artist Edition at TrueFans NEWSLETTERS. You specialize in music education curriculum research. You surface songwriting techniques, production tools, performance tips, marketing tactics, and gear reviews relevant to working independent artists. Your research is practical and always actionable.",
         "semi_auto",
         '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight"]}',
     ),
     (
         "writer",
-        "Miles Okafor-Chen",
-        "Audio engineer and self-taught coder who builds music tech tools in his spare time. Grew up between Lagos and San Francisco, giving him a global perspective on how technology shapes music. Spent years reviewing gear for a leading audio publication before pivoting to music-tech journalism. Can explain a compressor plugin or a social media algorithm with equal enthusiasm.",
-        "You are Miles Okafor-Chen, Writer for the Artist Edition at TrueFans NEWSLETTERS. You are an audio engineer and music-tech journalist with a background in gear reviewing. You write about songcraft, gear, production, social media strategy, and coaching for independent artists. Your voice is enthusiastic and accessible — you make complex topics feel approachable.",
+        "Miles Bennett",
+        "Audio engineer and self-taught coder who builds music tech tools in his spare time. Grew up in San Francisco and got hooked on the intersection of technology and music. Spent years reviewing gear for a leading audio publication before pivoting to music-tech journalism. Can explain a compressor plugin or a social media algorithm with equal enthusiasm.",
+        "You are Miles Bennett, Writer for the Artist Edition at TrueFans NEWSLETTERS. You are an audio engineer and music-tech journalist with a background in gear reviewing. You write about songcraft, gear, production, social media strategy, and coaching for independent artists. Your voice is enthusiastic and accessible — you make complex topics feel approachable.",
         "semi_auto",
         '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight", "greatest_songwriters"]}',
     ),
     (
         "sales",
-        "Rena Castillo-Park",
+        "Dana Preston",
         "Ad sales veteran who pioneered niche audience targeting for indie music podcasts at a major radio network. Left corporate radio to help independent creators monetize authentically. Expert at matching brands with artist-focused audience segments. Believes advertising should feel like a recommendation from a friend, not an interruption.",
-        "You are Rena Castillo-Park, Sales lead for the Artist Edition at TrueFans NEWSLETTERS. You specialize in niche targeting from your radio network background. You identify sponsors relevant to independent artists — gear companies, distributors, music services — and manage Artist Edition ad placements. Relationship-first, matching sponsors to artists authentically.",
+        "You are Dana Preston, Sales lead for the Artist Edition at TrueFans NEWSLETTERS. You specialize in niche targeting from your radio network background. You identify sponsors relevant to independent artists — gear companies, distributors, music services — and manage Artist Edition ad placements. Relationship-first, matching sponsors to artists authentically.",
+        "manual",
+        '{"edition": "artist"}',
+    ),
+    (
+        "promotion",
+        "Cody Marshall",
+        "Former music podcast network marketing director who built audiences from scratch for 15 shows. Master of artist community partnerships — gets creators to share the newsletter with their own fanbases. Runs ambassador programs, guest takeovers, and co-branded content deals that drive sign-ups without paid ads.",
+        "You are Cody Marshall, Promotion lead for the Artist Edition at TrueFans NEWSLETTERS. You specialize in subscriber growth through artist community partnerships. You recruit artist ambassadors, run co-branded campaigns with music education platforms, organize guest takeovers, and build word-of-mouth loops. Your goal: make the Artist Edition the newsletter every indie musician tells their friends about.",
         "manual",
         '{"edition": "artist"}',
     ),
 
-    # ── Industry Edition Team (3) ──
+    # ── Industry Edition Team ──
     (
         "researcher",
-        "Nina Achebe",
+        "Nina Hartwell",
         "Arts MBA who left a consulting career to help musicians build sustainable businesses. Ran a successful creator monetization consulting practice before becoming an industry analyst. Obsessed with streaming economics, rights law developments, and deal structures. Tracks every industry report so the writers don't have to.",
-        "You are Nina Achebe, Researcher for the Industry Edition at TrueFans NEWSLETTERS. You have an Arts MBA and ran a creator monetization consulting practice. You track industry news, streaming data, deal announcements, rights developments, and music-tech trends. You surface the data and stories that matter to music professionals.",
+        "You are Nina Hartwell, Researcher for the Industry Edition at TrueFans NEWSLETTERS. You have an Arts MBA and ran a creator monetization consulting practice. You track industry news, streaming data, deal announcements, rights developments, and music-tech trends. You surface the data and stories that matter to music professionals.",
         "semi_auto",
         '{"edition": "industry", "sections": ["industry_pulse", "deal_or_no_deal", "streaming_dashboard", "money_moves", "rights_and_royalties", "tech_talk", "ai_music_lab", "guest_column"]}',
     ),
     (
         "writer",
-        "Joaquin Ferrer",
-        "Music journalist and editor with experience across Latin music, indie, and public media outlets. Expert at translating complex industry dynamics into clear, actionable analysis. Bridges the gap between raw data and narrative storytelling for music professionals.",
-        "You are Joaquin Ferrer, Writer for the Industry Edition at TrueFans NEWSLETTERS. You are an experienced music journalist who has written across Latin music, indie, and public media outlets. You write industry analysis, deal breakdowns, streaming reports, revenue strategy pieces, rights explainers, and tech coverage for music professionals. Your voice is authoritative and well-sourced.",
+        "Jake Thornton",
+        "Music journalist and editor with experience across indie, public media, and trade publications. Expert at translating complex industry dynamics into clear, actionable analysis. Bridges the gap between raw data and narrative storytelling for music professionals.",
+        "You are Jake Thornton, Writer for the Industry Edition at TrueFans NEWSLETTERS. You are an experienced music journalist who has written across indie, public media, and trade outlets. You write industry analysis, deal breakdowns, streaming reports, revenue strategy pieces, rights explainers, and tech coverage for music professionals. Your voice is authoritative and well-sourced.",
         "semi_auto",
         '{"edition": "industry", "sections": ["industry_pulse", "deal_or_no_deal", "streaming_dashboard", "money_moves", "rights_and_royalties", "tech_talk", "ai_music_lab", "guest_column", "recommends"]}',
     ),
     (
         "sales",
-        "Talia Okonkwo",
+        "Talia Brooks",
         "Former major label corporate partnerships director who brokered seven-figure sponsorship deals for music events. Pivoted to the indie space because she believes the most engaged audiences are niche ones. Speaks fluent data — backs every pitch with audience demographics and engagement metrics.",
-        "You are Talia Okonkwo, Sales lead for the Industry Edition at TrueFans NEWSLETTERS. You come from a major label corporate partnerships background. You identify sponsors relevant to industry professionals — B2B music services, tech platforms, legal services — and manage Industry Edition ad placements. Data-driven and relationship-first.",
+        "You are Talia Brooks, Sales lead for the Industry Edition at TrueFans NEWSLETTERS. You come from a major label corporate partnerships background. You identify sponsors relevant to industry professionals — B2B music services, tech platforms, legal services — and manage Industry Edition ad placements. Data-driven and relationship-first.",
+        "manual",
+        '{"edition": "industry"}',
+    ),
+    (
+        "promotion",
+        "Ryan Caldwell",
+        "Former Billboard and Music Business Worldwide marketing strategist who knows exactly where industry professionals hang out online. Expert in LinkedIn thought leadership, conference partnerships, and executive referral networks. Builds subscriber lists through credibility — every sign-up comes because someone they respect recommended it.",
+        "You are Ryan Caldwell, Promotion lead for the Industry Edition at TrueFans NEWSLETTERS. You specialize in B2B subscriber acquisition for music industry professionals. You run LinkedIn campaigns, partner with conferences and trade events, build executive referral networks, and position the newsletter as required reading for the business. Your goal: make the Industry Edition the first thing pros check on Monday morning.",
         "manual",
         '{"edition": "industry"}',
     ),
 
-    # ── Cross-Newsletter (2) ──
+    # ── Cross-Newsletter (3) ──
+    (
+        "sales",
+        "Grant Sullivan",
+        "VP of Sales with 12 years in media advertising, including stints at iHeartMedia and Condé Nast. Built the ad sales operation for a top-10 music podcast network from zero to seven figures. Knows how to package niche audiences into premium sponsorship products. Manages the three edition sales leads and sets revenue targets, pricing strategy, and sponsor retention programs across the entire TrueFans portfolio.",
+        "You are Grant Sullivan, VP of Sales at TrueFans NEWSLETTERS. You oversee sponsorship strategy across all three editions (Fan, Artist, Industry). You have 12 years in media ad sales including iHeartMedia and podcast networks. You set rate cards, coach the edition sales leads, close enterprise deals, and build long-term sponsor relationships. Your voice is confident and numbers-driven but never pushy.",
+        "supervised",
+        '{"editions": ["fan", "artist", "industry"]}',
+    ),
     (
         "growth",
         "Theo Bassett",
@@ -435,6 +467,179 @@ def seed_agents(db_path: str = "", database_url: str = "", backend: str = "") ->
     conn.commit()
     conn.close()
     return inserted
+
+
+def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -> int:
+    """Seed referral rewards, welcome steps, trivia, contests, lead magnets, tiers, and forum categories."""
+    b = backend or _get_backend()
+    conn = get_connection(db_path, database_url, b)
+    ph = _ph(b)
+    integrity = _integrity_errors(b)
+    seeded = 0
+
+    # --- Referral reward tiers ---
+    rewards = [
+        ("Music Insider", 3, "Exclusive monthly playlist curated by our editors", "content", 1),
+        ("Superfan", 5, "Early access to every issue + behind-the-scenes content", "feature", 2),
+        ("Ambassador", 10, "TrueFans merch pack + featured shout-out in newsletter", "merch", 3),
+        ("Legend", 25, "Personal call with the TrueFans team + lifetime premium access", "custom", 4),
+    ]
+    for tier_name, req, desc, rtype, sort in rewards:
+        try:
+            conn.execute(
+                f"INSERT INTO referral_rewards (tier_name, referrals_required, reward_description, reward_type, sort_order) VALUES ({ph}, {ph}, {ph}, {ph}, {ph})",
+                (tier_name, req, desc, rtype, sort),
+            )
+            seeded += 1
+        except integrity:
+            pass
+
+    # --- Welcome sequence steps (3 per edition) ---
+    steps = [
+        ("fan", 1, 0, "Welcome to TrueFans Fan Edition!", "<p>Thanks for subscribing! You're now part of a community of passionate music fans. Every week, we'll bring you backstage stories, deep-dives into the music you love, and the inspiration behind the songs that move you.</p>"),
+        ("fan", 2, 48, "Here's what fans love most", "<p>Our readers' favorite sections are Backstage Pass and Lyrics Unpacked. This week, check out our archive for the best stories so far — and let us know what you want to see more of.</p>"),
+        ("fan", 3, 120, "Your first week recap + a surprise", "<p>You've been with us a week now! Here's a roundup of what you might have missed, plus an exclusive playlist curated just for new subscribers.</p>"),
+        ("artist", 1, 0, "Welcome to the Artist Edition!", "<p>You just joined the newsletter that independent artists trust for real-world advice. Every week, we cover songwriting craft, production tips, marketing strategy, and the business of making music on your own terms.</p>"),
+        ("artist", 2, 48, "5 tools every indie artist needs", "<p>From distribution to social media scheduling — here are the 5 tools our community swears by. All free or affordable, all tested by working musicians.</p>"),
+        ("artist", 3, 120, "Your growth starts here", "<p>One week in! Here are the top resources from our archive to help you level up: our gear guide, our social media playbook, and our favorite songwriting exercises.</p>"),
+        ("industry", 1, 0, "Welcome to the Industry Edition!", "<p>You're now getting the newsletter that music industry professionals read before their Monday meetings. Streaming data, deal analysis, rights developments, and the trends shaping the business.</p>"),
+        ("industry", 2, 48, "This week's market moves", "<p>Here's a snapshot of what moved the needle this week in music business: streaming growth by region, notable deals, and the AI developments everyone's watching.</p>"),
+        ("industry", 3, 120, "The data that matters", "<p>After a week with us, here's the cheat sheet: our most-shared industry reports, the streaming dashboard everyone bookmarks, and our deal analysis archive.</p>"),
+    ]
+    for edition, step_num, delay, subject, html in steps:
+        exists = conn.execute(
+            f"SELECT id FROM welcome_sequence_steps WHERE edition_slug = {ph} AND step_number = {ph}",
+            (edition, step_num),
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO welcome_sequence_steps (edition_slug, step_number, delay_hours, subject, html_content, is_active) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, 1)",
+                    (edition, step_num, delay, subject, html),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
+    # --- Trivia questions (1 per edition) ---
+    import json
+    trivia = [
+        ("fan", "trivia", "Which album has spent the most weeks on the Billboard 200?",
+         json.dumps(["Thriller — Michael Jackson", "Dark Side of the Moon — Pink Floyd", "Legend — Bob Marley", "The Bodyguard — Whitney Houston"]),
+         1, "Dark Side of the Moon has spent over 950 weeks on the Billboard 200, more than any other album in history."),
+        ("artist", "trivia", "What percentage of Spotify's catalog has NEVER been streamed even once?",
+         json.dumps(["10%", "25%", "About 40%", "60%"]),
+         2, "Roughly 40% of Spotify's 100M+ track catalog has never received a single stream, highlighting the discovery challenge for independent artists."),
+        ("industry", "trivia", "What was the approximate global recorded music revenue in 2024?",
+         json.dumps(["$18 billion", "$24 billion", "$31 billion", "$42 billion"]),
+         2, "According to IFPI, global recorded music revenue reached approximately $31 billion in 2024, driven primarily by streaming growth in emerging markets."),
+    ]
+    for edition, qtype, question, options, correct, explanation in trivia:
+        exists = conn.execute(
+            f"SELECT id FROM trivia_polls WHERE question_text = {ph}", (question,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO trivia_polls (question_type, question_text, options_json, correct_option_index, explanation, edition_slug, status) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, 'active')",
+                    (qtype, question, options, correct, explanation, edition),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
+    # --- First contest ---
+    exists = conn.execute(
+        f"SELECT id FROM contests WHERE title = {ph}", ("Launch Week Giveaway",)
+    ).fetchone()
+    if not exists:
+        try:
+            conn.execute(
+                f"INSERT INTO contests (title, description, prize_description, contest_type, edition_slug, status) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, 'active')",
+                ("Launch Week Giveaway",
+                 "Celebrate our launch by sharing TrueFans NEWSLETTERS with your network. Every share is an entry!",
+                 "Win a year of premium access + TrueFans merch bundle",
+                 "share", ""),
+            )
+            seeded += 1
+        except integrity:
+            pass
+
+    # --- Lead magnets (1 per edition) ---
+    magnets = [
+        ("The Ultimate Music Discovery Guide 2026", "music-discovery-guide-2026",
+         "50 underground artists you need to hear right now — curated by our editorial team across hip-hop, indie, electronic, and more.", "fan"),
+        ("The Independent Artist Toolkit", "independent-artist-toolkit",
+         "Free templates: EPK, release plan, social media calendar, and budget tracker. Everything you need to launch your next project.", "artist"),
+        ("Music Industry Report Q1 2026", "music-industry-report-q1-2026",
+         "Streaming trends, deal structures, catalog valuations, and market analysis. 25 pages of data that matters.", "industry"),
+    ]
+    for title, slug, desc, edition in magnets:
+        exists = conn.execute(
+            f"SELECT id FROM lead_magnets WHERE slug = {ph}", (slug,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO lead_magnets (title, slug, description, edition_slug) VALUES ({ph}, {ph}, {ph}, {ph})",
+                    (title, slug, desc, edition),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
+    # --- Subscriber tiers ---
+    tiers = [
+        ("free", "Free", 0, "monthly", json.dumps(["All newsletter content", "Community forum access"]), 0),
+        ("pro", "Pro", 999, "monthly", json.dumps(["Ad-free experience", "Early access to every issue", "Exclusive content", "Trivia leaderboard perks"]), 1),
+        ("premium", "Premium", 2499, "monthly", json.dumps(["Everything in Pro", "Monthly live Q&A", "Direct editor access", "Sponsor-free experience"]), 2),
+    ]
+    for slug, name, price, interval, features, sort in tiers:
+        exists = conn.execute(
+            f"SELECT id FROM subscriber_tiers WHERE slug = {ph}", (slug,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO subscriber_tiers (slug, name, price_cents, billing_interval, features_json, sort_order) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph})",
+                    (slug, name, price, interval, features, sort),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
+    # --- Forum categories (3 per edition) ---
+    categories = [
+        ("general-discussion", "General Discussion", "Talk about anything music-related", "fan", 1),
+        ("album-reviews", "Album Reviews", "Share your takes on new and classic albums", "fan", 2),
+        ("concert-stories", "Concert Stories", "Your best live music experiences", "fan", 3),
+        ("feedback-collabs", "Feedback & Collabs", "Share your work and find collaborators", "artist", 4),
+        ("gear-talk", "Gear Talk", "Discuss instruments, plugins, and studio equipment", "artist", 5),
+        ("career-advice", "Career Advice", "Ask questions and share what's working", "artist", 6),
+        ("market-discussion", "Market Discussion", "Discuss industry trends and market moves", "industry", 7),
+        ("deal-talk", "Deal Talk", "Analyze deals, acquisitions, and partnerships", "industry", 8),
+        ("tech-innovation", "Tech & Innovation", "Music tech, AI, and emerging platforms", "industry", 9),
+    ]
+    for slug, name, desc, edition, sort in categories:
+        exists = conn.execute(
+            f"SELECT id FROM forum_categories WHERE slug = {ph}", (slug,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO forum_categories (slug, name, description, edition_slug, sort_order) VALUES ({ph}, {ph}, {ph}, {ph}, {ph})",
+                    (slug, name, desc, edition, sort),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
+    conn.commit()
+    conn.close()
+    if seeded:
+        import logging
+        logging.getLogger(__name__).info("Seeded %d content records", seeded)
+    return seeded
 
 
 def seed_guest_contacts(db_path: str = "", database_url: str = "", backend: str = "") -> int:

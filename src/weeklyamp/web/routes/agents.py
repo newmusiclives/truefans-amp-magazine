@@ -36,9 +36,9 @@ def _enrich_staff(staff: list[dict]) -> dict:
     """Organize staff into structured groups by role and edition."""
     leadership = []  # editor_in_chief + growth
     edition_teams = {
-        "fan": {"editor": None, "researcher": None, "writer": None, "sales": None},
-        "artist": {"editor": None, "researcher": None, "writer": None, "sales": None},
-        "industry": {"editor": None, "researcher": None, "writer": None, "sales": None},
+        "fan": {"editor": None, "researcher": None, "writer": None, "sales": None, "promotion": None},
+        "artist": {"editor": None, "researcher": None, "writer": None, "sales": None, "promotion": None},
+        "industry": {"editor": None, "researcher": None, "writer": None, "sales": None, "promotion": None},
     }
     cross_newsletter = []  # PS and other cross-edition staff
 
@@ -59,7 +59,9 @@ def _enrich_staff(staff: list[dict]) -> dict:
             leadership.append(enriched)
         elif atype == "growth":
             leadership.append(enriched)
-        elif atype in ("editor", "researcher", "writer", "sales") and enriched["edition"] in edition_teams:
+        elif atype == "sales" and len(enriched.get("editions", [])) > 1:
+            leadership.append(enriched)
+        elif atype in ("editor", "researcher", "writer", "sales", "promotion") and enriched["edition"] in edition_teams:
             edition_teams[enriched["edition"]][atype] = enriched
         elif enriched.get("editions"):
             cross_newsletter.append(enriched)
@@ -69,7 +71,7 @@ def _enrich_staff(staff: list[dict]) -> dict:
     editions = []
     for slug in ("fan", "artist", "industry"):
         team = edition_teams[slug]
-        members = [m for m in [team["editor"], team["researcher"], team["writer"], team["sales"]] if m]
+        members = [m for m in [team["editor"], team["researcher"], team["writer"], team["sales"], team["promotion"]] if m]
         editions.append({
             "slug": slug,
             "label": EDITION_LABELS[slug],

@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS sponsor_bookings (
 -- AI agents
 CREATE TABLE IF NOT EXISTS ai_agents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    agent_type TEXT NOT NULL CHECK (agent_type IN ('editor_in_chief','editor','writer','researcher','sales','growth')),
+    agent_type TEXT NOT NULL CHECK (agent_type IN ('editor_in_chief','editor','writer','researcher','sales','promotion','growth')),
     name TEXT NOT NULL,
     persona TEXT DEFAULT '',
     system_prompt TEXT DEFAULT '',
@@ -993,3 +993,140 @@ CREATE TABLE IF NOT EXISTS newsletter_milestones (
 );
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (23);
+
+-- Rate limiting (persists across restarts)
+CREATE TABLE IF NOT EXISTS rate_limits (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip_address TEXT NOT NULL,
+    limit_type TEXT NOT NULL DEFAULT 'login',
+    attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_rate_limits_ip_type ON rate_limits(ip_address, limit_type);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (24);
+
+-- Sponsor block performance tracking events
+CREATE TABLE IF NOT EXISTS sponsor_block_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_id INTEGER NOT NULL,
+    event_type TEXT NOT NULL CHECK (event_type IN ('impression','click')),
+    subscriber_id INTEGER,
+    ip_address TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sponsor_events_block ON sponsor_block_events(block_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (25);
+
+-- ======================================================================
+-- v26: Paid subscriber tiers, audio newsletter, community forum,
+--      advertiser self-serve portal
+-- ======================================================================
+
+-- Paid subscriber tiers
+CREATE TABLE IF NOT EXISTS subscriber_tiers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    price_cents INTEGER DEFAULT 0,
+    billing_interval TEXT DEFAULT 'monthly' CHECK (billing_interval IN ('monthly','yearly')),
+    features_json TEXT DEFAULT '[]',
+    is_active INTEGER DEFAULT 1,
+    sort_order INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS subscriber_billing (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    tier_id INTEGER NOT NULL REFERENCES subscriber_tiers(id),
+    stripe_customer_id TEXT DEFAULT '',
+    stripe_subscription_id TEXT DEFAULT '',
+    status TEXT DEFAULT 'active' CHECK (status IN ('active','cancelled','past_due')),
+    current_period_end TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_billing_subscriber ON subscriber_billing(subscriber_id);
+CREATE INDEX IF NOT EXISTS idx_billing_stripe ON subscriber_billing(stripe_subscription_id);
+
+-- Audio newsletter
+CREATE TABLE IF NOT EXISTS audio_issues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue_id INTEGER NOT NULL REFERENCES issues(id),
+    edition_slug TEXT DEFAULT '',
+    audio_url TEXT DEFAULT '',
+    duration_seconds INTEGER DEFAULT 0,
+    file_size_bytes INTEGER DEFAULT 0,
+    tts_provider TEXT DEFAULT 'openai',
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending','processing','complete','failed')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audio_issue ON audio_issues(issue_id);
+
+-- Community forum
+CREATE TABLE IF NOT EXISTS forum_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    description TEXT DEFAULT '',
+    edition_slug TEXT DEFAULT '',
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS forum_threads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_id INTEGER NOT NULL REFERENCES forum_categories(id),
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    title TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    is_pinned INTEGER DEFAULT 0,
+    is_locked INTEGER DEFAULT 0,
+    reply_count INTEGER DEFAULT 0,
+    last_reply_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_forum_threads_cat ON forum_threads(category_id);
+
+CREATE TABLE IF NOT EXISTS forum_replies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    thread_id INTEGER NOT NULL REFERENCES forum_threads(id),
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    content TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_forum_replies_thread ON forum_replies(thread_id);
+
+-- Advertiser self-serve portal
+CREATE TABLE IF NOT EXISTS advertiser_accounts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sponsor_id INTEGER REFERENCES sponsors(id),
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS advertiser_campaigns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    advertiser_id INTEGER NOT NULL REFERENCES advertiser_accounts(id),
+    name TEXT NOT NULL,
+    edition_slug TEXT DEFAULT '',
+    position TEXT DEFAULT 'mid',
+    headline TEXT DEFAULT '',
+    body_html TEXT DEFAULT '',
+    cta_url TEXT DEFAULT '',
+    cta_text TEXT DEFAULT 'Learn More',
+    image_url TEXT DEFAULT '',
+    budget_cents INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','submitted','approved','live','completed')),
+    start_date TEXT DEFAULT '',
+    end_date TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_adv_campaigns_adv ON advertiser_campaigns(advertiser_id);
+CREATE INDEX IF NOT EXISTS idx_adv_campaigns_status ON advertiser_campaigns(status);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (26);

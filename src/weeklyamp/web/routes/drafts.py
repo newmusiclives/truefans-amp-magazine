@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
 from weeklyamp.content.generator import generate_draft
@@ -134,3 +134,21 @@ async def save_draft(section_slug: str, content: str = Form(...)):
     if draft:
         repo.update_draft_content(draft["id"], content)
     return render("partials/alert.html", message="Draft saved!", level="success")
+
+
+@router.post("/auto-generate", response_class=HTMLResponse)
+async def auto_generate_draft(request: Request, issue_id: int = Form(...), section_slug: str = Form(...)):
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.content.auto_draft import auto_draft_from_research
+    draft_id = auto_draft_from_research(repo, config, issue_id, section_slug)
+    if draft_id:
+        return HTMLResponse(
+            f'<div class="alert alert-success">Draft generated successfully (ID: {draft_id}). '
+            f'<a href="/drafts/">View drafts</a></div>'
+        )
+    else:
+        return HTMLResponse(
+            '<div class="alert alert-warning">No research content available for '
+            'auto-generation. Try fetching sources first.</div>'
+        )

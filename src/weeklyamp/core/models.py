@@ -89,6 +89,7 @@ class AgentType(str, Enum):
     WRITER = "writer"
     RESEARCHER = "researcher"
     SALES = "sales"
+    PROMOTION = "promotion"
     GROWTH = "growth"
 
 
@@ -845,6 +846,26 @@ class ReaderContentConfig(BaseModel):
     max_per_issue: int = 2
 
 
+class PaidTiersConfig(BaseModel):
+    enabled: bool = False
+    stripe_publishable_key: str = ""
+    stripe_secret_key: str = ""
+    webhook_secret: str = ""
+
+
+class AudioConfig(BaseModel):
+    enabled: bool = False
+    tts_provider: str = "openai"
+    voice_id: str = ""
+    output_format: str = "mp3"
+
+
+class CommunityConfig(BaseModel):
+    enabled: bool = False
+    require_verified_email: bool = True
+    moderation_enabled: bool = True
+
+
 class RateLimitConfig(BaseModel):
     login_max: int = 5
     login_window: int = 900
@@ -882,6 +903,9 @@ class AppConfig(BaseModel):
     sponsor_portal: SponsorPortalConfig = Field(default_factory=SponsorPortalConfig)
     contests: ContestsConfig = Field(default_factory=ContestsConfig)
     reader_content: ReaderContentConfig = Field(default_factory=ReaderContentConfig)
+    paid_tiers: PaidTiersConfig = Field(default_factory=PaidTiersConfig)
+    audio: AudioConfig = Field(default_factory=AudioConfig)
+    community: CommunityConfig = Field(default_factory=CommunityConfig)
     rate_limits: RateLimitConfig = Field(default_factory=RateLimitConfig)
     db_path: str = "data/weeklyamp.db"
     db_backend: str = "sqlite"  # "sqlite" or "postgres"

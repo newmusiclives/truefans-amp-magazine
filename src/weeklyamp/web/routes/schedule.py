@@ -450,3 +450,47 @@ async def move_section_to_day(edition_slug: str, from_day: str, slug: str, to_da
     layout = _build_day_layout(repo, edition_slug)
     return render("partials/edition_layout_body.html", layout=layout,
         message=f"Moved to {to_day.title()}", level="success")
+
+
+# ── Scheduled Sends ──
+
+@router.get("/scheduled-sends", response_class=HTMLResponse)
+async def scheduled_sends_page(request: Request):
+    repo = get_repo()
+    config = get_config()
+    # Get scheduled sends
+    conn = repo._conn()
+    sends = conn.execute(
+        "SELECT ss.*, i.issue_number, i.edition_slug FROM scheduled_sends ss LEFT JOIN issues i ON i.id = ss.issue_id ORDER BY ss.scheduled_at DESC LIMIT 50"
+    ).fetchall()
+    conn.close()
+    sends = [dict(s) for s in sends]
+    issues = repo.get_upcoming_issues(limit=20)
+    editions = repo.get_editions()
+    return HTMLResponse(render("scheduled_sends.html", sends=sends, issues=issues, editions=editions, config=config))
+
+
+@router.post("/scheduled-sends", response_class=HTMLResponse)
+async def create_scheduled_send(
+    request: Request,
+    issue_id: int = Form(...),
+    edition_slug: str = Form(""),
+    subject: str = Form(...),
+    scheduled_at: str = Form(...),
+):
+    config = get_config()
+    repo = get_repo()
+    from weeklyamp.delivery.scheduler import SendScheduler
+    scheduler = SendScheduler(repo, config.scheduler, config.email)
+    scheduler.schedule_send(issue_id, edition_slug, subject, scheduled_at)
+    return HTMLResponse('<div class="alert alert-success">Scheduled send created successfully.</div>')
+
+
+@router.post("/scheduled-sends/{send_id}/cancel", response_class=HTMLResponse)
+async def cancel_scheduled_send(send_id: int, request: Request):
+    config = get_config()
+    repo = get_repo()
+    from weeklyamp.delivery.scheduler import SendScheduler
+    scheduler = SendScheduler(repo, config.scheduler, config.email)
+    scheduler.cancel_send(send_id)
+    return HTMLResponse('<div class="alert alert-success">Send cancelled.</div>')

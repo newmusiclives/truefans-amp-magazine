@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse
 
 from weeklyamp.content.assembly import assemble_newsletter
@@ -157,3 +157,14 @@ async def test_send():
         return render("partials/alert.html",
             message=f"Test email sent to {cfg.email.from_address}", level="success")
     return render("partials/alert.html", message="Test send failed — check SMTP settings", level="error")
+
+
+@router.post("/generate-audio", response_class=HTMLResponse)
+async def generate_audio(request: Request, issue_id: int = Form(...)):
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.content.audio import generate_audio_newsletter
+    audio_id = generate_audio_newsletter(repo, config, issue_id)
+    if audio_id:
+        return HTMLResponse(f'<div class="alert alert-success">Audio generated successfully! <a href="/audio/{issue_id}">Listen</a></div>')
+    return HTMLResponse('<div class="alert alert-warning">Audio generation failed. Check that audio is enabled and the issue is assembled.</div>')

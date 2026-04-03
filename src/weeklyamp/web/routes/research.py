@@ -66,3 +66,17 @@ async def add_topic(
     editorial = repo.get_editorial_inputs(issue_id)
     sections = repo.get_active_sections()
     return render("partials/editorial_list.html", editorial=editorial, sections=sections)
+
+
+@router.post("/generate-brief", response_class=HTMLResponse)
+async def generate_brief(request: Request, issue_id: int = Form(0), section_slug: str = Form(...)):
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.content.discovery import generate_research_brief
+    brief = generate_research_brief(repo, config, issue_id, section_slug)
+    return HTMLResponse(
+        f'<div class="card" style="margin-top:1rem">'
+        f'<h4>Research Brief: {section_slug}</h4>'
+        f'<div style="white-space:pre-wrap;font-size:14px;line-height:1.7">{brief}</div>'
+        f'</div>'
+    )

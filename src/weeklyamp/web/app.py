@@ -17,7 +17,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.gzip import GZipMiddleware
 
 from weeklyamp.core.config import load_config
-from weeklyamp.core.database import init_database, seed_agents, seed_editions, seed_guest_contacts, seed_sections
+from weeklyamp.core.database import init_database, seed_agents, seed_content, seed_editions, seed_guest_contacts, seed_sections
 from weeklyamp.research.sources import sync_sources_from_config
 from weeklyamp.web.security import (
     AuthMiddleware,
@@ -112,6 +112,7 @@ def create_app() -> FastAPI:
             seed_editions(db_path, database_url, backend)
             seed_guest_contacts(db_path, database_url, backend)
             seed_agents(db_path, database_url, backend)
+            seed_content(db_path, database_url, backend)
             # Sync any new sources from sources.yaml into DB
             from weeklyamp.db.repository import Repository
             repo = Repository(db_path, database_url, backend)
@@ -124,9 +125,14 @@ def create_app() -> FastAPI:
             if _is_production():
                 sys.exit(1)
 
+        # Start background workers (disabled by default)
+        from weeklyamp.workers.scheduler import start_scheduler, stop_scheduler
+        _bg_scheduler = start_scheduler()
+
         yield
 
-        # Shutdown — close connections cleanly
+        # Shutdown — stop scheduler and close connections cleanly
+        stop_scheduler()
         logger.info("Shutting down — closing database connections")
 
     app = FastAPI(title="TrueFans NEWSLETTERS", docs_url=None, redoc_url=None, lifespan=lifespan)
@@ -342,6 +348,11 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import contests as contests_routes
     from weeklyamp.web.routes import reader_content as reader_content_routes
     from weeklyamp.web.routes import embed as embed_routes
+    from weeklyamp.web.routes import welcome as welcome_routes
+    from weeklyamp.web.routes import reengagement as reengagement_routes
+    from weeklyamp.web.routes import billing as billing_routes
+    from weeklyamp.web.routes import advertiser_portal as advertiser_portal_routes
+    from weeklyamp.web.routes import community as community_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -381,6 +392,14 @@ def create_app() -> FastAPI:
     app.include_router(contests_routes.router)
     app.include_router(reader_content_routes.router)
     app.include_router(embed_routes.router)
+    app.include_router(welcome_routes.router, prefix="/admin/welcome-sequence")
+    app.include_router(reengagement_routes.router, prefix="/admin/reengagement")
+    # v26+ paid tiers & billing
+    app.include_router(billing_routes.router)
+    # v26+ advertiser self-serve portal
+    app.include_router(advertiser_portal_routes.router)
+    # v26+ community forum
+    app.include_router(community_routes.router)
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

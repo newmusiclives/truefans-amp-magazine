@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Welcome Sequence — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_welcome_sequence %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Welcome Sequence</h2>
+    <p class="subtitle">Automated emails sent to new subscribers after sign-up</p>
+</div>
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Create Step</h3>
+    <form hx-post="/admin/welcome-sequence/create" hx-target="#welcome-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div>
+            <label>Edition</label>
+            <select name="edition_slug">
+                <option value="">All editions</option>
+                {% for ed in editions %}
+                <option value="{{ ed.slug }}">{{ ed.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Step #</label>
+            <input type="number" name="step_number" required min="1" value="1" style="width:80px">
+        </div>
+        <div>
+            <label>Delay (hours)</label>
+            <input type="number" name="delay_hours" required min="0" value="0" style="width:100px">
+        </div>
+        <div>
+            <label>Subject</label>
+            <input type="text" name="subject" required placeholder="Welcome to the newsletter!" style="width:280px">
+        </div>
+        <div style="width:100%">
+            <label>Content (HTML)</label>
+            <textarea name="html_content" rows="4" style="width:100%" placeholder="Email body HTML..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Create Step</button>
+    </form>
+    <div id="welcome-result" style="margin-top:0.75rem"></div>
+</div>
+
+<div class="card">
+    <h3>Welcome Steps</h3>
+    {% if steps %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Step #</th>
+                <th>Edition</th>
+                <th>Delay (hours)</th>
+                <th>Subject</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for step in steps %}
+            <tr>
+                <td>{{ step.step_number }}</td>
+                <td>{{ step.edition_slug or 'All' }}</td>
+                <td>{{ step.delay_hours }}</td>
+                <td>{{ step.subject }}</td>
+                <td>
+                    <button hx-post="/admin/welcome-sequence/{{ step.id }}/delete" hx-target="closest tr" hx-swap="outerHTML" hx-confirm="Remove this step?" class="btn btn-sm btn-danger">Delete</button>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No welcome steps configured yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

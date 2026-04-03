@@ -11,9 +11,8 @@ from weeklyamp.web.security import (
     _get_login_rate_config,
     _is_public,
     _is_rate_limited,
-    _login_attempts,
-    _login_lock,
     _record_attempt,
+    _rate_limit_conn,
     create_session,
     hash_password,
     is_authenticated,
@@ -54,9 +53,14 @@ def test_verify_password_empty_password():
 # ---- Rate limiting ----
 
 def _clear_rate_state():
-    """Helper to reset global rate-limiting state between tests."""
-    with _login_lock:
-        _login_attempts.clear()
+    """Helper to reset rate-limiting state between tests."""
+    try:
+        conn = _rate_limit_conn()
+        conn.execute("DELETE FROM rate_limits")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
 
 def test_rate_limiting_allows_under_limit():

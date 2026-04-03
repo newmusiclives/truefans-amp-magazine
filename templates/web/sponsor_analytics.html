@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Sponsor Performance — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_sponsors %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sponsor Performance</h2>
+    <p class="subtitle">Impression and click tracking across all sponsor ad blocks</p>
+</div>
+
+<div class="card">
+    {% if performance %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Sponsor Name</th>
+                <th>Position</th>
+                <th>Issue #</th>
+                <th>Edition</th>
+                <th>Impressions</th>
+                <th>Clicks</th>
+                <th>CTR%</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for row in performance %}
+            <tr>
+                <td>{{ row.sponsor_name or '—' }}</td>
+                <td><span class="badge">{{ row.position or '—' }}</span></td>
+                <td>{{ row.issue_number or '—' }}</td>
+                <td>{{ row.edition_slug or '—' }}</td>
+                <td>{{ row.impressions }}</td>
+                <td>{{ row.clicks }}</td>
+                <td>
+                    {% if row.ctr >= 5 %}
+                        <span class="badge badge-success">{{ row.ctr }}%</span>
+                    {% elif row.ctr >= 2 %}
+                        <span class="badge badge-warning">{{ row.ctr }}%</span>
+                    {% elif row.ctr > 0 %}
+                        <span class="badge badge-muted">{{ row.ctr }}%</span>
+                    {% else %}
+                        <span class="badge">0%</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No sponsor performance data yet. Events will appear here once impressions and clicks are recorded.</p>
+    {% endif %}
+</div>
+{% endblock %}

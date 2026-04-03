@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Scheduled Sends — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_schedule %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Scheduled Sends</h2>
+    <p class="subtitle">Queue and manage timed newsletter deliveries</p>
+</div>
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Schedule a Send</h3>
+    <form hx-post="/schedule/scheduled-sends" hx-target="#send-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div>
+            <label>Issue</label>
+            <select name="issue_id" required>
+                <option value="">— Select issue —</option>
+                {% for issue in issues %}
+                <option value="{{ issue.id }}">#{{ issue.issue_number }} — {{ issue.title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Edition</label>
+            <select name="edition_slug">
+                <option value="">All editions</option>
+                {% for ed in editions %}
+                <option value="{{ ed.slug }}">{{ ed.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Subject</label>
+            <input type="text" name="subject" required placeholder="Newsletter subject line" style="width:260px">
+        </div>
+        <div>
+            <label>Scheduled At</label>
+            <input type="datetime-local" name="scheduled_at" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Schedule Send</button>
+    </form>
+    <div id="send-result" style="margin-top:0.75rem"></div>
+</div>
+
+<div class="card">
+    <h3>Existing Scheduled Sends</h3>
+    {% if sends %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Issue #</th>
+                <th>Edition</th>
+                <th>Subject</th>
+                <th>Scheduled At</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for send in sends %}
+            <tr>
+                <td>{{ send.issue_number or '—' }}</td>
+                <td>{{ send.edition_slug or 'All' }}</td>
+                <td>{{ send.subject }}</td>
+                <td>{{ send.scheduled_at }}</td>
+                <td>
+                    {% if send.status == 'pending' %}
+                    <span class="badge" style="background:#f59e0b;color:#fff">Pending</span>
+                    {% elif send.status == 'processing' %}
+                    <span class="badge" style="background:#3b82f6;color:#fff">Processing</span>
+                    {% elif send.status == 'sent' %}
+                    <span class="badge badge-success">Sent</span>
+                    {% elif send.status == 'cancelled' %}
+                    <span class="badge badge-muted">Cancelled</span>
+                    {% elif send.status == 'failed' %}
+                    <span class="badge" style="background:#ef4444;color:#fff">Failed</span>
+                    {% else %}
+                    <span class="badge">{{ send.status }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if send.status == 'pending' %}
+                    <button hx-post="/schedule/scheduled-sends/{{ send.id }}/cancel" hx-target="closest tr" hx-swap="outerHTML" class="btn btn-sm">Cancel</button>
+                    {% else %}
+                    —
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No scheduled sends yet.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

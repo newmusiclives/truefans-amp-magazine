@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from jinja2 import Environment, FileSystemLoader
@@ -101,3 +101,44 @@ async def newsletters_page():
 
     tpl = _env.get_template("newsletters.html")
     return tpl.render(editions=editions_with_sections)
+
+
+@router.get("/audio/{issue_id}")
+async def serve_audio(issue_id: int):
+    from weeklyamp.content.audio import get_audio_file_path
+    from fastapi.responses import FileResponse
+    path = get_audio_file_path(issue_id)
+    if not path:
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse("Audio not available", status_code=404)
+    return FileResponse(str(path), media_type="audio/mpeg", filename=f"truefans_issue_{issue_id}.mp3")
+
+
+@router.get("/feed/podcast.xml", response_class=HTMLResponse)
+async def podcast_feed(request: Request):
+    repo = _get_repo()
+    cfg = load_config()
+    audio_issues = repo.get_audio_issues(limit=50)
+    # Build simple RSS podcast feed
+    items = ""
+    for ai in audio_issues:
+        if ai.get("status") == "complete" and ai.get("audio_url"):
+            issue_num = ai.get("issue_number", "")
+            items += f"""<item>
+  <title>TrueFans NEWSLETTERS — Issue #{issue_num}</title>
+  <enclosure url="{cfg.site_domain}{ai['audio_url']}" type="audio/mpeg" length="{ai.get('file_size_bytes', 0)}"/>
+  <pubDate>{ai.get('created_at', '')}</pubDate>
+</item>\n"""
+
+    feed = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+<channel>
+  <title>TrueFans NEWSLETTERS Audio</title>
+  <description>Audio versions of TrueFans NEWSLETTERS</description>
+  <link>{cfg.site_domain}</link>
+  <language>en-us</language>
+  {items}
+</channel>
+</rss>"""
+    from fastapi.responses import Response
+    return Response(content=feed, media_type="application/rss+xml")

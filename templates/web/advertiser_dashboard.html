@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Advertiser Dashboard — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Advertiser Dashboard</h2>
+    {% if account and account.get("sponsor_name") %}
+    <p class="text-dim">Welcome back, {{ account.sponsor_name }}!</p>
+    {% endif %}
+</div>
+
+{% if show_rates %}
+<div class="card" style="margin-bottom: 32px;">
+    <div class="card-header"><h3>Rate Card</h3></div>
+    <div class="card-body">
+        {% if config and config.sponsor_portal %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Base CPM</td>
+                    <td>${{ config.sponsor_portal.base_cpm }}</td>
+                </tr>
+                <tr>
+                    <td>Top Position Multiplier</td>
+                    <td>{{ config.sponsor_portal.position_multipliers.get("top", 1.5) }}x</td>
+                </tr>
+                <tr>
+                    <td>Mid Position Multiplier</td>
+                    <td>{{ config.sponsor_portal.position_multipliers.get("mid", 1.0) }}x</td>
+                </tr>
+                <tr>
+                    <td>Bottom Position Multiplier</td>
+                    <td>{{ config.sponsor_portal.position_multipliers.get("bottom", 0.75) }}x</td>
+                </tr>
+                <tr>
+                    <td>Weekly Discount</td>
+                    <td>{{ (config.sponsor_portal.discounts.get("weekly", 0.1) * 100)|int }}%</td>
+                </tr>
+                <tr>
+                    <td>Monthly Discount</td>
+                    <td>{{ (config.sponsor_portal.discounts.get("monthly", 0.2) * 100)|int }}%</td>
+                </tr>
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-dim">Rate card information is not currently available. Please contact us at <a href="mailto:sponsors@truefansnewsletters.com">sponsors@truefansnewsletters.com</a>.</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Create Campaign -->
+<div class="card" style="margin-bottom: 32px;">
+    <div class="card-header"><h3>Create Campaign</h3></div>
+    <div class="card-body">
+        <form method="POST" action="/advertiser/campaign/create">
+            {% if account and account.get("id") %}
+            <input type="hidden" name="advertiser_id" value="{{ account.id }}">
+            {% else %}
+            <div class="form-group">
+                <label for="advertiser_id">Advertiser ID</label>
+                <input type="number" id="advertiser_id" name="advertiser_id" class="form-control" required>
+            </div>
+            {% endif %}
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label for="name">Campaign Name</label>
+                <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Spring 2026 Promo">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                <div class="form-group">
+                    <label for="edition_slug">Edition</label>
+                    <select id="edition_slug" name="edition_slug" class="form-control">
+                        <option value="">All editions</option>
+                        <option value="fan">Fan Edition</option>
+                        <option value="artist">Artist Edition</option>
+                        <option value="industry">Industry Edition</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="position">Position</label>
+                    <select id="position" name="position" class="form-control">
+                        <option value="top">Top (Premium)</option>
+                        <option value="mid" selected>Mid</option>
+                        <option value="bottom">Bottom</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label for="headline">Headline</label>
+                <input type="text" id="headline" name="headline" class="form-control" placeholder="Your ad headline">
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label for="body_html">Body (HTML)</label>
+                <textarea id="body_html" name="body_html" class="form-control" rows="4" placeholder="Ad copy — HTML supported"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 12px;">
+                <div class="form-group">
+                    <label for="cta_url">CTA URL</label>
+                    <input type="url" id="cta_url" name="cta_url" class="form-control" placeholder="https://yoursite.com">
+                </div>
+                <div class="form-group">
+                    <label for="cta_text">CTA Text</label>
+                    <input type="text" id="cta_text" name="cta_text" class="form-control" value="Learn More">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 12px;">
+                <label for="budget_cents">Budget (cents)</label>
+                <input type="number" id="budget_cents" name="budget_cents" class="form-control" value="0" min="0" placeholder="e.g. 50000 = $500">
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">Create Campaign</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Campaigns Table -->
+<div class="card">
+    <div class="card-header"><h3>Your Campaigns</h3></div>
+    <div class="card-body">
+        {% if campaigns %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Edition</th>
+                    <th>Position</th>
+                    <th>Budget</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in campaigns %}
+                <tr>
+                    <td><a href="/advertiser/campaign/{{ c.id }}">{{ c.name }}</a></td>
+                    <td>{{ c.edition_slug or "All" }}</td>
+                    <td>{{ c.position }}</td>
+                    <td>${{ "%.2f"|format(c.budget_cents / 100) }}</td>
+                    <td>
+                        {% if c.status == "draft" %}
+                        <span class="badge" style="background: #6b7280; color: #fff;">Draft</span>
+                        {% elif c.status == "submitted" %}
+                        <span class="badge" style="background: #f59e0b; color: #000;">Submitted</span>
+                        {% elif c.status == "approved" %}
+                        <span class="badge" style="background: #3b82f6; color: #fff;">Approved</span>
+                        {% elif c.status == "live" %}
+                        <span class="badge" style="background: #10b981; color: #fff;">Live</span>
+                        {% elif c.status == "completed" %}
+                        <span class="badge" style="background: #9ca3af; color: #fff;">Completed</span>
+                        {% else %}
+                        <span class="badge">{{ c.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if c.status == "draft" %}
+                        <form method="POST" action="/advertiser/campaign/{{ c.id }}/submit" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Submit for Review</button>
+                        </form>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-dim">No campaigns yet. Create one above to get started.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

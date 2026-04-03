@@ -203,9 +203,10 @@ class SendScheduler:
                 plain_text = assembled.get("plain_text", "")
 
                 # Get subscribers for this edition
-                # TODO: add edition-filtered subscriber query to Repository
-                # For now, get all active subscribers
-                recipients = self.repo.get_subscribers("active")
+                if edition_slug:
+                    recipients = self.repo.get_subscribers_for_edition(edition_slug)
+                else:
+                    recipients = self.repo.get_subscribers("active")
 
                 if not recipients:
                     logger.warning(

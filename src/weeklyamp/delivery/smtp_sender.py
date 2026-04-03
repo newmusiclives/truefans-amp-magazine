@@ -17,11 +17,27 @@ _BATCH_SIZE = 50
 _BATCH_DELAY = 1.0  # seconds between batches
 
 
+def _retry_with_backoff(fn, max_attempts=3, backoff_delays=(1, 2, 4)):
+    """Call fn(), retrying on SMTPException/ConnectionError with backoff."""
+    last_exc = None
+    for attempt in range(max_attempts):
+        try:
+            return fn()
+        except (smtplib.SMTPException, ConnectionError, OSError) as exc:
+            last_exc = exc
+            if attempt < max_attempts - 1:
+                delay = backoff_delays[min(attempt, len(backoff_delays) - 1)]
+                logger.warning("SMTP attempt %d/%d failed (%s), retrying in %ds", attempt + 1, max_attempts, exc, delay)
+                time.sleep(delay)
+    raise last_exc
+
+
 class SMTPSender:
     """Send newsletters via SMTP (GoHighLevel / Mailgun)."""
 
-    def __init__(self, config: EmailConfig) -> None:
+    def __init__(self, config: EmailConfig, warmup_config=None) -> None:
         self.config = config
+        self._warmup_config = warmup_config
 
     def _build_message(
         self,
@@ -66,15 +82,18 @@ class SMTPSender:
 
         msg = self._build_message(to_email, subject, html_body, plain_text, unsubscribe_url)
 
-        try:
+        def _do_send():
             with smtplib.SMTP(self.config.smtp_host, self.config.smtp_port) as server:
                 server.starttls()
                 server.login(self.config.smtp_user, self.config.smtp_password)
                 server.send_message(msg)
+
+        try:
+            _retry_with_backoff(_do_send)
             logger.info("Email sent to %s", to_email)
             return True
         except Exception:
-            logger.exception("Failed to send email to %s", to_email)
+            logger.exception("Failed to send email to %s after retries", to_email)
             return False
 
     def send_bulk(
@@ -100,6 +119,15 @@ class SMTPSender:
             logger.warning("Email sending is disabled")
             return {"sent": 0, "failed": 0, "errors": ["Email sending is disabled"]}
 
+        # Domain warm-up: respect daily limit if enabled
+        if self._warmup_config and getattr(self._warmup_config, 'warmup_enabled', False):
+            from weeklyamp.delivery.warmup import WarmupManager
+            warmup = WarmupManager(None, self._warmup_config)  # repo not needed for limit calc
+            daily_limit = self._warmup_config.warmup_daily_start
+            if daily_limit and len(recipients) > daily_limit:
+                logger.info("Warm-up active: limiting recipients from %d to %d", len(recipients), daily_limit)
+                recipients = recipients[:daily_limit]
+
         sent = 0
         failed = 0
         errors: list[str] = []
@@ -108,10 +136,14 @@ class SMTPSender:
             batch = recipients[batch_start:batch_start + _BATCH_SIZE]
 
             try:
-                with smtplib.SMTP(self.config.smtp_host, self.config.smtp_port) as server:
+                def _connect():
+                    server = smtplib.SMTP(self.config.smtp_host, self.config.smtp_port)
                     server.starttls()
                     server.login(self.config.smtp_user, self.config.smtp_password)
+                    return server
 
+                server = _retry_with_backoff(_connect)
+                try:
                     for recipient in batch:
                         email = recipient.get("email", "")
                         if not email:
@@ -143,6 +175,8 @@ class SMTPSender:
                             failed += 1
                             errors.append(f"{email}: {e}")
                             logger.warning("Failed to send to %s: %s", email, e)
+                finally:
+                    server.quit()
 
             except Exception as e:
                 # Connection-level failure — count remaining batch as failed

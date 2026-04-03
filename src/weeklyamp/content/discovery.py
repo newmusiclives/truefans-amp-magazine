@@ -89,3 +89,40 @@ def save_suggestions(repo: Repository, suggestions: list[dict]) -> int:
             conn.close()
 
     return saved
+
+
+def generate_research_brief(repo, config, issue_id: int, section_slug: str) -> str:
+    """Generate an AI-powered research brief from top raw content for a section."""
+    from weeklyamp.content.generator import generate_draft
+
+    # Get top content items for this section
+    content_items = repo.get_unused_content(section_slug=section_slug, limit=5)
+    if not content_items:
+        return "No research content available for this section."
+
+    # Build context from raw content
+    context_parts = []
+    for item in content_items:
+        title = item.get("title", "Untitled")
+        url = item.get("url", "")
+        summary = item.get("summary", "")
+        author = item.get("author", "")
+        context_parts.append(
+            f"- {title}"
+            + (f" by {author}" if author else "")
+            + (f"\n  {summary}" if summary else "")
+            + (f"\n  Source: {url}" if url else "")
+        )
+
+    context = "\n".join(context_parts)
+
+    prompt = (
+        f"Based on the following research sources, write a concise editorial brief "
+        f"for the newsletter section '{section_slug}'. Summarize the key themes, "
+        f"highlight the most interesting angles, and suggest a focus for this week's article.\n\n"
+        f"Sources:\n{context}\n\n"
+        f"Write a 200-300 word brief."
+    )
+
+    brief, _ = generate_draft(prompt, config, max_tokens_override=500)
+    return brief or "Brief generation failed — check AI provider configuration."

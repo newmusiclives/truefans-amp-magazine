@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Campaign: {{ campaign.name }} — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ campaign.name }}</h2>
+    <p class="text-dim">Campaign #{{ campaign.id }}</p>
+</div>
+
+<div class="card" style="margin-bottom: 24px;">
+    <div class="card-header">
+        <h3>Campaign Details</h3>
+        <span>
+            {% if campaign.status == "draft" %}
+            <span class="badge" style="background: #6b7280; color: #fff;">Draft</span>
+            {% elif campaign.status == "submitted" %}
+            <span class="badge" style="background: #f59e0b; color: #000;">Submitted</span>
+            {% elif campaign.status == "approved" %}
+            <span class="badge" style="background: #3b82f6; color: #fff;">Approved</span>
+            {% elif campaign.status == "live" %}
+            <span class="badge" style="background: #10b981; color: #fff;">Live</span>
+            {% elif campaign.status == "completed" %}
+            <span class="badge" style="background: #9ca3af; color: #fff;">Completed</span>
+            {% else %}
+            <span class="badge">{{ campaign.status }}</span>
+            {% endif %}
+        </span>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <tbody>
+                <tr>
+                    <td style="font-weight: 600; width: 180px;">Edition</td>
+                    <td>{{ campaign.edition_slug or "All editions" }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Position</td>
+                    <td>{{ campaign.position }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Headline</td>
+                    <td>{{ campaign.headline or "—" }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Body</td>
+                    <td>{{ campaign.body_html or "—" }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">CTA URL</td>
+                    <td>
+                        {% if campaign.cta_url %}
+                        <a href="{{ campaign.cta_url }}" target="_blank">{{ campaign.cta_url }}</a>
+                        {% else %}
+                        —
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">CTA Text</td>
+                    <td>{{ campaign.cta_text or "Learn More" }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Image URL</td>
+                    <td>{{ campaign.image_url or "—" }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Budget</td>
+                    <td>${{ "%.2f"|format(campaign.budget_cents / 100) }}</td>
+                </tr>
+                <tr>
+                    <td style="font-weight: 600;">Created</td>
+                    <td>{{ campaign.created_at or "—" }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if campaign.status == "draft" %}
+<form method="POST" action="/advertiser/campaign/{{ campaign.id }}/submit">
+    <button type="submit" class="btn btn-primary">Submit for Review</button>
+</form>
+{% endif %}
+
+<p style="margin-top: 24px;">
+    <a href="/advertiser/dashboard{% if campaign.advertiser_id %}?advertiser_id={{ campaign.advertiser_id }}{% endif %}">Back to Dashboard</a>
+</p>
+{% endblock %}

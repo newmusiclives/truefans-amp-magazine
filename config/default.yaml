@@ -63,20 +63,20 @@ analytics:
 
 # --- Email open/click tracking (INACTIVE — set to true to activate) ---
 tracking:
-  open_tracking: false
-  click_tracking: false
+  open_tracking: true
+  click_tracking: true
   tracking_domain: ""  # e.g. "trk.truefansnewsletters.com"
 
 # --- A/B testing for subject lines (INACTIVE) ---
 ab_testing:
-  enabled: false
+  enabled: true
   default_sample_percent: 20
   default_measurement_hours: 4
-  auto_send_winner: true
+  auto_send_winner: false
 
 # --- Deliverability: bounce handling + warm-up (INACTIVE) ---
 deliverability:
-  bounce_handling: false
+  bounce_handling: true
   hard_bounce_threshold: 1     # suppress after N hard bounces
   soft_bounce_threshold: 3     # suppress after N soft bounces
   auto_suppress: false
@@ -86,32 +86,32 @@ deliverability:
 
 # --- Scheduled publishing (INACTIVE) ---
 scheduler:
-  enabled: false
+  enabled: true
   check_interval_seconds: 60
   default_send_hour: 9
   default_timezone: "America/New_York"
 
 # --- Webhooks inbound/outbound (INACTIVE) ---
 webhooks:
-  enabled: false
+  enabled: true
   inbound_secret: ""
   max_retries: 3
   timeout_seconds: 10
 
 # --- Referral system (INACTIVE) ---
 referrals:
-  enabled: false
+  enabled: true
   reward_threshold: 3
   code_prefix: "TF"
 
 # --- Welcome drip sequence for new subscribers (INACTIVE) ---
 welcome_sequence:
-  enabled: false
+  enabled: true
   default_steps: 3
 
 # --- Re-engagement automation (INACTIVE) ---
 reengagement:
-  enabled: false
+  enabled: true
   inactive_days: 30
   suppress_after_days: 60
 
@@ -134,7 +134,7 @@ spotify:
 
 # --- Public artist profile pages at /artists/{slug} ---
 artist_profiles:
-  enabled: false
+  enabled: true
   allow_self_service: false  # let artists edit their own profiles
   require_approval: true
 
@@ -162,14 +162,14 @@ genre_preferences:
 
 # --- Section-level engagement scoring ---
 section_engagement:
-  enabled: false
+  enabled: true
   score_decay_days: 90
   min_events_for_profile: 5
   reorder_by_engagement: false
 
 # --- Music trivia & polls embedded in newsletters ---
 trivia_polls:
-  enabled: false
+  enabled: true
   max_options: 6
   show_results_in_next_issue: true
   leaderboard_size: 25
@@ -180,11 +180,11 @@ trivia_polls:
 
 # --- Lead magnets: gated downloads to drive signups ---
 lead_magnets:
-  enabled: false
+  enabled: true
 
 # --- Sponsor self-service portal + public advertise page ---
 sponsor_portal:
-  enabled: false
+  enabled: true
   public_rates_visible: false
   base_cpm: 30.0
   premium_position_multiplier: 1.5
@@ -193,14 +193,34 @@ sponsor_portal:
 
 # --- Contests & giveaways ---
 contests:
-  enabled: false
+  enabled: true
   max_active: 3
 
 # --- Reader-submitted content (hot takes, reviews) ---
 reader_content:
-  enabled: false
+  enabled: true
   auto_approve: false
   max_per_issue: 2
+
+# --- Paid subscriber tiers (INACTIVE — requires Stripe keys) ---
+paid_tiers:
+  enabled: false
+  stripe_publishable_key: ""
+  stripe_secret_key: ""
+  webhook_secret: ""
+
+# --- Audio newsletter via TTS (INACTIVE) ---
+audio:
+  enabled: false
+  tts_provider: "openai"
+  voice_id: ""
+  output_format: "mp3"
+
+# --- Community forum (INACTIVE) ---
+community:
+  enabled: false
+  require_verified_email: true
+  moderation_enabled: true
 
 rate_limits:
   login_max: 5

@@ -8,6 +8,31 @@
     <p>Discover content and add editorial topics for the next issue</p>
 </div>
 
+<!-- Generate Research Brief -->
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Generate Research Brief</span>
+    </div>
+    <form hx-post="/research/generate-brief" hx-target="#brief-result" hx-swap="innerHTML"
+          hx-indicator="#brief-spinner"
+          style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+        <input type="hidden" name="issue_id" value="{{ issue.id if issue else 0 }}">
+        <div class="form-group">
+            <label>Section</label>
+            <select name="section_slug">
+                {% for sec in sections %}
+                <option value="{{ sec.slug }}">{{ sec.display_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="margin-bottom:16px">
+            <span class="spinner htmx-indicator" id="brief-spinner"></span>
+            Generate Brief
+        </button>
+    </form>
+    <div id="brief-result"></div>
+</div>
+
 <!-- Scrape action -->
 <div class="card">
     <div class="card-header">

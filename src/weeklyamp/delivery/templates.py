@@ -31,11 +31,21 @@ def get_env() -> Environment:
     )
 
 
-def render_section(display_name: str, content_html: str, headline: str = "") -> str:
+def render_section(
+    display_name: str,
+    content_html: str,
+    headline: str = "",
+    byline: str = "",
+    sources: list[dict] | None = None,
+    segment_content: dict[str, str] | None = None,
+) -> str:
     """Render a single section block."""
     env = get_env()
     template = env.get_template("section.html.j2")
-    return template.render(display_name=display_name, content=content_html, headline=headline)
+    return template.render(
+        display_name=display_name, content=content_html,
+        headline=headline, byline=byline, sources=sources or [],
+    )
 
 
 def render_newsletter(

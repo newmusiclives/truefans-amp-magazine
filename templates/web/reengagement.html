@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Re-engagement — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_reengagement %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Re-engagement</h2>
+    <p class="subtitle">Win back inactive subscribers or suppress long-dormant ones</p>
+</div>
+
+<div style="display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap">
+    <div class="card" style="flex:1;min-width:200px;text-align:center">
+        <h3 style="margin:0;font-size:2rem">{{ stats.inactive_count | default(0) }}</h3>
+        <p class="text-muted" style="margin:0.25rem 0 0">Inactive Subscribers</p>
+    </div>
+    <div class="card" style="flex:1;min-width:200px;text-align:center">
+        <h3 style="margin:0;font-size:2rem">{{ stats.suppressed_count | default(0) }}</h3>
+        <p class="text-muted" style="margin:0.25rem 0 0">Suppressed</p>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:2rem">
+    <h3>Actions</h3>
+    <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+        <form hx-post="/admin/reengagement/create-campaign" hx-target="#reengage-result" hx-swap="innerHTML" style="display:inline">
+            <input type="hidden" name="campaign_type" value="winback">
+            <button type="submit" class="btn btn-primary">Create Win-back Campaign</button>
+        </form>
+        <form hx-post="/admin/reengagement/suppress" hx-target="#reengage-result" hx-swap="innerHTML" hx-confirm="Suppress all long-inactive subscribers?" style="display:inline">
+            <button type="submit" class="btn btn-danger">Suppress Long-Inactive</button>
+        </form>
+    </div>
+    <div id="reengage-result" style="margin-top:0.75rem"></div>
+</div>
+
+<div class="card">
+    <h3>Inactive Subscribers</h3>
+    {% if inactive %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Last Activity</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for sub in inactive %}
+            <tr>
+                <td>{{ sub.email }}</td>
+                <td>{{ sub.last_activity_at or '—' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No inactive subscribers found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

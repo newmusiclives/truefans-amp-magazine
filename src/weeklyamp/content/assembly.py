@@ -258,7 +258,34 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
                 artist_social=submission.get("artist_social", ""),
             )
         else:
-            section_html = render_section(display_name, content_html, headline=headline)
+            # Look up the writer or editor who produced this section
+            writer = repo.get_writer_for_section(slug)
+            if writer:
+                byline = f"Written by {writer['name']}, {writer['agent_type'].replace('_', ' ').title()}"
+            else:
+                byline = ""
+
+            # Gather source citations from editorial inputs and raw content
+            sources: list[dict] = []
+            editorial_inputs = repo.get_editorial_inputs(issue_id, section_slug=slug)
+            for ei in editorial_inputs:
+                for url in (ei.get("reference_urls") or "").split("\n"):
+                    url = url.strip()
+                    if url:
+                        sources.append({"title": url, "url": url, "author": ""})
+            used_content = repo.get_unused_content(section_slug=slug, limit=5)
+            for rc in used_content:
+                if rc.get("url"):
+                    sources.append({
+                        "title": rc.get("title") or rc["url"],
+                        "url": rc["url"],
+                        "author": rc.get("author", ""),
+                    })
+
+            section_html = render_section(
+                display_name, content_html, headline=headline,
+                byline=byline, sources=sources,
+            )
 
         sections_html.append({"html": section_html})
 
@@ -335,3 +362,35 @@ def assemble_newsletter(repo: Repository, issue_id: int, config: AppConfig) -> t
     plain_text = plain_intro + "\n\n".join(plain_parts) + plain_ps
 
     return html, plain_text
+
+
+def get_subscriber_segments(repo) -> dict:
+    """Group subscribers into segments by genre preference and engagement level.
+
+    Returns a dict mapping segment_name -> list of subscriber dicts.
+    Infrastructure for future per-segment content personalization.
+    """
+    conn = repo._conn()
+
+    # Get subscribers with genre preferences
+    rows = conn.execute(
+        """SELECT s.id, s.email, sg.genre, sg.priority,
+                  COALESCE(sip.engagement_score, 0) as engagement
+           FROM subscribers s
+           LEFT JOIN subscriber_genres sg ON sg.subscriber_id = s.id
+           LEFT JOIN subscriber_interest_profiles sip ON sip.subscriber_id = s.id
+           WHERE s.status = 'active'
+           ORDER BY s.id, sg.priority"""
+    ).fetchall()
+    conn.close()
+
+    segments: dict[str, list[dict]] = {}
+    for row in rows:
+        row_dict = dict(row)
+        genre = row_dict.get("genre", "general") or "general"
+        engagement = row_dict.get("engagement", 0) or 0
+        level = "high" if engagement >= 50 else "medium" if engagement >= 20 else "low"
+        segment_key = f"{level}-{genre}"
+        segments.setdefault(segment_key, []).append(row_dict)
+
+    return segments

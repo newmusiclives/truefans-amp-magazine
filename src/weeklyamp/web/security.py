@@ -5,8 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import secrets
-import threading
-import time
+import sqlite3
 from pathlib import Path
 
 import bcrypt
@@ -67,10 +66,14 @@ _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web
 _login_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
 
 
-# ---- Rate limiting ----
+# ---- Rate limiting (SQLite-backed, survives restarts) ----
 
-_login_attempts: dict[str, list[float]] = {}  # ip -> [timestamps]
-_login_lock = threading.Lock()
+_DB_PATH = Path(__file__).parent.parent.parent.parent / "data" / "weeklyamp.db"
+
+
+def _rate_limit_conn():
+    """Open a lightweight SQLite connection for rate-limit queries."""
+    return sqlite3.connect(str(_DB_PATH))
 
 
 def _get_login_rate_config() -> tuple[int, int]:
@@ -91,24 +94,47 @@ def _get_client_ip(request: Request) -> str:
 def _is_rate_limited(ip: str) -> bool:
     """Check if an IP has exceeded the login attempt limit."""
     max_attempts, window = _get_login_rate_config()
-    now = time.time()
-    with _login_lock:
-        attempts = _login_attempts.get(ip, [])
-        attempts = [t for t in attempts if now - t < window]
-        _login_attempts[ip] = attempts
-        return len(attempts) >= max_attempts
+    try:
+        conn = _rate_limit_conn()
+        row = conn.execute(
+            "SELECT COUNT(*) FROM rate_limits "
+            "WHERE ip_address = ? AND limit_type = 'login' "
+            "AND attempted_at >= datetime('now', '-' || ? || ' seconds')",
+            (ip, window),
+        ).fetchone()
+        conn.close()
+        return (row[0] if row else 0) >= max_attempts
+    except Exception:
+        logger.warning("Rate-limit check failed — allowing request", exc_info=True)
+        return False
 
 
 def _record_attempt(ip: str) -> None:
     """Record a failed login attempt for an IP."""
-    with _login_lock:
-        _login_attempts.setdefault(ip, []).append(time.time())
+    try:
+        conn = _rate_limit_conn()
+        conn.execute(
+            "INSERT INTO rate_limits (ip_address, limit_type) VALUES (?, 'login')",
+            (ip,),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logger.warning("Failed to record login attempt", exc_info=True)
 
 
 def _clear_attempts(ip: str) -> None:
     """Clear login attempts for an IP after successful login."""
-    with _login_lock:
-        _login_attempts.pop(ip, None)
+    try:
+        conn = _rate_limit_conn()
+        conn.execute(
+            "DELETE FROM rate_limits WHERE ip_address = ? AND limit_type = 'login'",
+            (ip,),
+        )
+        conn.commit()
+        conn.close()
+    except Exception:
+        logger.warning("Failed to clear login attempts", exc_info=True)
 
 
 # ---- Secure cookie helpers ----

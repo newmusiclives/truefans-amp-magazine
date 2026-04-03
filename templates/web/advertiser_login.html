@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Advertiser Login — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Advertiser Portal</h2>
+    <p class="text-dim">Log in to manage your campaigns and view performance.</p>
+</div>
+
+{% if error %}
+<div class="alert alert-danger" style="margin-bottom: 20px;">{{ error }}</div>
+{% endif %}
+
+<div class="card" style="max-width: 480px;">
+    <div class="card-header"><h3>Sign In</h3></div>
+    <div class="card-body">
+        <form method="POST" action="/advertiser/login">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" required placeholder="you@company.com">
+            </div>
+            <div class="form-group" style="margin-top: 16px;">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+            </div>
+            <div style="margin-top: 24px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Log In</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<p style="margin-top: 24px; color: var(--text-dim);">
+    Interested in advertising? <a href="/advertise">Learn about sponsorship opportunities</a>.
+</p>
+{% endblock %}

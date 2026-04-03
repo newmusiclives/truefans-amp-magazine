@@ -10,12 +10,13 @@
 </head>
 <body>
     <div class="newsletter-wrapper">
-        <div class="header">
-            {% if header_image_url %}
-            <img src="{{ header_image_url }}" alt="{{ newsletter_name }}" class="header-image">
-            {% else %}
-            <h1>{{ newsletter_name }}</h1>
-            {% endif %}
+        <div class="header" style="padding: 32px 0 28px; text-align: center;">
+            <hr style="border: none; border-top: 1px solid #d1d5db; margin: 0 0 32px;">
+            <div style="margin-bottom: 24px;">
+                <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 32px; color: #9ca3af; font-style: italic;">A TrueFans</span>
+                <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 38px; font-weight: 900; color: #1a1a1a; letter-spacing: 2px; margin-left: 10px;">NEWSLETTER</span>
+            </div>
+            <div style="font-family: Georgia, 'Times New Roman', serif; font-size: 14px; color: #9ca3af; font-style: italic; margin-bottom: 20px;">Part of the TrueFans Ecosystem&trade;</div>
         </div>
 
         {% if intro_copy %}

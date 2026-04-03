@@ -632,6 +632,19 @@ class Repository:
         conn.close()
         return [dict(r) for r in rows]
 
+    def get_subscribers_for_edition(self, edition_slug: str) -> list[dict]:
+        """Return active subscribers who are subscribed to the given edition."""
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT s.* FROM subscribers s
+               JOIN subscriber_editions se ON se.subscriber_id = s.id
+               JOIN newsletter_editions ne ON ne.id = se.edition_id
+               WHERE s.status = 'active' AND ne.slug = ?""",
+            (edition_slug,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
     # ---- Newsletter Editions ----
 
     def get_editions(self, active_only: bool = True) -> list[dict]:
@@ -873,6 +886,40 @@ class Repository:
         conn.execute("DELETE FROM sponsor_blocks WHERE id = ?", (block_id,))
         conn.commit()
         conn.close()
+
+    # ---- Sponsor Block Events (performance tracking) ----
+
+    def record_sponsor_event(self, block_id: int, event_type: str, subscriber_id: int = 0, ip_address: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO sponsor_block_events (block_id, event_type, subscriber_id, ip_address) VALUES (?, ?, ?, ?)",
+            (block_id, event_type, subscriber_id or None, ip_address),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_sponsor_performance(self, limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT sb.id as block_id, sb.sponsor_name, sb.position, sb.headline,
+                      i.issue_number, i.edition_slug,
+                      COUNT(CASE WHEN sbe.event_type = 'impression' THEN 1 END) as impressions,
+                      COUNT(CASE WHEN sbe.event_type = 'click' THEN 1 END) as clicks,
+                      CASE WHEN COUNT(CASE WHEN sbe.event_type = 'impression' THEN 1 END) > 0
+                           THEN ROUND(100.0 * COUNT(CASE WHEN sbe.event_type = 'click' THEN 1 END) / COUNT(CASE WHEN sbe.event_type = 'impression' THEN 1 END), 1)
+                           ELSE 0 END as ctr
+               FROM sponsor_blocks sb
+               LEFT JOIN sponsor_block_events sbe ON sbe.block_id = sb.id
+               LEFT JOIN issues i ON i.id = sb.issue_id
+               GROUP BY sb.id
+               ORDER BY clicks DESC
+               LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
 
     # ---- Edition Sponsors (main sponsors per newsletter x edition) ----
 
@@ -3273,6 +3320,250 @@ class Repository:
         row_id = cur.lastrowid
         conn.close()
         return row_id
+
+    # ---- Audio Issues ----
+
+    def create_audio_issue(self, issue_id: int, edition_slug: str = "", tts_provider: str = "openai") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO audio_issues (issue_id, edition_slug, tts_provider) VALUES (?, ?, ?)",
+            (issue_id, edition_slug, tts_provider),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_audio_issue(self, issue_id: int):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM audio_issues WHERE issue_id = ? ORDER BY id DESC LIMIT 1", (issue_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_audio_issue(self, audio_id: int, **kwargs) -> None:
+        if not kwargs:
+            return
+        allowed = {"audio_url", "duration_seconds", "file_size_bytes", "status"}
+        fields = {k: v for k, v in kwargs.items() if k in allowed}
+        if not fields:
+            return
+        conn = self._conn()
+        set_clause = ", ".join(f"{k} = ?" for k in fields)
+        conn.execute(f"UPDATE audio_issues SET {set_clause} WHERE id = ?", (*fields.values(), audio_id))
+        conn.commit()
+        conn.close()
+
+    def get_audio_issues(self, limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT ai.*, i.issue_number FROM audio_issues ai LEFT JOIN issues i ON i.id = ai.issue_id ORDER BY ai.id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Subscriber Tiers & Billing ----
+
+    def get_tiers(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute("SELECT * FROM subscriber_tiers WHERE is_active = 1 ORDER BY sort_order").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_tier_by_slug(self, slug: str):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM subscriber_tiers WHERE slug = ?", (slug,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def create_billing_record(self, subscriber_id: int, tier_id: int, stripe_customer_id: str = "", stripe_subscription_id: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO subscriber_billing (subscriber_id, tier_id, stripe_customer_id, stripe_subscription_id) VALUES (?, ?, ?, ?)",
+            (subscriber_id, tier_id, stripe_customer_id, stripe_subscription_id),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_billing_for_subscriber(self, subscriber_id: int):
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT sb.*, st.slug as tier_slug, st.name as tier_name
+               FROM subscriber_billing sb
+               JOIN subscriber_tiers st ON st.id = sb.tier_id
+               WHERE sb.subscriber_id = ? ORDER BY sb.id DESC LIMIT 1""",
+            (subscriber_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_billing_status(self, stripe_subscription_id: str, status: str, current_period_end: str = "") -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE subscriber_billing SET status = ?, current_period_end = ?, updated_at = CURRENT_TIMESTAMP WHERE stripe_subscription_id = ?",
+            (status, current_period_end, stripe_subscription_id),
+        )
+        conn.commit()
+        conn.close()
+
+    # ---- Community Forum ----
+
+    def get_forum_categories(self, edition_slug: str = "") -> list[dict]:
+        conn = self._conn()
+        if edition_slug:
+            rows = conn.execute(
+                "SELECT * FROM forum_categories WHERE is_active = 1 AND edition_slug = ? ORDER BY sort_order",
+                (edition_slug,),
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM forum_categories WHERE is_active = 1 ORDER BY sort_order").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_forum_category_by_slug(self, slug: str):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM forum_categories WHERE slug = ?", (slug,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def create_forum_thread(self, category_id: int, subscriber_id: int, title: str, content: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO forum_threads (category_id, subscriber_id, title, content) VALUES (?, ?, ?, ?)",
+            (category_id, subscriber_id, title, content),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_forum_threads(self, category_id: int, limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT ft.*, s.email as author_email, s.first_name as author_name
+               FROM forum_threads ft
+               LEFT JOIN subscribers s ON s.id = ft.subscriber_id
+               WHERE ft.category_id = ?
+               ORDER BY ft.is_pinned DESC, ft.last_reply_at DESC NULLS LAST, ft.created_at DESC
+               LIMIT ?""",
+            (category_id, limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_forum_thread(self, thread_id: int):
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT ft.*, s.email as author_email, s.first_name as author_name, fc.name as category_name, fc.slug as category_slug
+               FROM forum_threads ft
+               LEFT JOIN subscribers s ON s.id = ft.subscriber_id
+               LEFT JOIN forum_categories fc ON fc.id = ft.category_id
+               WHERE ft.id = ?""",
+            (thread_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def create_forum_reply(self, thread_id: int, subscriber_id: int, content: str) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO forum_replies (thread_id, subscriber_id, content) VALUES (?, ?, ?)",
+            (thread_id, subscriber_id, content),
+        )
+        # Update reply count and last_reply_at
+        conn.execute(
+            "UPDATE forum_threads SET reply_count = reply_count + 1, last_reply_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (thread_id,),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_forum_replies(self, thread_id: int, limit: int = 100) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT fr.*, s.email as author_email, s.first_name as author_name
+               FROM forum_replies fr
+               LEFT JOIN subscribers s ON s.id = fr.subscriber_id
+               WHERE fr.thread_id = ?
+               ORDER BY fr.created_at ASC
+               LIMIT ?""",
+            (thread_id, limit),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Advertiser Portal ----
+
+    def create_advertiser_account(self, sponsor_id: int, email: str, password_hash: str) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO advertiser_accounts (sponsor_id, email, password_hash) VALUES (?, ?, ?)",
+            (sponsor_id, email, password_hash),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_advertiser_by_email(self, email: str):
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT aa.*, s.name as sponsor_name FROM advertiser_accounts aa LEFT JOIN sponsors s ON s.id = aa.sponsor_id WHERE aa.email = ?",
+            (email,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_advertiser_campaigns(self, advertiser_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM advertiser_campaigns WHERE advertiser_id = ? ORDER BY created_at DESC",
+            (advertiser_id,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_advertiser_campaign(self, advertiser_id: int, name: str, edition_slug: str = "", position: str = "mid", headline: str = "", body_html: str = "", cta_url: str = "", cta_text: str = "Learn More", image_url: str = "", budget_cents: int = 0) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO advertiser_campaigns
+               (advertiser_id, name, edition_slug, position, headline, body_html, cta_url, cta_text, image_url, budget_cents, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft')""",
+            (advertiser_id, name, edition_slug, position, headline, body_html, cta_url, cta_text, image_url, budget_cents),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_advertiser_campaign(self, campaign_id: int):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM advertiser_campaigns WHERE id = ?", (campaign_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_campaign_status(self, campaign_id: int, status: str) -> None:
+        conn = self._conn()
+        conn.execute("UPDATE advertiser_campaigns SET status = ? WHERE id = ?", (status, campaign_id))
+        conn.commit()
+        conn.close()
+
+    def get_pending_campaigns(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT ac.*, aa.email as advertiser_email, s.name as sponsor_name
+               FROM advertiser_campaigns ac
+               LEFT JOIN advertiser_accounts aa ON aa.id = ac.advertiser_id
+               LEFT JOIN sponsors s ON s.id = aa.sponsor_id
+               WHERE ac.status = 'submitted'
+               ORDER BY ac.created_at""",
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
 
     # ---- Stats ----
 

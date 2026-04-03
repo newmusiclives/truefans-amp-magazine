@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from weeklyamp.core.models import AIProvider, AppConfig
+
+logger = logging.getLogger(__name__)
 
 
 def generate_draft(
@@ -43,10 +46,14 @@ def _generate_anthropic(
     if system_prompt:
         kwargs["system"] = system_prompt
 
-    client = anthropic.Anthropic()  # uses ANTHROPIC_API_KEY env var
-    message = client.messages.create(**kwargs)
-    content = message.content[0].text
-    return content, config.ai.model
+    try:
+        client = anthropic.Anthropic()  # uses ANTHROPIC_API_KEY env var
+        message = client.messages.create(**kwargs)
+        content = message.content[0].text
+        return content, config.ai.model
+    except Exception:
+        logger.exception("Anthropic API call failed")
+        return "", config.ai.model
 
 
 def _generate_openai(
@@ -63,12 +70,16 @@ def _generate_openai(
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
 
-    client = openai.OpenAI()  # uses OPENAI_API_KEY env var
-    response = client.chat.completions.create(
-        model=config.ai.model,
-        max_tokens=max_tokens,
-        temperature=config.ai.temperature,
-        messages=messages,
-    )
-    content = response.choices[0].message.content
-    return content, config.ai.model
+    try:
+        client = openai.OpenAI()  # uses OPENAI_API_KEY env var
+        response = client.chat.completions.create(
+            model=config.ai.model,
+            max_tokens=max_tokens,
+            temperature=config.ai.temperature,
+            messages=messages,
+        )
+        content = response.choices[0].message.content
+        return content, config.ai.model
+    except Exception:
+        logger.exception("OpenAI API call failed")
+        return "", config.ai.model
