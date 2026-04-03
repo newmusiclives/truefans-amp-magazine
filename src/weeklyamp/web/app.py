@@ -352,6 +352,7 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import reengagement as reengagement_routes
     from weeklyamp.web.routes import billing as billing_routes
     from weeklyamp.web.routes import advertiser_portal as advertiser_portal_routes
+    from weeklyamp.web.routes import affiliates as affiliates_routes
     from weeklyamp.web.routes import community as community_routes
 
     # Routes
@@ -400,6 +401,8 @@ def create_app() -> FastAPI:
     app.include_router(advertiser_portal_routes.router)
     # v26+ community forum
     app.include_router(community_routes.router)
+    # v27+ affiliate programs
+    app.include_router(affiliates_routes.router, prefix="/affiliates")
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=70.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weeklyamp"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = [
+    "typer[all]>=0.12,<1.0",
+    "rich>=13.0,<14.0",
+    "httpx>=0.27,<1.0",
+    "beautifulsoup4>=4.12,<5.0",
+    "feedparser>=6.0,<7.0",
+    "pydantic>=2.5,<3.0",
+    "pyyaml>=6.0,<7.0",
+    "python-dotenv>=1.0,<2.0",
+    "anthropic>=0.40,<1.0",
+    "openai>=1.50,<2.0",
+    "jinja2>=3.1,<4.0",
+    "markdown>=3.5,<4.0",
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.32,<1.0",
+    "python-multipart>=0.0.9,<1.0",
+    "bleach>=6.1,<7.0",
+    "itsdangerous>=2.1,<3.0",
+    "bcrypt>=4.1,<5.0",
+    "psycopg2-binary>=2.9,<3.0",
+    "pytest>=8.0,<9.0",
+]
+
+[project.scripts]
+weeklyamp = "weeklyamp.cli:app"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

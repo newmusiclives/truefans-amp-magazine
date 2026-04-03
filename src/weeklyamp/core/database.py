@@ -682,6 +682,45 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
             except integrity:
                 pass
 
+    # --- Affiliate programs ---
+    affiliates = [
+        ("DistroKid", "distrokid", "https://distrokid.com", "https://distrokid.com/vip/truefans", "percentage", "7% recurring", 30, "distribution", "artist", "Unlimited music distribution to all streaming platforms for one annual fee."),
+        ("TuneCore", "tunecore", "https://tunecore.com", "https://tunecore.com/partners/truefans", "flat", "$5-10 per signup", 30, "distribution", "artist", "Music distribution with 100% royalty retention."),
+        ("CD Baby", "cd-baby", "https://cdbaby.com", "https://cdbaby.com/affiliate/truefans", "percentage", "10% first purchase", 60, "distribution", "artist", "Music distribution plus sync licensing and publishing administration."),
+        ("Splice", "splice", "https://splice.com", "https://splice.com/referral/truefans", "recurring", "$3/month recurring", 30, "software", "artist", "Sample packs, plugins, and rent-to-own instruments."),
+        ("Sweetwater", "sweetwater", "https://sweetwater.com", "https://sweetwater.com/affiliate/truefans", "percentage", "4-6% per sale", 14, "gear", "artist", "Musical instruments, pro audio, and studio gear."),
+        ("Plugin Boutique", "plugin-boutique", "https://pluginboutique.com", "https://pluginboutique.com/affiliate/truefans", "percentage", "15% per sale", 90, "software", "artist", "VST plugins, virtual instruments, and audio effects."),
+        ("Bandcamp", "bandcamp", "https://bandcamp.com", "https://bandcamp.com/affiliate/truefans", "percentage", "10% referral credit", 30, "distribution", "fan,artist", "Artist-direct music sales and merch platform."),
+        ("Skillshare", "skillshare", "https://skillshare.com", "https://skillshare.com/affiliates/truefans", "flat", "$7 per free trial signup", 30, "education", "artist", "Online classes including music production, songwriting, and marketing."),
+        ("Coursera", "coursera", "https://coursera.org", "https://coursera.org/affiliate/truefans", "percentage", "15-45% per enrollment", 30, "education", "artist,industry", "University-level music business and production courses."),
+        ("Focusrite", "focusrite", "https://focusrite.com", "https://focusrite.com/affiliate/truefans", "percentage", "5% per sale", 30, "gear", "artist", "Audio interfaces, preamps, and studio hardware."),
+        ("iZotope", "izotope", "https://izotope.com", "https://izotope.com/affiliate/truefans", "percentage", "15% per sale", 30, "software", "artist", "Mastering, mixing, and audio repair software."),
+        ("Spotify for Artists", "spotify-artists", "https://artists.spotify.com", "https://artists.spotify.com/partner/truefans", "flat", "Co-marketing credit", 0, "streaming", "artist,industry", "Artist tools, analytics, and playlist pitching."),
+        ("SoundCloud Pro", "soundcloud-pro", "https://soundcloud.com", "https://soundcloud.com/affiliate/truefans", "percentage", "20% first payment", 30, "streaming", "artist,fan", "Upload, distribute, and monetize music."),
+        ("Chartmetric", "chartmetric", "https://chartmetric.com", "https://chartmetric.com/affiliate/truefans", "percentage", "20% recurring", 30, "services", "industry", "Music analytics platform for labels, managers, and A&R."),
+        ("Songtrust", "songtrust", "https://songtrust.com", "https://songtrust.com/affiliate/truefans", "flat", "$10 per signup", 30, "services", "artist,industry", "Global music publishing administration and royalty collection."),
+        ("Linktree", "linktree", "https://linktr.ee", "https://linktr.ee/affiliate/truefans", "percentage", "25% recurring", 90, "marketing", "artist", "Link-in-bio tool for artists and creators."),
+        ("Mailchimp", "mailchimp", "https://mailchimp.com", "https://mailchimp.com/affiliate/truefans", "recurring", "$30 per paid referral", 30, "marketing", "artist,industry", "Email marketing and audience management."),
+        ("Canva", "canva", "https://canva.com", "https://canva.com/affiliates/truefans", "flat", "$36 per Pro signup", 30, "marketing", "artist", "Design tool for album art, social graphics, and EPKs."),
+        ("BeatStars", "beatstars", "https://beatstars.com", "https://beatstars.com/affiliate/truefans", "percentage", "10% per sale", 30, "distribution", "artist", "Beat marketplace and music licensing platform."),
+        ("Audiomack", "audiomack", "https://audiomack.com", "https://audiomack.com/affiliate/truefans", "flat", "Co-marketing credit", 0, "streaming", "artist,fan", "Free music streaming and distribution platform popular in hip-hop and afrobeats."),
+    ]
+    for name, slug, website, aff_url, comm_type, rate, cookie, cat, editions, desc in affiliates:
+        exists = conn.execute(
+            f"SELECT id FROM affiliate_programs WHERE slug = {ph}", (slug,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"""INSERT INTO affiliate_programs
+                        (name, slug, website_url, affiliate_url, commission_type, commission_rate, cookie_days, category, target_editions, description)
+                        VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})""",
+                    (name, slug, website, aff_url, comm_type, rate, cookie, cat, editions, desc),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
     conn.commit()
     conn.close()
     if seeded:

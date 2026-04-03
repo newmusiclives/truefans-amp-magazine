@@ -1130,3 +1130,38 @@ CREATE INDEX IF NOT EXISTS idx_adv_campaigns_adv ON advertiser_campaigns(adverti
 CREATE INDEX IF NOT EXISTS idx_adv_campaigns_status ON advertiser_campaigns(status);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (26);
+
+-- v27: Affiliate program management
+CREATE TABLE IF NOT EXISTS affiliate_programs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    website_url TEXT DEFAULT '',
+    affiliate_url TEXT DEFAULT '',
+    commission_type TEXT DEFAULT 'percentage' CHECK (commission_type IN ('percentage','flat','recurring')),
+    commission_rate TEXT DEFAULT '',
+    cookie_days INTEGER DEFAULT 30,
+    category TEXT DEFAULT 'general' CHECK (category IN ('distribution','gear','education','software','services','streaming','marketing','general')),
+    target_editions TEXT DEFAULT '',
+    description TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    total_clicks INTEGER DEFAULT 0,
+    total_conversions INTEGER DEFAULT 0,
+    total_revenue_cents INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS affiliate_placements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    affiliate_id INTEGER NOT NULL REFERENCES affiliate_programs(id),
+    issue_id INTEGER REFERENCES issues(id),
+    edition_slug TEXT DEFAULT '',
+    section_slug TEXT DEFAULT '',
+    placement_type TEXT DEFAULT 'inline' CHECK (placement_type IN ('inline','block','cta')),
+    anchor_text TEXT DEFAULT '',
+    clicks INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_affiliate_placements_issue ON affiliate_placements(issue_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (27);

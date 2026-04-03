@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Affiliate Programs — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_affiliates %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Affiliate Programs</h2>
+    <p>Earn commission from music industry partnerships</p>
+</div>
+
+<!-- Summary stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="label">Total Programs</div>
+        <div class="value blue">{{ programs|length }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Clicks</div>
+        <div class="value gold">{{ programs|sum(attribute='total_clicks') }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Total Conversions</div>
+        <div class="value green">{{ programs|sum(attribute='total_conversions') }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="label">Categories</div>
+        <div class="value">{{ categories|length }}</div>
+    </div>
+</div>
+
+{% set category_labels = {
+    'distribution': 'Distribution',
+    'gear': 'Gear',
+    'education': 'Education',
+    'software': 'Software',
+    'services': 'Services',
+    'streaming': 'Streaming',
+    'marketing': 'Marketing',
+    'general': 'General'
+} %}
+
+{% for cat, cat_programs in categories.items() %}
+<div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+        <span class="card-title">{{ category_labels.get(cat, cat|capitalize) }}</span>
+        <span class="badge">{{ cat_programs|length }}</span>
+    </div>
+    <div style="overflow-x:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Program</th>
+                    <th>Commission</th>
+                    <th>Cookie</th>
+                    <th>Editions</th>
+                    <th style="text-align:right">Clicks</th>
+                    <th>Affiliate Link</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in cat_programs %}
+                <tr>
+                    <td>
+                        <a href="{{ p.website_url }}" target="_blank" rel="noopener" style="font-weight:600">{{ p.name }}</a>
+                        {% if p.description %}
+                        <div style="font-size:0.85em;color:var(--muted);margin-top:2px">{{ p.description }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if p.commission_type == 'recurring' %}green{% elif p.commission_type == 'percentage' %}blue{% else %}gold{% endif %}">
+                            {{ p.commission_type }}
+                        </span>
+                        <div style="font-size:0.9em;margin-top:2px">{{ p.commission_rate }}</div>
+                    </td>
+                    <td>{% if p.cookie_days > 0 %}{{ p.cookie_days }} days{% else %}&mdash;{% endif %}</td>
+                    <td>{{ p.target_editions }}</td>
+                    <td style="text-align:right">{{ p.total_clicks }}</td>
+                    <td>
+                        <a href="/affiliates/redirect/{{ p.slug }}" class="btn btn-sm" target="_blank" rel="noopener">Open Link</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endfor %}
+
+{% if not categories %}
+<div class="card">
+    <div style="padding:40px;text-align:center;color:var(--muted)">
+        No affiliate programs found. Run database seeding to populate programs.
+    </div>
+</div>
+{% endif %}
+{% endblock %}

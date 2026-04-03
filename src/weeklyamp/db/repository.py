@@ -3565,6 +3565,67 @@ class Repository:
         conn.close()
         return [dict(r) for r in rows]
 
+    # ---- Affiliate Programs ----
+
+    def get_affiliate_programs(self, active_only: bool = True, category: str = "", edition: str = "") -> list[dict]:
+        conn = self._conn()
+        query = "SELECT * FROM affiliate_programs"
+        conditions = []
+        params = []
+        if active_only:
+            conditions.append("is_active = 1")
+        if category:
+            conditions.append("category = ?")
+            params.append(category)
+        if edition:
+            conditions.append("target_editions LIKE ?")
+            params.append(f"%{edition}%")
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY name"
+        rows = conn.execute(query, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_affiliate_by_slug(self, slug: str):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM affiliate_programs WHERE slug = ?", (slug,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def record_affiliate_click(self, affiliate_id: int) -> None:
+        conn = self._conn()
+        conn.execute("UPDATE affiliate_programs SET total_clicks = total_clicks + 1 WHERE id = ?", (affiliate_id,))
+        conn.commit()
+        conn.close()
+
+    def create_affiliate_placement(self, affiliate_id: int, issue_id: int = 0, edition_slug: str = "", section_slug: str = "", placement_type: str = "inline", anchor_text: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO affiliate_placements (affiliate_id, issue_id, edition_slug, section_slug, placement_type, anchor_text) VALUES (?, ?, ?, ?, ?, ?)",
+            (affiliate_id, issue_id or None, edition_slug, section_slug, placement_type, anchor_text),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_affiliate_placements(self, issue_id: int = 0, edition_slug: str = "") -> list[dict]:
+        conn = self._conn()
+        query = """SELECT ap.*, af.name as affiliate_name, af.affiliate_url, af.commission_rate
+                   FROM affiliate_placements ap
+                   JOIN affiliate_programs af ON af.id = ap.affiliate_id"""
+        if issue_id:
+            query += " WHERE ap.issue_id = ?"
+            rows = conn.execute(query, (issue_id,)).fetchall()
+        elif edition_slug:
+            query += " WHERE ap.edition_slug = ?"
+            rows = conn.execute(query, (edition_slug,)).fetchall()
+        else:
+            rows = conn.execute(query).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
     # ---- Stats ----
 
     def get_table_counts(self) -> dict:
