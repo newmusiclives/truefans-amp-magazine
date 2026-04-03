@@ -6,8 +6,11 @@ is chosen by the ``WEEKLYAMP_DB_BACKEND`` env-var / config field.
 
 from __future__ import annotations
 
+import logging
 import os
 import sqlite3
+
+logger = logging.getLogger(__name__)
 from pathlib import Path
 from typing import Optional, Union
 
@@ -509,11 +512,14 @@ def seed_agents(db_path: str = "", database_url: str = "", backend: str = "") ->
                 (agent_type, name, persona, system_prompt, autonomy_level, config_json),
             )
             inserted += 1
+            logger.info("Seeded new agent: %s (%s)", name, agent_type)
         except ierr:
             if backend == "postgres":
                 conn.rollback()
     conn.commit()
     conn.close()
+    if inserted:
+        logger.info("Seeded %d new AI agents", inserted)
     return inserted
 
 
