@@ -35,7 +35,7 @@ def _get_admin_hash() -> str:
     # Fallback: if a plaintext password is set, hash it once at runtime.
     # This avoids issues with $ characters in bcrypt hashes being
     # interpreted as variable references by platforms like Railway.
-    pw = os.environ.get("WEEKLYAMP_ADMIN_PASSWORD", "")
+    pw = os.environ.get("WEEKLYAMP_ADMIN_PASSWORD", "").strip()
     if pw:
         _cached_admin_hash = bcrypt.hashpw(pw.encode(), bcrypt.gensalt()).decode()
         logger.info("WEEKLYAMP_ADMIN_PASSWORD set — hashed at runtime")
@@ -266,9 +266,11 @@ async def login_submit(request: Request) -> Response:
         )
 
     form = await request.form()
-    password = form.get("password", "")
+    password = form.get("password", "").strip()
 
-    if verify_password(password, _get_admin_hash()):
+    admin_hash = _get_admin_hash()
+    logger.info("Login attempt — password length: %d, hash present: %s", len(password), bool(admin_hash))
+    if verify_password(password, admin_hash):
         _clear_attempts(ip)
         _log_security_event(request, "login_success")
         response = RedirectResponse("/dashboard", status_code=302)
