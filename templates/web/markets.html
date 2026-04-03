@@ -10,7 +10,7 @@
 
 <div class="card" style="margin-bottom:2rem">
     <h3>Create Market</h3>
-    <form hx-post="/markets/create" hx-target="#market-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+    <form hx-post="/admin/markets/create" hx-target="#market-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
         <div>
             <label>Edition</label>
             <select name="edition_slug" required>
@@ -38,36 +38,66 @@
 </div>
 
 {% for ed in editions %}
-<div class="card" style="margin-bottom:1.5rem">
-    <h3>{{ ed.name }}</h3>
-    {% if by_edition.get(ed.slug) %}
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Slug</th>
-                <th>Description</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for m in by_edition[ed.slug] %}
-            <tr>
-                <td>{{ m.market_name }}</td>
-                <td><code>{{ m.market_slug }}</code></td>
-                <td>{{ m.description or '—' }}</td>
-                <td>
-                    <button hx-post="/markets/{{ m.id }}/toggle" hx-target="closest tr" hx-swap="outerHTML" class="btn btn-sm">
-                        {% if m.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}
-                    </button>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p class="text-muted">No markets configured for this edition yet.</p>
-    {% endif %}
+<div style="margin-bottom:2rem;">
+    <div style="font-size:18px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        <span>{{ ed.icon | safe }}</span> {{ ed.name }}
+    </div>
+
+    <!-- Genre Markets -->
+    <div class="card" style="margin-bottom:1rem">
+        <h4 style="margin-bottom:12px;">Genre & Focus Markets</h4>
+        {% if genre_by_edition.get(ed.slug) %}
+        <table class="data-table">
+            <thead>
+                <tr><th>Name</th><th>Slug</th><th>Description</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            {% for m in genre_by_edition[ed.slug] %}
+                <tr>
+                    <td><strong>{{ m.market_name }}</strong></td>
+                    <td><code>{{ m.market_slug }}</code></td>
+                    <td>{{ m.description or '—' }}</td>
+                    <td>
+                        <button hx-post="/admin/markets/{{ m.id }}/toggle" hx-target="closest tr" hx-swap="outerHTML" class="btn btn-sm">
+                            {% if m.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}
+                        </button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No genre markets configured.</p>
+        {% endif %}
+    </div>
+
+    <!-- City / Local Markets -->
+    <div class="card" style="margin-bottom:1.5rem">
+        <h4 style="margin-bottom:12px;">City & Local Markets</h4>
+        {% if city_by_edition.get(ed.slug) %}
+        <table class="data-table">
+            <thead>
+                <tr><th>City</th><th>Slug</th><th>Description</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+            {% for m in city_by_edition[ed.slug] %}
+                <tr>
+                    <td><strong>{{ m.market_name }}</strong></td>
+                    <td><code>{{ m.market_slug }}</code></td>
+                    <td>{{ m.description or '—' }}</td>
+                    <td>
+                        <button hx-post="/admin/markets/{{ m.id }}/toggle" hx-target="closest tr" hx-swap="outerHTML" class="btn btn-sm">
+                            {% if m.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Inactive</span>{% endif %}
+                        </button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted">No city markets configured.</p>
+        {% endif %}
+    </div>
 </div>
 {% endfor %}
 

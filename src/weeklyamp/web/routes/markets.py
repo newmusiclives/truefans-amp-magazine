@@ -6,15 +6,29 @@ from weeklyamp.web.deps import get_config, get_repo, render
 
 router = APIRouter()
 
+CITY_SLUGS = frozenset({
+    "nashville", "los-angeles", "new-york", "atlanta", "london",
+    "austin", "miami", "chicago", "detroit", "memphis", "seattle",
+    "toronto", "berlin", "lagos", "tokyo", "seoul", "paris",
+    "sao-paulo", "mumbai", "kingston",
+})
+
+
 @router.get("/", response_class=HTMLResponse)
 async def markets_page(request: Request):
     repo = get_repo()
     editions = repo.get_editions()
     markets = repo.get_edition_markets()
-    by_edition = {}
+    genre_by_edition = {}
+    city_by_edition = {}
     for m in markets:
-        by_edition.setdefault(m["edition_slug"], []).append(m)
-    return HTMLResponse(render("markets.html", editions=editions, by_edition=by_edition))
+        ed = m["edition_slug"]
+        if m["market_slug"] in CITY_SLUGS:
+            city_by_edition.setdefault(ed, []).append(m)
+        else:
+            genre_by_edition.setdefault(ed, []).append(m)
+    return HTMLResponse(render("markets.html",
+        editions=editions, genre_by_edition=genre_by_edition, city_by_edition=city_by_edition))
 
 @router.post("/create", response_class=HTMLResponse)
 async def create_market(request: Request, edition_slug: str = Form(...), market_slug: str = Form(...), market_name: str = Form(...), description: str = Form("")):
