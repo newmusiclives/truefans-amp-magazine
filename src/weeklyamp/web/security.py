@@ -267,8 +267,12 @@ async def login_submit(request: Request) -> Response:
     password = form.get("password", "").strip()
 
     admin_hash = _get_admin_hash()
-    logger.info("Login attempt — password length: %d, hash present: %s", len(password), bool(admin_hash))
-    if verify_password(password, admin_hash):
+    # Also check direct password match as fallback for Railway env issues
+    env_pw = os.environ.get("WEEKLYAMP_ADMIN_PASSWORD", "").strip()
+    password_ok = verify_password(password, admin_hash) if admin_hash else False
+    if not password_ok and env_pw and password == env_pw:
+        password_ok = True
+    if password_ok:
         _clear_attempts(ip)
         _log_security_event(request, "login_success")
         response = RedirectResponse("/dashboard", status_code=302)
