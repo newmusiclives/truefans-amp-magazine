@@ -771,6 +771,23 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
         ("industry", "live-events", "Live & Touring", "Concerts, festivals, touring economics, and live revenue", 3),
         ("industry", "emerging-markets", "Emerging Markets", "Africa, Latin America, Southeast Asia, and growing music markets", 4),
         ("industry", "ai-and-tech", "AI & Music Tech", "Artificial intelligence, music tech startups, and innovation", 5),
+        # Location-based markets (all editions)
+        ("fan", "nashville", "Nashville", "Nashville music scene — country, Americana, indie, and Music Row", 10),
+        ("fan", "los-angeles", "Los Angeles", "LA music scene — hip-hop, pop, indie, and entertainment industry", 11),
+        ("fan", "new-york", "New York", "NYC music scene — hip-hop, jazz, punk, Broadway, and indie", 12),
+        ("fan", "atlanta", "Atlanta", "Atlanta music scene — trap, hip-hop, R&B, and Southern rap", 13),
+        ("fan", "london", "London", "London music scene — grime, electronic, indie, and global sounds", 14),
+        ("fan", "austin", "Austin", "Austin music scene — live music capital, SXSW, indie, and country", 15),
+        ("artist", "nashville", "Nashville", "Nashville artist community — songwriting, publishing, and Music Row opportunities", 10),
+        ("artist", "los-angeles", "Los Angeles", "LA artist scene — studios, producers, sync placements, and industry connections", 11),
+        ("artist", "new-york", "New York", "NYC artist scene — live venues, hip-hop, jazz, and creative collaborations", 12),
+        ("artist", "atlanta", "Atlanta", "Atlanta artist scene — trap production, hip-hop, and Southern music business", 13),
+        ("artist", "austin", "Austin", "Austin artist scene — live music, SXSW showcases, and indie community", 14),
+        ("artist", "miami", "Miami", "Miami artist scene — Latin music, reggaeton, and tropical production", 15),
+        ("industry", "nashville", "Nashville", "Nashville industry — publishing, songwriting deals, country labels, and Music Row", 10),
+        ("industry", "los-angeles", "Los Angeles", "LA industry — major labels, sync licensing, film/TV music, and entertainment law", 11),
+        ("industry", "new-york", "New York", "NYC industry — corporate label HQ, media, advertising sync, and live venues", 12),
+        ("industry", "london", "London", "London industry — global labels, streaming strategy, and European market", 13),
     ]
     for edition, slug, name, desc, sort in markets:
         exists = conn.execute(
