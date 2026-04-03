@@ -771,6 +771,17 @@ textarea {
 }
 
 /* Responsive */
+/* Sidebar nav section labels */
+.nav-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted, #9ca3af);
+    padding: 16px 16px 6px;
+    margin-top: 4px;
+}
+
 /* Sidebar divider (logout section) */
 .sidebar-divider {
     border-top: 1px solid var(--border, #e2e4ea);

@@ -28,14 +28,10 @@
                 <a href="/dashboard" class="{% block nav_dashboard %}{% endblock %}">
                     <span class="icon">&#9776;</span> Dashboard
                 </a>
+
+                <div class="nav-section-label">Content</div>
                 <a href="/research" class="{% block nav_research %}{% endblock %}">
                     <span class="icon">&#128270;</span> Research
-                </a>
-                <a href="/guests" class="{% block nav_guests %}{% endblock %}">
-                    <span class="icon">&#128221;</span> Guest Articles
-                </a>
-                <a href="/editor-articles" class="{% block nav_editor_articles %}{% endblock %}">
-                    <span class="icon">&#128196;</span> Editor Articles
                 </a>
                 <a href="/drafts" class="{% block nav_drafts %}{% endblock %}">
                     <span class="icon">&#9998;</span> Drafts
@@ -46,53 +42,45 @@
                 <a href="/publish" class="{% block nav_publish %}{% endblock %}">
                     <span class="icon">&#9993;</span> Publish
                 </a>
-                <a href="/subscribers" class="{% block nav_subscribers %}{% endblock %}">
-                    <span class="icon">&#128101;</span> Subscribers
+                <a href="/guests" class="{% block nav_guests %}{% endblock %}">
+                    <span class="icon">&#128221;</span> Guest Articles
                 </a>
+                <a href="/editor-articles" class="{% block nav_editor_articles %}{% endblock %}">
+                    <span class="icon">&#128196;</span> Editor Articles
+                </a>
+                <a href="/submissions" class="{% block nav_submissions %}{% endblock %}">
+                    <span class="icon">&#127925;</span> Submissions
+                </a>
+                <a href="/admin/reader-content" class="{% block nav_reader_content %}{% endblock %}">
+                    <span class="icon">&#128172;</span> Reader Content
+                </a>
+                <a href="/trivia" class="{% block nav_trivia %}{% endblock %}">
+                    <span class="icon">&#10068;</span> Trivia & Polls
+                </a>
+
+                <div class="nav-section-label">Planning</div>
                 <a href="/sections" class="{% block nav_sections %}{% endblock %}">
                     <span class="icon">&#9881;</span> Sections
                 </a>
                 <a href="/schedule" class="{% block nav_schedule %}{% endblock %}">
                     <span class="icon">&#128197;</span> Schedule
                 </a>
-                <a href="/sponsor-blocks" class="{% block nav_sponsor_blocks %}{% endblock %}">
-                    <span class="icon">&#128230;</span> Ad Blocks
+                <a href="/calendar" class="{% block nav_calendar %}{% endblock %}">
+                    <span class="icon">&#128467;</span> Calendar
                 </a>
                 <a href="/agents" class="{% block nav_agents %}{% endblock %}">
                     <span class="icon">&#129302;</span> AI Staff
                 </a>
-                <a href="/submissions" class="{% block nav_submissions %}{% endblock %}">
-                    <span class="icon">&#127925;</span> Submissions
-                </a>
-                <a href="/calendar" class="{% block nav_calendar %}{% endblock %}">
-                    <span class="icon">&#128467;</span> Calendar
-                </a>
-                <a href="/growth" class="{% block nav_growth %}{% endblock %}">
-                    <span class="icon">&#128200;</span> Growth
-                </a>
                 <a href="/ab-tests" class="{% block nav_ab_tests %}{% endblock %}">
                     <span class="icon">&#9878;</span> A/B Tests
                 </a>
-                <a href="/webhooks" class="{% block nav_webhooks %}{% endblock %}">
-                    <span class="icon">&#128279;</span> Webhooks
+
+                <div class="nav-section-label">Audience</div>
+                <a href="/subscribers" class="{% block nav_subscribers %}{% endblock %}">
+                    <span class="icon">&#128101;</span> Subscribers
                 </a>
-                <a href="/backup" class="{% block nav_backup %}{% endblock %}">
-                    <span class="icon">&#128190;</span> Backup
-                </a>
-                <a href="/spotify" class="{% block nav_spotify %}{% endblock %}">
-                    <span class="icon">&#127925;</span> Spotify
-                </a>
-                <a href="/admin/artists" class="{% block nav_admin_artists %}{% endblock %}">
-                    <span class="icon">&#127908;</span> Artist Profiles
-                </a>
-                <a href="/sections/analytics" class="{% block nav_section_analytics %}{% endblock %}">
-                    <span class="icon">&#128202;</span> Section Analytics
-                </a>
-                <a href="/trivia" class="{% block nav_trivia %}{% endblock %}">
-                    <span class="icon">&#10068;</span> Trivia & Polls
-                </a>
-                <a href="/advertise/inquiries" class="{% block nav_sponsor_inquiries %}{% endblock %}">
-                    <span class="icon">&#128176;</span> Sponsor Inquiries
+                <a href="/growth" class="{% block nav_growth %}{% endblock %}">
+                    <span class="icon">&#128200;</span> Growth
                 </a>
                 <a href="/admin/lead-magnets" class="{% block nav_lead_magnets %}{% endblock %}">
                     <span class="icon">&#127873;</span> Lead Magnets
@@ -100,12 +88,58 @@
                 <a href="/admin/contests" class="{% block nav_contests %}{% endblock %}">
                     <span class="icon">&#127942;</span> Contests
                 </a>
-                <a href="/admin/reader-content" class="{% block nav_reader_content %}{% endblock %}">
-                    <span class="icon">&#128172;</span> Reader Content
+                <a href="/admin/welcome-sequence" class="{% block nav_welcome %}{% endblock %}">
+                    <span class="icon">&#128140;</span> Welcome Sequence
+                </a>
+                <a href="/admin/reengagement" class="{% block nav_reengagement %}{% endblock %}">
+                    <span class="icon">&#128260;</span> Re-engagement
+                </a>
+                <a href="/admin/artists" class="{% block nav_admin_artists %}{% endblock %}">
+                    <span class="icon">&#127908;</span> Artist Profiles
+                </a>
+
+                <div class="nav-section-label">Revenue</div>
+                <a href="/sponsor-blocks" class="{% block nav_sponsor_blocks %}{% endblock %}">
+                    <span class="icon">&#128230;</span> Ad Blocks
+                </a>
+                <a href="/sponsor-blocks/analytics" class="{% block nav_sponsor_analytics %}{% endblock %}">
+                    <span class="icon">&#128176;</span> Sponsor Analytics
+                </a>
+                <a href="/advertise/inquiries" class="{% block nav_sponsor_inquiries %}{% endblock %}">
+                    <span class="icon">&#128181;</span> Sponsor Inquiries
+                </a>
+                <a href="/pricing" class="{% block nav_pricing %}{% endblock %}">
+                    <span class="icon">&#127991;</span> Pricing & Tiers
+                </a>
+
+                <div class="nav-section-label">Analytics</div>
+                <a href="/sections/analytics" class="{% block nav_section_analytics %}{% endblock %}">
+                    <span class="icon">&#128202;</span> Section Analytics
+                </a>
+
+                <div class="nav-section-label">Integrations</div>
+                <a href="/webhooks" class="{% block nav_webhooks %}{% endblock %}">
+                    <span class="icon">&#128279;</span> Webhooks
+                </a>
+                <a href="/spotify" class="{% block nav_spotify %}{% endblock %}">
+                    <span class="icon">&#127925;</span> Spotify
+                </a>
+                <a href="/advertiser/login" class="{% block nav_advertiser %}{% endblock %}">
+                    <span class="icon">&#128188;</span> Advertiser Portal
                 </a>
                 <a href="/embed/code" class="{% block nav_embed %}{% endblock %}">
-                    <span class="icon">&#128736;</span> Embed Widget
+                    <span class="icon">&#128736;</span> Embed Widgets
                 </a>
+                <a href="/schedule/scheduled-sends" class="{% block nav_scheduled_sends %}{% endblock %}">
+                    <span class="icon">&#9200;</span> Scheduled Sends
+                </a>
+                <a href="/backup" class="{% block nav_backup %}{% endblock %}">
+                    <span class="icon">&#128190;</span> Backup & Export
+                </a>
+                <a href="/community" class="{% block nav_community %}{% endblock %}">
+                    <span class="icon">&#128483;</span> Community Forum
+                </a>
+
                 <div class="sidebar-divider">
                     <a href="/logout">
                         <span class="icon">&#10140;</span> Logout
