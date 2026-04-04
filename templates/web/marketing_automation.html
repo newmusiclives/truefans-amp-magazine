@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Marketing Automation — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_automation %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Marketing Automation</h2>
+    <p class="subtitle">AI-powered subscriber growth and sponsor sales — powered by Morgan Blake, AI CMO</p>
+</div>
+
+<!-- Status Banner -->
+{% if autonomous %}
+<div class="alert alert-success" style="margin-bottom:20px;">
+    <strong>Automation is ACTIVE</strong> — Marketing jobs are running on schedule. The AI CMO is working.
+</div>
+{% else %}
+<div class="alert" style="margin-bottom:20px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:16px;border-radius:8px;">
+    <strong>Automation is OFF</strong> — Set <code>agents.default_autonomy: "autonomous"</code> in config and <code>WEEKLYAMP_WORKERS_ENABLED=true</code> to enable scheduled automation. Use the manual triggers below to run tasks on-demand.
+</div>
+{% endif %}
+
+<!-- Manual Trigger Buttons -->
+<div class="card" style="margin-bottom:20px;">
+    <h3 style="margin-bottom:16px;">Manual Triggers</h3>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Run any automation task on-demand. Results appear below each button.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div>
+            <button hx-post="/admin/marketing/automation/prospect-scan" hx-target="#result-prospects" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;">
+                &#128270; Scan for Prospects
+            </button>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">AI identifies 5 new sponsor prospects</div>
+            <div id="result-prospects" style="margin-top:8px;"></div>
+        </div>
+        <div>
+            <button hx-post="/admin/marketing/automation/outreach" hx-target="#result-outreach" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;">
+                &#9993; Draft Sponsor Outreach
+            </button>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Drafts emails for pending prospects</div>
+            <div id="result-outreach" style="margin-top:8px;"></div>
+        </div>
+        <div>
+            <button hx-post="/admin/marketing/automation/growth-tactics" hx-target="#result-tactics" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;">
+                &#128200; Growth Tactics
+            </button>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">AI generates 5 growth strategies</div>
+            <div id="result-tactics" style="margin-top:8px;"></div>
+        </div>
+        <div>
+            <button hx-post="/admin/marketing/automation/social-batch" hx-target="#result-social" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;">
+                &#128227; Draft Social Posts
+            </button>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Creates posts for latest issues</div>
+            <div id="result-social" style="margin-top:8px;"></div>
+        </div>
+        <div>
+            <button hx-post="/admin/marketing/automation/retention-check" hx-target="#result-retention" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;">
+                &#128260; Retention Check
+            </button>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">Finds at-risk subs, queues win-backs</div>
+            <div id="result-retention" style="margin-top:8px;"></div>
+        </div>
+        <div>
+            <button hx-post="/admin/marketing/automation/weekly-report" hx-target="#result-report" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;">
+                &#128203; Weekly Report
+            </button>
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">AI marketing performance summary</div>
+            <div id="result-report" style="margin-top:8px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Automation Schedule -->
+<div class="card" style="margin-bottom:20px;">
+    <h3 style="margin-bottom:16px;">Scheduled Automation (when enabled)</h3>
+    <table class="data-table">
+        <thead>
+            <tr><th>Job</th><th>Schedule</th><th>What It Does</th><th>Agent</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Prospect Scan</strong></td>
+                <td>Monday 9:00 AM</td>
+                <td>AI identifies 5 new sponsor prospects from industry analysis</td>
+                <td>Morgan Blake (CMO)</td>
+            </tr>
+            <tr>
+                <td><strong>Sponsor Outreach</strong></td>
+                <td>Daily 10:00 AM</td>
+                <td>Drafts personalized outreach emails for new prospects</td>
+                <td>Morgan Blake + Grant Sullivan</td>
+            </tr>
+            <tr>
+                <td><strong>Social Posts</strong></td>
+                <td>Daily 11:00 AM</td>
+                <td>Creates Twitter/LinkedIn/Instagram posts for latest issues</td>
+                <td>Morgan Blake + Theo Bassett</td>
+            </tr>
+            <tr>
+                <td><strong>Retention Check</strong></td>
+                <td>Daily 2:00 PM</td>
+                <td>Identifies at-risk subscribers, queues win-back emails</td>
+                <td>Morgan Blake</td>
+            </tr>
+            <tr>
+                <td><strong>Weekly Report</strong></td>
+                <td>Friday 4:00 PM</td>
+                <td>AI-generated marketing performance summary</td>
+                <td>Morgan Blake</td>
+            </tr>
+            <tr>
+                <td><strong>Research Fetch</strong></td>
+                <td>Every 6 hours</td>
+                <td>Fetches latest content from 50+ RSS/scrape sources</td>
+                <td>System</td>
+            </tr>
+            <tr>
+                <td><strong>Welcome Queue</strong></td>
+                <td>Every 30 minutes</td>
+                <td>Sends pending welcome sequence emails to new subscribers</td>
+                <td>System</td>
+            </tr>
+            <tr>
+                <td><strong>Scheduled Sends</strong></td>
+                <td>Every 60 seconds</td>
+                <td>Processes queued newsletter sends</td>
+                <td>System</td>
+            </tr>
+            <tr>
+                <td><strong>Re-engagement</strong></td>
+                <td>Daily 3:00 AM</td>
+                <td>Auto-suppress long-inactive subscribers</td>
+                <td>System</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Recent Tasks -->
+<div class="card">
+    <h3 style="margin-bottom:16px;">Recent Marketing Agent Tasks</h3>
+    {% if tasks %}
+    <table class="data-table">
+        <thead>
+            <tr><th>Task</th><th>State</th><th>Created</th></tr>
+        </thead>
+        <tbody>
+        {% for task in tasks %}
+            <tr>
+                <td>{{ task.task_type }}</td>
+                <td>
+                    {% if task.state == 'complete' %}<span class="badge badge-success">complete</span>
+                    {% elif task.state == 'working' %}<span class="badge" style="background:#3b82f6;color:#fff;">working</span>
+                    {% elif task.state == 'failed' %}<span class="badge" style="background:#ef4444;color:#fff;">failed</span>
+                    {% else %}<span class="badge badge-muted">{{ task.state }}</span>{% endif %}
+                </td>
+                <td>{{ task.created_at }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No marketing tasks yet. Use the manual triggers above to run your first automation.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

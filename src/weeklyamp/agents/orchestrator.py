@@ -6,6 +6,7 @@ from typing import Optional
 
 from weeklyamp.agents.editor import EditorInChiefAgent
 from weeklyamp.agents.growth import GrowthAgent
+from weeklyamp.agents.marketing import MarketingAgent
 from weeklyamp.agents.researcher import ResearcherAgent
 from weeklyamp.agents.promotion import PromotionAgent
 from weeklyamp.agents.sales import SalesAgent
@@ -21,6 +22,7 @@ AGENT_CLASSES = {
     "sales": SalesAgent,
     "promotion": PromotionAgent,
     "growth": GrowthAgent,
+    "marketing": MarketingAgent,
 }
 
 

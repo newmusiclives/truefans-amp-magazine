@@ -59,6 +59,8 @@ def _enrich_staff(staff: list[dict]) -> dict:
             leadership.append(enriched)
         elif atype == "growth":
             leadership.append(enriched)
+        elif atype == "marketing":
+            leadership.append(enriched)
         elif atype == "sales" and len(enriched.get("editions", [])) > 1:
             leadership.append(enriched)
         elif atype in ("editor", "researcher", "writer", "sales", "promotion") and enriched["edition"] in edition_teams:

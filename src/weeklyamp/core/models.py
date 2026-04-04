@@ -91,6 +91,7 @@ class AgentType(str, Enum):
     SALES = "sales"
     PROMOTION = "promotion"
     GROWTH = "growth"
+    MARKETING = "marketing"
 
 
 class AgentTaskState(str, Enum):

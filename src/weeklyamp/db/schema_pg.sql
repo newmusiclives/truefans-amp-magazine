@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS sponsor_bookings (
 -- AI agents
 CREATE TABLE IF NOT EXISTS ai_agents (
     id SERIAL PRIMARY KEY,
-    agent_type TEXT NOT NULL CHECK (agent_type IN ('editor_in_chief','editor','writer','researcher','sales','promotion','growth')),
+    agent_type TEXT NOT NULL CHECK (agent_type IN ('editor_in_chief','editor','writer','researcher','sales','promotion','growth','marketing')),
     name TEXT NOT NULL,
     persona TEXT DEFAULT '',
     system_prompt TEXT DEFAULT '',

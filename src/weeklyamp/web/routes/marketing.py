@@ -144,3 +144,87 @@ async def ghl_integration(request: Request):
     repo = get_repo()
     config = get_config()
     return HTMLResponse(render("marketing_ghl.html", config=config))
+
+
+# ── Automation ──
+
+@router.get("/automation", response_class=HTMLResponse)
+async def automation_page(request: Request):
+    repo = get_repo()
+    config = get_config()
+    autonomous = config.agents.default_autonomy == "autonomous"
+    agent_row = repo.get_agent_by_type("marketing")
+    tasks = []
+    if agent_row:
+        tasks = repo.get_agent_tasks(agent_id=agent_row["id"], limit=20)
+    return HTMLResponse(render("marketing_automation.html",
+        autonomous=autonomous, tasks=tasks, config=config))
+
+
+def _run_marketing_task(task_type: str):
+    """Helper to run a marketing agent task and return HTML result."""
+    import json as _json
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.agents.marketing import MarketingAgent
+    agent_row = repo.get_agent_by_type("marketing")
+    if not agent_row:
+        return '<div class="alert alert-warning">Marketing agent not found. Restart server to seed agents.</div>', {}
+    agent = MarketingAgent(repo, config, agent_row)
+    task_id = repo.create_agent_task(agent_row["id"], task_type)
+    agent.execute(task_id)
+    task = repo.get_task(task_id)
+    output = _json.loads(task.get("output_json", "{}")) if task else {}
+    return None, output
+
+
+@router.post("/automation/prospect-scan", response_class=HTMLResponse)
+async def trigger_prospect_scan(request: Request):
+    err, output = _run_marketing_task("identify_prospects")
+    if err:
+        return HTMLResponse(err)
+    return HTMLResponse(f'<div class="alert alert-success">Prospect scan complete. {output.get("count", 0)} prospects identified.</div>')
+
+
+@router.post("/automation/outreach", response_class=HTMLResponse)
+async def trigger_outreach(request: Request):
+    err, output = _run_marketing_task("draft_outreach_batch")
+    if err:
+        return HTMLResponse(err)
+    return HTMLResponse(f'<div class="alert alert-success">Outreach drafted for {output.get("drafted", 0)} prospects.</div>')
+
+
+@router.post("/automation/growth-tactics", response_class=HTMLResponse)
+async def trigger_growth_tactics(request: Request):
+    err, output = _run_marketing_task("generate_growth_tactics")
+    if err:
+        return HTMLResponse(err)
+    tactics = output.get("tactics", "No tactics generated")
+    return HTMLResponse(f'<div class="card" style="margin-top:12px"><h4>Growth Tactics</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.7">{tactics}</div></div>')
+
+
+@router.post("/automation/social-batch", response_class=HTMLResponse)
+async def trigger_social_batch(request: Request):
+    err, output = _run_marketing_task("draft_social_batch")
+    if err:
+        return HTMLResponse(err)
+    return HTMLResponse(f'<div class="alert alert-success">{output.get("drafted", 0)} social posts drafted.</div>')
+
+
+@router.post("/automation/retention-check", response_class=HTMLResponse)
+async def trigger_retention(request: Request):
+    err, output = _run_marketing_task("identify_at_risk")
+    if err:
+        return HTMLResponse(err)
+    err2, output2 = _run_marketing_task("draft_winback_batch")
+    recipients = output2.get("recipients", 0) if not err2 else 0
+    return HTMLResponse(f'<div class="alert alert-success">Retention check complete. {output.get("at_risk_count", 0)} at-risk found, {recipients} win-back emails queued.</div>')
+
+
+@router.post("/automation/weekly-report", response_class=HTMLResponse)
+async def trigger_weekly_report(request: Request):
+    err, output = _run_marketing_task("weekly_marketing_report")
+    if err:
+        return HTMLResponse(err)
+    report = output.get("report", "No report generated")
+    return HTMLResponse(f'<div class="card" style="margin-top:12px"><h4>Marketing Report</h4><div style="white-space:pre-wrap;font-size:14px;line-height:1.7">{report}</div></div>')

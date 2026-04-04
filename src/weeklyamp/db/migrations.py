@@ -1294,6 +1294,26 @@ CREATE INDEX IF NOT EXISTS idx_sponsor_prospects_status ON sponsor_prospects(sta
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (32);
 """,
+    33: """
+-- v33: Add marketing agent type
+PRAGMA foreign_keys=OFF;
+CREATE TABLE IF NOT EXISTS ai_agents_new (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    agent_type TEXT NOT NULL CHECK (agent_type IN ('editor_in_chief','editor','writer','researcher','sales','promotion','growth','marketing')),
+    name TEXT NOT NULL,
+    persona TEXT DEFAULT '',
+    system_prompt TEXT DEFAULT '',
+    autonomy_level TEXT DEFAULT 'manual' CHECK (autonomy_level IN ('manual','supervised','semi_auto','autonomous')),
+    config_json TEXT DEFAULT '{}',
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO ai_agents_new SELECT * FROM ai_agents;
+DROP TABLE ai_agents;
+ALTER TABLE ai_agents_new RENAME TO ai_agents;
+PRAGMA foreign_keys=ON;
+INSERT OR IGNORE INTO schema_version (version) VALUES (33);
+""",
 }
 
 
