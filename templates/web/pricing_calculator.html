@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Revenue Calculator — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_calculator %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Revenue Calculator</h2>
+    <p class="subtitle">Adjust parameters to model newsletter revenue across all streams</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+
+<!-- LEFT: Input Controls -->
+<div>
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Newsletter Parameters</h3>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Subscribers per Edition <span id="val-subs" style="color:var(--accent);">1,000</span></label>
+            <input type="range" id="slider-subs" min="100" max="100000" step="100" value="1000" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Number of Editions <span id="val-editions" style="color:var(--accent);">3</span></label>
+            <input type="range" id="slider-editions" min="1" max="20" step="1" value="3" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Issues per Week per Edition <span id="val-issues" style="color:var(--accent);">3</span></label>
+            <input type="range" id="slider-issues" min="1" max="7" step="1" value="3" style="width:100%;" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Sponsor Rates</h3>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Base CPM ($) <span id="val-cpm" style="color:var(--accent);">$30</span></label>
+            <input type="range" id="slider-cpm" min="5" max="100" step="1" value="30" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Sponsor Fill Rate (%) <span id="val-fill" style="color:var(--accent);">70%</span></label>
+            <input type="range" id="slider-fill" min="0" max="100" step="5" value="70" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Sponsor Slots per Issue <span id="val-slots" style="color:var(--accent);">2</span></label>
+            <input type="range" id="slider-slots" min="1" max="5" step="1" value="2" style="width:100%;" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Paid Tiers</h3>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Pro Price ($/mo) <span id="val-pro-price" style="color:var(--accent);">$9.99</span></label>
+            <input type="range" id="slider-pro-price" min="0" max="50" step="0.99" value="9.99" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Premium Price ($/mo) <span id="val-prem-price" style="color:var(--accent);">$24.99</span></label>
+            <input type="range" id="slider-prem-price" min="0" max="100" step="0.99" value="24.99" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Pro Conversion Rate (%) <span id="val-pro-conv" style="color:var(--accent);">2%</span></label>
+            <input type="range" id="slider-pro-conv" min="0" max="20" step="0.5" value="2" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Premium Conversion Rate (%) <span id="val-prem-conv" style="color:var(--accent);">1%</span></label>
+            <input type="range" id="slider-prem-conv" min="0" max="10" step="0.5" value="1" style="width:100%;" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Licensing</h3>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Active City Licensees <span id="val-licensees" style="color:var(--accent);">0</span></label>
+            <input type="range" id="slider-licensees" min="0" max="200" step="1" value="0" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">License Fee ($/mo) <span id="val-license-fee" style="color:var(--accent);">$99</span></label>
+            <input type="range" id="slider-license-fee" min="49" max="499" step="10" value="99" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Revenue Share (%) <span id="val-rev-share" style="color:var(--accent);">20%</span></label>
+            <input type="range" id="slider-rev-share" min="5" max="50" step="1" value="20" style="width:100%;" oninput="calculate()">
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Avg Licensee Revenue ($/mo) <span id="val-licensee-rev" style="color:var(--accent);">$2,500</span></label>
+            <input type="range" id="slider-licensee-rev" min="500" max="20000" step="100" value="2500" style="width:100%;" oninput="calculate()">
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom:16px;">Affiliate & Other</h3>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:flex;justify-content:space-between;font-weight:600;">Affiliate Revenue per 1K Subs ($/mo) <span id="val-aff" style="color:var(--accent);">$150</span></label>
+            <input type="range" id="slider-aff" min="0" max="1000" step="10" value="150" style="width:100%;" oninput="calculate()">
+        </div>
+    </div>
+</div>
+
+<!-- RIGHT: Results -->
+<div>
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);color:#fff;padding:24px;">
+        <h3 style="color:#fff;margin-bottom:20px;">Total Monthly Revenue</h3>
+        <div id="total-revenue" style="font-size:48px;font-weight:900;color:#10b981;margin-bottom:8px;">$0</div>
+        <div id="annual-revenue" style="font-size:18px;color:#9ca3af;">Annual: $0</div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Revenue Breakdown</h3>
+        <table class="data-table">
+            <tbody>
+                <tr><td style="font-weight:600;">Sponsor Revenue</td><td id="rev-sponsor" style="text-align:right;font-weight:700;color:var(--accent);">$0</td></tr>
+                <tr><td style="font-weight:600;">Paid Tier MRR</td><td id="rev-tiers" style="text-align:right;font-weight:700;color:var(--accent);">$0</td></tr>
+                <tr><td style="font-weight:600;">Affiliate Revenue</td><td id="rev-affiliate" style="text-align:right;font-weight:700;color:var(--accent);">$0</td></tr>
+                <tr><td style="font-weight:600;">License Fees</td><td id="rev-license-fees" style="text-align:right;font-weight:700;color:var(--accent);">$0</td></tr>
+                <tr><td style="font-weight:600;">Revenue Share (from licensees)</td><td id="rev-license-share" style="text-align:right;font-weight:700;color:var(--accent);">$0</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Key Metrics</h3>
+        <table class="data-table">
+            <tbody>
+                <tr><td>Total Subscribers (all editions)</td><td id="metric-total-subs" style="text-align:right;font-weight:700;">0</td></tr>
+                <tr><td>Total Issues per Month</td><td id="metric-total-issues" style="text-align:right;font-weight:700;">0</td></tr>
+                <tr><td>Revenue per Subscriber</td><td id="metric-rev-per-sub" style="text-align:right;font-weight:700;">$0</td></tr>
+                <tr><td>Revenue per Issue</td><td id="metric-rev-per-issue" style="text-align:right;font-weight:700;">$0</td></tr>
+                <tr><td>Pro Subscribers</td><td id="metric-pro-subs" style="text-align:right;font-weight:700;">0</td></tr>
+                <tr><td>Premium Subscribers</td><td id="metric-prem-subs" style="text-align:right;font-weight:700;">0</td></tr>
+                <tr><td>Total Sponsor Slots/Month</td><td id="metric-total-slots" style="text-align:right;font-weight:700;">0</td></tr>
+                <tr><td>Filled Sponsor Slots</td><td id="metric-filled-slots" style="text-align:right;font-weight:700;">0</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="margin-bottom:16px;">Revenue Bars</h3>
+        <div id="revenue-bars"></div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom:16px;">Growth Projections</h3>
+        <table class="data-table">
+            <thead><tr><th>Month</th><th>Subscribers</th><th>Monthly Revenue</th><th>Cumulative</th></tr></thead>
+            <tbody id="projection-table"></tbody>
+        </table>
+    </div>
+</div>
+
+</div>
+
+<script>
+function fmt(n) { return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0}); }
+function fmtDec(n) { return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}); }
+
+function calculate() {
+    // Read inputs
+    var subs = parseInt(document.getElementById('slider-subs').value);
+    var editions = parseInt(document.getElementById('slider-editions').value);
+    var issuesPerWeek = parseInt(document.getElementById('slider-issues').value);
+    var cpm = parseFloat(document.getElementById('slider-cpm').value);
+    var fillRate = parseFloat(document.getElementById('slider-fill').value) / 100;
+    var slots = parseInt(document.getElementById('slider-slots').value);
+    var proPrice = parseFloat(document.getElementById('slider-pro-price').value);
+    var premPrice = parseFloat(document.getElementById('slider-prem-price').value);
+    var proConv = parseFloat(document.getElementById('slider-pro-conv').value) / 100;
+    var premConv = parseFloat(document.getElementById('slider-prem-conv').value) / 100;
+    var licensees = parseInt(document.getElementById('slider-licensees').value);
+    var licenseFee = parseFloat(document.getElementById('slider-license-fee').value);
+    var revShare = parseFloat(document.getElementById('slider-rev-share').value) / 100;
+    var licenseeRev = parseFloat(document.getElementById('slider-licensee-rev').value);
+    var affPer1k = parseFloat(document.getElementById('slider-aff').value);
+
+    // Update display values
+    document.getElementById('val-subs').textContent = subs.toLocaleString();
+    document.getElementById('val-editions').textContent = editions;
+    document.getElementById('val-issues').textContent = issuesPerWeek;
+    document.getElementById('val-cpm').textContent = '$' + cpm;
+    document.getElementById('val-fill').textContent = (fillRate * 100) + '%';
+    document.getElementById('val-slots').textContent = slots;
+    document.getElementById('val-pro-price').textContent = fmtDec(proPrice);
+    document.getElementById('val-prem-price').textContent = fmtDec(premPrice);
+    document.getElementById('val-pro-conv').textContent = (proConv * 100) + '%';
+    document.getElementById('val-prem-conv').textContent = (premConv * 100) + '%';
+    document.getElementById('val-licensees').textContent = licensees;
+    document.getElementById('val-license-fee').textContent = fmt(licenseFee);
+    document.getElementById('val-rev-share').textContent = (revShare * 100) + '%';
+    document.getElementById('val-licensee-rev').textContent = fmt(licenseeRev);
+    document.getElementById('val-aff').textContent = fmt(affPer1k);
+
+    // Calculate
+    var totalSubs = subs * editions;
+    var issuesPerMonth = issuesPerWeek * 4.33 * editions;
+    var totalSlots = issuesPerMonth * slots;
+    var filledSlots = Math.round(totalSlots * fillRate);
+
+    // Sponsor revenue: CPM x (subscribers/1000) x filled_slots x avg position multiplier (1.07)
+    var sponsorPerSlot = cpm * (subs / 1000) * 1.07;
+    var sponsorRevenue = filledSlots * sponsorPerSlot;
+
+    // Paid tiers
+    var proSubs = Math.round(totalSubs * proConv);
+    var premSubs = Math.round(totalSubs * premConv);
+    var tierMRR = (proSubs * proPrice) + (premSubs * premPrice);
+
+    // Affiliates
+    var affiliateRevenue = (totalSubs / 1000) * affPer1k;
+
+    // Licensing
+    var licenseFees = licensees * licenseFee;
+    var licenseShare = licensees * licenseeRev * revShare;
+
+    // Total
+    var totalMonthly = sponsorRevenue + tierMRR + affiliateRevenue + licenseFees + licenseShare;
+    var annualRevenue = totalMonthly * 12;
+    var revPerSub = totalSubs > 0 ? totalMonthly / totalSubs : 0;
+    var revPerIssue = issuesPerMonth > 0 ? totalMonthly / issuesPerMonth : 0;
+
+    // Update results
+    document.getElementById('total-revenue').textContent = fmt(Math.round(totalMonthly));
+    document.getElementById('annual-revenue').textContent = 'Annual: ' + fmt(Math.round(annualRevenue));
+    document.getElementById('rev-sponsor').textContent = fmt(Math.round(sponsorRevenue));
+    document.getElementById('rev-tiers').textContent = fmt(Math.round(tierMRR));
+    document.getElementById('rev-affiliate').textContent = fmt(Math.round(affiliateRevenue));
+    document.getElementById('rev-license-fees').textContent = fmt(Math.round(licenseFees));
+    document.getElementById('rev-license-share').textContent = fmt(Math.round(licenseShare));
+
+    // Metrics
+    document.getElementById('metric-total-subs').textContent = totalSubs.toLocaleString();
+    document.getElementById('metric-total-issues').textContent = Math.round(issuesPerMonth);
+    document.getElementById('metric-rev-per-sub').textContent = fmtDec(revPerSub);
+    document.getElementById('metric-rev-per-issue').textContent = fmt(Math.round(revPerIssue));
+    document.getElementById('metric-pro-subs').textContent = proSubs.toLocaleString();
+    document.getElementById('metric-prem-subs').textContent = premSubs.toLocaleString();
+    document.getElementById('metric-total-slots').textContent = Math.round(totalSlots);
+    document.getElementById('metric-filled-slots').textContent = filledSlots;
+
+    // Revenue bars
+    var maxRev = Math.max(sponsorRevenue, tierMRR, affiliateRevenue, licenseFees + licenseShare, 1);
+    var barsHtml = '';
+    var items = [
+        {label: 'Sponsors', value: sponsorRevenue, color: '#e8645a'},
+        {label: 'Paid Tiers', value: tierMRR, color: '#7c5cfc'},
+        {label: 'Affiliates', value: affiliateRevenue, color: '#10b981'},
+        {label: 'Licensing', value: licenseFees + licenseShare, color: '#f59e0b'},
+    ];
+    for (var i = 0; i < items.length; i++) {
+        var pct = (items[i].value / maxRev) * 100;
+        barsHtml += '<div style="margin-bottom:12px;">';
+        barsHtml += '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;"><span>' + items[i].label + '</span><span style="font-weight:700;">' + fmt(Math.round(items[i].value)) + '</span></div>';
+        barsHtml += '<div style="background:#e5e7eb;border-radius:8px;height:12px;overflow:hidden;"><div style="background:' + items[i].color + ';height:100%;width:' + pct + '%;border-radius:8px;transition:width 0.3s;"></div></div>';
+        barsHtml += '</div>';
+    }
+    document.getElementById('revenue-bars').innerHTML = barsHtml;
+
+    // Growth projections (10% monthly subscriber growth)
+    var projHtml = '';
+    var cumulative = 0;
+    var growthRate = 1.10;
+    for (var m = 1; m <= 12; m++) {
+        var projSubs = Math.round(totalSubs * Math.pow(growthRate, m - 1));
+        var projRev = (sponsorRevenue * Math.pow(growthRate, m - 1)) + tierMRR * Math.pow(growthRate, m - 1) + affiliateRevenue * Math.pow(growthRate, m - 1) + licenseFees + licenseShare;
+        cumulative += projRev;
+        projHtml += '<tr><td>Month ' + m + '</td><td>' + projSubs.toLocaleString() + '</td><td>' + fmt(Math.round(projRev)) + '</td><td>' + fmt(Math.round(cumulative)) + '</td></tr>';
+    }
+    document.getElementById('projection-table').innerHTML = projHtml;
+}
+
+// Initial calculation
+calculate();
+</script>
+
+{% endblock %}

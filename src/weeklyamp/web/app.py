@@ -364,6 +364,7 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import setup as setup_routes
     from weeklyamp.web.routes import users as users_routes
     from weeklyamp.web.routes import licensing as licensing_routes
+    from weeklyamp.web.routes import pricing_calc as pricing_calc_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -430,6 +431,8 @@ def create_app() -> FastAPI:
     app.include_router(users_routes.router, prefix="/admin/users")
     # v30+ city edition licensing
     app.include_router(licensing_routes.router, prefix="/admin/licensing")
+    # Revenue calculator
+    app.include_router(pricing_calc_routes.router, prefix="/admin/calculator")
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader
