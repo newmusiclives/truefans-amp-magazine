@@ -142,21 +142,30 @@ artist_profiles:
 genre_preferences:
   enabled: false
   available_genres:
-    - hip-hop
-    - rock
-    - pop
-    - country
-    - electronic
-    - jazz
-    - r&b
-    - latin
-    - metal
-    - indie
-    - classical
-    - folk
-    - reggae
-    - punk
-    - world
+    - Alternative
+    - Americana
+    - Blues
+    - Classical
+    - Country
+    - Electronic
+    - Folk
+    - Funk
+    - Gospel
+    - Hip-Hop
+    - Indie
+    - Jazz
+    - Latin
+    - Metal
+    - Pop
+    - Punk
+    - R&B
+    - Reggae
+    - Rock
+    - Singer-Songwriter
+    - Soul
+    - Tribute/Cover Band
+    - World
+    - Other
   weight_sections_by_genre: false
   max_genres_per_subscriber: 5
 

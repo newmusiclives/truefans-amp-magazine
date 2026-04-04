@@ -801,9 +801,11 @@ class ArtistProfilesConfig(BaseModel):
 class GenrePreferencesConfig(BaseModel):
     enabled: bool = False
     available_genres: list[str] = Field(default_factory=lambda: [
-        "hip-hop", "rock", "pop", "country", "electronic", "jazz",
-        "r&b", "latin", "metal", "indie", "classical", "folk",
-        "reggae", "punk", "world",
+        "Alternative", "Americana", "Blues", "Classical", "Country",
+        "Electronic", "Folk", "Funk", "Gospel", "Hip-Hop", "Indie",
+        "Jazz", "Latin", "Metal", "Pop", "Punk", "R&B", "Reggae",
+        "Rock", "Singer-Songwriter", "Soul", "Tribute/Cover Band",
+        "World", "Other",
     ])
     weight_sections_by_genre: bool = False
     max_genres_per_subscriber: int = 5
