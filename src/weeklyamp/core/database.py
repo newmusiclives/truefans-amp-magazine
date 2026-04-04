@@ -920,6 +920,22 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
         except integrity:
             pass
 
+    # --- Demo artist newsletter: Fox & Bones ---
+    exists = conn.execute(
+        f"SELECT id FROM artist_newsletters WHERE slug = {ph}", ("fox-and-bones",)
+    ).fetchone()
+    if not exists:
+        try:
+            conn.execute(
+                f"""INSERT INTO artist_newsletters
+                    (artist_name, slug, brand_color, tagline, template_style, status, subscriber_count)
+                    VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, 'active', 247)""",
+                ("Fox & Bones", "fox-and-bones", "#2d5a3d", "Indie Folk from Portland, Oregon", "minimal"),
+            )
+            seeded += 1
+        except integrity:
+            pass
+
     conn.commit()
     conn.close()
     if seeded:
