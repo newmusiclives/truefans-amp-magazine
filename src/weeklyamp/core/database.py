@@ -824,6 +824,77 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
             except integrity:
                 pass
 
+    # --- Marketing templates ---
+    mktg_templates = [
+        # Subscriber Growth - Email
+        ("Welcome Series Invite", "email", "subscriber_growth", "You're missing out on TrueFans NEWSLETTERS",
+         "Hi {{first_name}},\n\nMusic industry insights, artist tools, and fan discoveries — delivered 3x weekly to your inbox.\n\nJoin {{subscriber_count}}+ readers who trust TrueFans NEWSLETTERS for:\n\n• {{edition_benefit_1}}\n• {{edition_benefit_2}}\n• {{edition_benefit_3}}\n\nSubscribe free: {{subscribe_url}}\n\nSee you inside,\nPaul Saunders\nFounder, TrueFans NEWSLETTERS",
+         "first_name,subscriber_count,edition_benefit_1,edition_benefit_2,edition_benefit_3,subscribe_url"),
+
+        # Subscriber Growth - SMS
+        ("SMS Subscribe Invite", "sms", "subscriber_growth", "",
+         "Hey {{first_name}}! TrueFans NEWSLETTERS delivers music industry insights 3x/week. Join {{subscriber_count}}+ readers free: {{subscribe_url}}",
+         "first_name,subscriber_count,subscribe_url"),
+
+        # Subscriber Growth - AI Agent
+        ("AI Subscriber Outreach", "ai_prompt", "subscriber_growth", "",
+         "You are a friendly outreach agent for TrueFans NEWSLETTERS. Your goal is to invite {{contact_name}} to subscribe. Key points: we have 3 editions (Fan, Artist, Industry), publish 3x weekly, and have {{subscriber_count}} subscribers. Be warm, not pushy. Ask which edition interests them most.",
+         "contact_name,subscriber_count"),
+
+        # Sponsor Outreach - Email
+        ("Sponsor Intro Email", "email", "sponsor_outreach", "Partnership opportunity: TrueFans NEWSLETTERS",
+         "Hi {{contact_name}},\n\nI'm reaching out from TrueFans NEWSLETTERS — we publish 3 music newsletters (Fan, Artist, Industry) reaching {{subscriber_count}}+ engaged subscribers 3x weekly.\n\nOur audience includes:\n• Music fans who buy merch, tickets, and streaming subscriptions\n• Independent artists investing in gear, distribution, and education\n• Industry professionals making purchasing decisions\n\nWe offer premium sponsor placements (top/mid/bottom) with:\n• {{open_rate}}% open rate (industry avg: 22%)\n• {{click_rate}}% click rate\n• CPM starting at ${{base_cpm}}\n\nWould you be open to a quick call this week?\n\nBest,\nGrant Sullivan\nVP of Sales, TrueFans NEWSLETTERS",
+         "contact_name,subscriber_count,open_rate,click_rate,base_cpm"),
+
+        # Sponsor Outreach - SMS
+        ("Sponsor SMS Follow-up", "sms", "sponsor_outreach", "",
+         "Hi {{contact_name}}, Grant from TrueFans NEWSLETTERS here. Following up on the sponsorship opportunity I emailed about. Our music newsletter reaches {{subscriber_count}}+ subscribers 3x/week. Quick call this week? Reply YES and I'll send calendar link.",
+         "contact_name,subscriber_count"),
+
+        # Sponsor Outreach - Voice Script
+        ("Sponsor Call Script", "voice_script", "sponsor_outreach", "",
+         "Hi {{contact_name}}, this is Grant Sullivan from TrueFans NEWSLETTERS. I'm calling because I think {{company_name}} would be a perfect sponsor for our music newsletter. We reach {{subscriber_count}} engaged music professionals and fans 3 times a week. Our open rates are above {{open_rate}}%, which is well above industry average. I'd love to share our media kit and discuss how we can create a native sponsorship that feels authentic to your brand. Do you have 10 minutes this week for a quick call?",
+         "contact_name,company_name,subscriber_count,open_rate"),
+
+        # Sponsor Outreach - AI Agent
+        ("AI Sponsor Research", "ai_prompt", "sponsor_outreach", "",
+         "Research {{company_name}} ({{website}}) and identify why they would be a good sponsor for TrueFans NEWSLETTERS, a music newsletter with {{subscriber_count}} subscribers across Fan, Artist, and Industry editions. Find: 1) Their target audience overlap with our readers 2) Current advertising/sponsorship activity 3) Budget signals 4) Best contact person 5) Personalized pitch angle. Return a brief with all findings.",
+         "company_name,website,subscriber_count"),
+
+        # Retention - Email
+        ("Win-back Email", "email", "retention", "We miss you at TrueFans NEWSLETTERS",
+         "Hi {{first_name}},\n\nWe noticed you haven't opened TrueFans NEWSLETTERS in a while. We get it — inboxes are crowded.\n\nBut here's what you missed:\n• {{missed_highlight_1}}\n• {{missed_highlight_2}}\n• {{missed_highlight_3}}\n\nStill interested? Just click here to stay subscribed: {{resubscribe_url}}\n\nIf not, no hard feelings — you can unsubscribe anytime.\n\nKeep the music playing,\nThe TrueFans Team",
+         "first_name,missed_highlight_1,missed_highlight_2,missed_highlight_3,resubscribe_url"),
+
+        # Upsell - Email
+        ("Pro Tier Upsell", "email", "upsell", "Unlock TrueFans Pro — ad-free + early access",
+         "Hi {{first_name}},\n\nYou've been reading TrueFans NEWSLETTERS for {{weeks_subscribed}} weeks now. You're clearly serious about music.\n\nReady to level up? TrueFans Pro gives you:\n\n✅ Ad-free reading experience\n✅ Early access to every issue\n✅ Exclusive content and deep-dives\n✅ Trivia leaderboard perks\n\nAll for just ${{pro_price}}/month.\n\nUpgrade now: {{upgrade_url}}\n\nSee you at the top,\nPaul Saunders",
+         "first_name,weeks_subscribed,pro_price,upgrade_url"),
+
+        # Social Post
+        ("Social Growth Post", "social_post", "subscriber_growth", "",
+         "🎵 {{stat_number}} music professionals read TrueFans NEWSLETTERS every week.\n\n3 editions. 3x weekly. Always free.\n\n→ Fan Edition: backstage stories & discoveries\n→ Artist Edition: tools, gear & career strategy\n→ Industry Edition: deals, data & market moves\n\nJoin them: {{subscribe_url}}\n\n#MusicIndustry #Newsletter #IndieMusic",
+         "stat_number,subscribe_url"),
+
+        # Landing Page Copy
+        ("Landing Page Copy", "landing_page", "subscriber_growth", "",
+         "THE MUSIC NEWSLETTERS FOR PEOPLE WHO TAKE MUSIC SERIOUSLY\n\nWhether you're a fan who wants to go deeper, an artist building a career, or a professional making deals — TrueFans NEWSLETTERS delivers the insights you need.\n\n{{subscriber_count}}+ subscribers trust us 3x every week.\n\nChoose your edition:\n🎵 FAN EDITION — Backstage stories, deep-dives, and discoveries\n🎸 ARTIST EDITION — Songwriting, gear, marketing, and career strategy\n📊 INDUSTRY EDITION — Deals, streaming data, and market intelligence\n\nSubscribe free. Unsubscribe anytime.",
+         "subscriber_count"),
+    ]
+    for name, ttype, cat, subject, content, variables in mktg_templates:
+        exists = conn.execute(
+            f"SELECT id FROM marketing_templates WHERE name = {ph}", (name,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO marketing_templates (name, template_type, category, subject, content, variables) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph})",
+                    (name, ttype, cat, subject, content, variables),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
     conn.commit()
     conn.close()
     if seeded:

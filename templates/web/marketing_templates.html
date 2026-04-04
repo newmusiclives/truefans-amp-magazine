@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Marketing Templates — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_mktg_templates %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Marketing Template Library</h2>
+    <p class="subtitle">Pre-built templates for email, SMS, voice, AI agent, and social campaigns</p>
+</div>
+
+{% set category_labels = {
+    'subscriber_growth': 'Subscriber Growth',
+    'sponsor_outreach': 'Sponsor Outreach',
+    'retention': 'Retention / Win-back',
+    'upsell': 'Upsell to Paid Tier',
+    'event': 'Event / Launch',
+    'general': 'General'
+} %}
+
+{% set type_badges = {
+    'email': ('&#9993;', '#3498db'),
+    'sms': ('&#128172;', '#27ae60'),
+    'voice_script': ('&#128222;', '#e67e22'),
+    'ai_prompt': ('&#129302;', '#9b59b6'),
+    'social_post': ('&#127760;', '#e74c3c'),
+    'landing_page': ('&#127968;', '#1abc9c')
+} %}
+
+{% for cat_key in ['subscriber_growth', 'sponsor_outreach', 'retention', 'upsell', 'event', 'general'] %}
+{% if cat_key in by_category %}
+<div class="card" style="margin-bottom:2rem">
+    <h3 style="margin-top:0">{{ category_labels.get(cat_key, cat_key | title) }}</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-top:1rem">
+        {% for t in by_category[cat_key] %}
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1.25rem;display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.75rem">
+                <strong style="font-size:1em">{{ t.name }}</strong>
+                {% set badge = type_badges.get(t.template_type, ('&#128196;', '#666')) %}
+                <span style="background:{{ badge[1] }};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75em;white-space:nowrap">{{ badge[0]|safe }} {{ t.template_type | replace('_', ' ') | title }}</span>
+            </div>
+            {% if t.subject %}
+            <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem"><strong>Subject:</strong> {{ t.subject }}</div>
+            {% endif %}
+            <div style="font-size:0.85em;color:var(--text-dim);flex:1;margin-bottom:0.75rem;white-space:pre-wrap;max-height:120px;overflow:hidden">{{ t.content[:200] }}{% if t.content|length > 200 %}...{% endif %}</div>
+            {% if t.variables %}
+            <div style="font-size:0.75em;color:var(--text-dim);margin-bottom:0.75rem">
+                <strong>Variables:</strong>
+                {% for v in t.variables.split(',') %}
+                <code style="background:var(--bg-dim);padding:1px 4px;border-radius:3px;margin:1px">{{ '{{' }}{{ v.strip() }}{{ '}}' }}</code>
+                {% endfor %}
+            </div>
+            {% endif %}
+            <div style="display:flex;gap:0.5rem">
+                <a href="/admin/marketing/templates/{{ t.id }}" class="btn btn-sm" style="font-size:0.8em">View Full Template</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if not by_category %}
+<div class="card">
+    <p class="text-muted">No templates available. Templates are seeded automatically on startup.</p>
+</div>
+{% endif %}
+{% endblock %}

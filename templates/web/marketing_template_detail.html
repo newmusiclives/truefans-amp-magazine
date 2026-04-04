@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ template.name }} — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_mktg_templates %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ template.name }}</h2>
+    <p class="subtitle">
+        {% set type_labels = {'email': 'Email Template', 'sms': 'SMS Template', 'voice_script': 'Voice Script', 'ai_prompt': 'AI Prompt', 'social_post': 'Social Post', 'landing_page': 'Landing Page'} %}
+        {{ type_labels.get(template.template_type, template.template_type) }} &middot;
+        {{ template.category | replace('_', ' ') | title }}
+    </p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:1.5rem;align-items:start">
+    <!-- Main Content -->
+    <div>
+        {% if template.subject %}
+        <div class="card" style="margin-bottom:1rem">
+            <h3 style="margin-top:0">Subject Line</h3>
+            <div style="font-size:1.1em;padding:0.75rem;background:var(--bg-dim);border-radius:6px;font-weight:500">{{ template.subject }}</div>
+        </div>
+        {% endif %}
+
+        <div class="card" style="margin-bottom:1rem">
+            <h3 style="margin-top:0">Content</h3>
+            <pre style="white-space:pre-wrap;word-wrap:break-word;font-family:inherit;font-size:0.95em;line-height:1.6;padding:1rem;background:var(--bg-dim);border-radius:6px;border:1px solid var(--border);max-height:600px;overflow-y:auto">{{ template.content }}</pre>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-top:0">Copy to Campaign</h3>
+            <p style="color:var(--text-dim);font-size:0.9em">Use this template as the starting point for a new campaign.</p>
+            <a href="/admin/marketing/campaigns" class="btn btn-primary">Create Campaign with This Template</a>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div>
+        <div class="card" style="margin-bottom:1rem">
+            <h3 style="margin-top:0">Details</h3>
+            <div style="display:grid;gap:0.75rem;font-size:0.9em">
+                <div>
+                    <strong>Type</strong><br>
+                    <span style="color:var(--text-dim)">{{ template.template_type | replace('_', ' ') | title }}</span>
+                </div>
+                <div>
+                    <strong>Category</strong><br>
+                    <span style="color:var(--text-dim)">{{ template.category | replace('_', ' ') | title }}</span>
+                </div>
+                <div>
+                    <strong>Usage Count</strong><br>
+                    <span style="color:var(--text-dim)">{{ template.usage_count }} times</span>
+                </div>
+                <div>
+                    <strong>Status</strong><br>
+                    <span class="badge {% if template.is_active %}badge-success{% else %}badge-secondary{% endif %}">{{ 'Active' if template.is_active else 'Inactive' }}</span>
+                </div>
+                <div>
+                    <strong>Created</strong><br>
+                    <span style="color:var(--text-dim)">{{ template.created_at[:10] if template.created_at else 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if template.variables %}
+        <div class="card">
+            <h3 style="margin-top:0">Template Variables</h3>
+            <p style="font-size:0.85em;color:var(--text-dim)">Replace these placeholders with actual values when using this template:</p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+                {% for v in template.variables.split(',') %}
+                <code style="background:var(--bg-dim);padding:4px 8px;border-radius:4px;font-size:0.85em;border:1px solid var(--border)">{{ '{{' }}{{ v.strip() }}{{ '}}' }}</code>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="/admin/marketing/templates">&larr; Back to Templates</a>
+</div>
+{% endblock %}

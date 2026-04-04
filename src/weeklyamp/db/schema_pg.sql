@@ -732,3 +732,80 @@ CREATE TABLE IF NOT EXISTS artist_newsletter_templates (
 );
 
 INSERT INTO schema_version (version) VALUES (31) ON CONFLICT DO NOTHING;
+
+-- v32: Marketing campaigns and outreach tracking
+
+CREATE TABLE IF NOT EXISTS marketing_campaigns (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    campaign_type TEXT NOT NULL CHECK (campaign_type IN ('subscriber_growth','sponsor_outreach','retention','reactivation','upsell','event')),
+    channel TEXT DEFAULT 'email' CHECK (channel IN ('email','sms','voice','ai_agent','social','multi')),
+    target_audience TEXT DEFAULT '',
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','scheduled','active','paused','completed','cancelled')),
+    goal_description TEXT DEFAULT '',
+    goal_target INTEGER DEFAULT 0,
+    goal_achieved INTEGER DEFAULT 0,
+    template_content TEXT DEFAULT '',
+    ghl_workflow_id TEXT DEFAULT '',
+    ghl_campaign_id TEXT DEFAULT '',
+    scheduled_at TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    created_by TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_marketing_campaigns_type ON marketing_campaigns(campaign_type);
+CREATE INDEX IF NOT EXISTS idx_marketing_campaigns_status ON marketing_campaigns(status);
+
+CREATE TABLE IF NOT EXISTS marketing_templates (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    template_type TEXT NOT NULL CHECK (template_type IN ('email','sms','voice_script','ai_prompt','social_post','landing_page')),
+    category TEXT DEFAULT 'general' CHECK (category IN ('subscriber_growth','sponsor_outreach','retention','upsell','event','general')),
+    subject TEXT DEFAULT '',
+    content TEXT DEFAULT '',
+    variables TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    usage_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS outreach_log (
+    id SERIAL PRIMARY KEY,
+    campaign_id INTEGER REFERENCES marketing_campaigns(id),
+    channel TEXT DEFAULT 'email',
+    recipient_email TEXT DEFAULT '',
+    recipient_phone TEXT DEFAULT '',
+    recipient_name TEXT DEFAULT '',
+    recipient_type TEXT DEFAULT 'subscriber' CHECK (recipient_type IN ('subscriber','sponsor_prospect','licensee_prospect','artist','partner')),
+    status TEXT DEFAULT 'sent' CHECK (status IN ('queued','sent','delivered','opened','clicked','replied','converted','failed','bounced')),
+    ghl_contact_id TEXT DEFAULT '',
+    response_notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_outreach_campaign ON outreach_log(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_outreach_status ON outreach_log(status);
+
+CREATE TABLE IF NOT EXISTS sponsor_prospects (
+    id SERIAL PRIMARY KEY,
+    company_name TEXT NOT NULL,
+    contact_name TEXT DEFAULT '',
+    contact_email TEXT DEFAULT '',
+    contact_phone TEXT DEFAULT '',
+    website TEXT DEFAULT '',
+    category TEXT DEFAULT 'general',
+    target_editions TEXT DEFAULT '',
+    estimated_budget TEXT DEFAULT '',
+    status TEXT DEFAULT 'identified' CHECK (status IN ('identified','researching','contacted','meeting','proposal','negotiating','closed_won','closed_lost')),
+    source TEXT DEFAULT 'manual',
+    last_contacted_at TIMESTAMP,
+    next_followup_at TIMESTAMP,
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_sponsor_prospects_status ON sponsor_prospects(status);
+
+INSERT INTO schema_version (version) VALUES (32) ON CONFLICT DO NOTHING;

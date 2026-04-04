@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Sponsor Pipeline — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_prospects %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Sponsor Prospect Pipeline</h2>
+    <p class="subtitle">Track and manage sponsor outreach from identification to close</p>
+</div>
+
+<!-- Add Prospect Form -->
+<div class="card" style="margin-bottom:2rem">
+    <h3 style="margin-top:0">Add New Prospect</h3>
+    <div id="prospect-result"></div>
+    <form hx-post="/admin/marketing/prospects/create" hx-target="#prospect-result" hx-swap="innerHTML" style="display:grid;gap:1rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+            <div>
+                <label for="company_name"><strong>Company Name</strong></label>
+                <input type="text" id="company_name" name="company_name" required class="form-control" placeholder="e.g. Fender Musical Instruments">
+            </div>
+            <div>
+                <label for="contact_name"><strong>Contact Name</strong></label>
+                <input type="text" id="contact_name" name="contact_name" class="form-control" placeholder="e.g. Jane Smith">
+            </div>
+            <div>
+                <label for="contact_email"><strong>Contact Email</strong></label>
+                <input type="email" id="contact_email" name="contact_email" class="form-control" placeholder="jane@company.com">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+            <div>
+                <label for="contact_phone"><strong>Phone</strong></label>
+                <input type="text" id="contact_phone" name="contact_phone" class="form-control" placeholder="+1 555-0100">
+            </div>
+            <div>
+                <label for="website"><strong>Website</strong></label>
+                <input type="url" id="website" name="website" class="form-control" placeholder="https://company.com">
+            </div>
+            <div>
+                <label for="category"><strong>Category</strong></label>
+                <input type="text" id="category" name="category" class="form-control" value="general" placeholder="e.g. instruments, streaming, education">
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+            <div>
+                <label for="target_editions"><strong>Target Editions</strong></label>
+                <input type="text" id="target_editions" name="target_editions" class="form-control" placeholder="e.g. artist, industry">
+            </div>
+            <div>
+                <label for="estimated_budget"><strong>Estimated Budget</strong></label>
+                <input type="text" id="estimated_budget" name="estimated_budget" class="form-control" placeholder="e.g. $2,000/month">
+            </div>
+        </div>
+        <div>
+            <label for="notes"><strong>Notes</strong></label>
+            <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="Research notes, connection points..."></textarea>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary">Add Prospect</button>
+        </div>
+    </form>
+</div>
+
+<!-- Pipeline View -->
+<div class="card">
+    <h3 style="margin-top:0">Prospect Pipeline</h3>
+
+    <!-- Pipeline stage summary -->
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.5rem">
+        {% set stage_counts = {} %}
+        {% for p in prospects %}
+            {% if p.status in stage_counts %}
+                {% set _ = stage_counts.update({p.status: stage_counts[p.status] + 1}) %}
+            {% else %}
+                {% set _ = stage_counts.update({p.status: 1}) %}
+            {% endif %}
+        {% endfor %}
+        {% for status in prospect_statuses %}
+            <span class="badge {% if status == 'closed_won' %}badge-success{% elif status == 'closed_lost' %}badge-danger{% elif status in ('proposal','negotiating') %}badge-warning{% elif status == 'contacted' %}badge-info{% else %}badge-secondary{% endif %}" style="font-size:0.85em;padding:4px 10px">
+                {{ status | replace('_', ' ') | title }}: {{ stage_counts.get(status, 0) }}
+            </span>
+        {% endfor %}
+    </div>
+
+    {% if prospects %}
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Category</th>
+                    <th>Editions</th>
+                    <th>Budget</th>
+                    <th>Status</th>
+                    <th>Source</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in prospects %}
+                <tr>
+                    <td>
+                        <strong>{{ p.company_name }}</strong>
+                        {% if p.website %}<br><a href="{{ p.website }}" target="_blank" style="font-size:0.8em">{{ p.website[:30] }}{% if p.website|length > 30 %}...{% endif %}</a>{% endif %}
+                    </td>
+                    <td>{{ p.contact_name or '-' }}</td>
+                    <td>{{ p.contact_email or '-' }}</td>
+                    <td>{{ p.contact_phone or '-' }}</td>
+                    <td>{{ p.category }}</td>
+                    <td>{{ p.target_editions or '-' }}</td>
+                    <td>{{ p.estimated_budget or '-' }}</td>
+                    <td id="pstatus-{{ p.id }}">
+                        <span class="badge {% if p.status == 'closed_won' %}badge-success{% elif p.status == 'closed_lost' %}badge-danger{% elif p.status in ('proposal','negotiating') %}badge-warning{% elif p.status == 'contacted' %}badge-info{% else %}badge-secondary{% endif %}">{{ p.status | replace('_', ' ') }}</span>
+                    </td>
+                    <td>{{ p.source }}</td>
+                    <td>
+                        <form hx-post="/admin/marketing/prospects/{{ p.id }}/status" hx-target="#pstatus-{{ p.id }}" hx-swap="innerHTML" style="display:flex;gap:0.25rem;align-items:center">
+                            <select name="status" class="form-control" style="width:auto;font-size:0.8em;padding:2px 6px">
+                                {% for s in prospect_statuses %}
+                                <option value="{{ s }}" {% if s == p.status %}selected{% endif %}>{{ s | replace('_', ' ') | title }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-sm" style="font-size:0.8em;padding:2px 8px">Set</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No prospects in the pipeline yet. Add one above to get started.</p>
+    {% endif %}
+</div>
+{% endblock %}

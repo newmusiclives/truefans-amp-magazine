@@ -4050,3 +4050,124 @@ class Repository:
         rows = conn.execute("SELECT * FROM artist_newsletter_templates ORDER BY is_default DESC, name").fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    # ---- Marketing & Promotion ----
+
+    def get_marketing_campaigns(self, campaign_type: str = "", status: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        query = "SELECT * FROM marketing_campaigns"
+        conditions, params = [], []
+        if campaign_type:
+            conditions.append("campaign_type = ?")
+            params.append(campaign_type)
+        if status:
+            conditions.append("status = ?")
+            params.append(status)
+        if conditions:
+            query += " WHERE " + " AND ".join(conditions)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_marketing_campaign(self, name: str, campaign_type: str, channel: str = "email", target_audience: str = "", goal_description: str = "", goal_target: int = 0, template_content: str = "", notes: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO marketing_campaigns (name, campaign_type, channel, target_audience, goal_description, goal_target, template_content, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (name, campaign_type, channel, target_audience, goal_description, goal_target, template_content, notes),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def update_campaign_status(self, campaign_id: int, status: str) -> None:
+        conn = self._conn()
+        updates = "status = ?, updated_at = CURRENT_TIMESTAMP"
+        params = [status]
+        if status == "active":
+            updates += ", started_at = CURRENT_TIMESTAMP"
+        elif status == "completed":
+            updates += ", completed_at = CURRENT_TIMESTAMP"
+        conn.execute(f"UPDATE marketing_campaigns SET {updates} WHERE id = ?", (*params, campaign_id))
+        conn.commit()
+        conn.close()
+
+    def get_marketing_templates(self, template_type: str = "", category: str = "") -> list[dict]:
+        conn = self._conn()
+        query = "SELECT * FROM marketing_templates WHERE is_active = 1"
+        params = []
+        if template_type:
+            query += " AND template_type = ?"
+            params.append(template_type)
+        if category:
+            query += " AND category = ?"
+            params.append(category)
+        query += " ORDER BY category, name"
+        rows = conn.execute(query, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_marketing_template(self, template_id: int):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM marketing_templates WHERE id = ?", (template_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def create_sponsor_prospect(self, company_name: str, contact_name: str = "", contact_email: str = "", contact_phone: str = "", website: str = "", category: str = "general", target_editions: str = "", estimated_budget: str = "", source: str = "manual", notes: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO sponsor_prospects (company_name, contact_name, contact_email, contact_phone, website, category, target_editions, estimated_budget, source, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (company_name, contact_name, contact_email, contact_phone, website, category, target_editions, estimated_budget, source, notes),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_sponsor_prospects(self, status: str = "", limit: int = 50) -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute("SELECT * FROM sponsor_prospects WHERE status = ? ORDER BY updated_at DESC LIMIT ?", (status, limit)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM sponsor_prospects ORDER BY updated_at DESC LIMIT ?", (limit,)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_prospect_status(self, prospect_id: int, status: str) -> None:
+        conn = self._conn()
+        conn.execute("UPDATE sponsor_prospects SET status = ?, updated_at = CURRENT_TIMESTAMP, last_contacted_at = CURRENT_TIMESTAMP WHERE id = ?", (status, prospect_id))
+        conn.commit()
+        conn.close()
+
+    def log_outreach(self, campaign_id: int = 0, channel: str = "email", recipient_email: str = "", recipient_phone: str = "", recipient_name: str = "", recipient_type: str = "subscriber", status: str = "sent") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO outreach_log (campaign_id, channel, recipient_email, recipient_phone, recipient_name, recipient_type, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (campaign_id or None, channel, recipient_email, recipient_phone, recipient_name, recipient_type, status),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_outreach_stats(self) -> dict:
+        conn = self._conn()
+        total = conn.execute("SELECT COUNT(*) as count FROM outreach_log").fetchone()
+        by_status = conn.execute("SELECT status, COUNT(*) as count FROM outreach_log GROUP BY status ORDER BY count DESC").fetchall()
+        by_channel = conn.execute("SELECT channel, COUNT(*) as count FROM outreach_log GROUP BY channel ORDER BY count DESC").fetchall()
+        campaigns = conn.execute("SELECT COUNT(*) as count FROM marketing_campaigns").fetchone()
+        active = conn.execute("SELECT COUNT(*) as count FROM marketing_campaigns WHERE status = 'active'").fetchone()
+        prospects = conn.execute("SELECT COUNT(*) as count FROM sponsor_prospects").fetchone()
+        conn.close()
+        return {
+            "total_outreach": dict(total)["count"] if total else 0,
+            "by_status": [dict(r) for r in by_status],
+            "by_channel": [dict(r) for r in by_channel],
+            "total_campaigns": dict(campaigns)["count"] if campaigns else 0,
+            "active_campaigns": dict(active)["count"] if active else 0,
+            "total_prospects": dict(prospects)["count"] if prospects else 0,
+        }

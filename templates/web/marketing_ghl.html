@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}GHL Integration — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_ghl %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>GoHighLevel Integration</h2>
+    <p class="subtitle">Configure and manage GHL channels for marketing automation</p>
+</div>
+
+<!-- API Connection Status -->
+<div class="card" style="margin-bottom:2rem">
+    <h3 style="margin-top:0">Connection Status</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem">
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;border:1px solid var(--border);border-radius:8px">
+            <div style="width:12px;height:12px;border-radius:50%;background:{% if config.ghl.api_key %}#5cb85c{% else %}#d9534f{% endif %}"></div>
+            <div>
+                <strong>GHL API Key</strong><br>
+                <span style="font-size:0.85em;color:var(--text-dim)">{% if config.ghl.api_key %}Configured{% else %}Not configured — set GHL_API_KEY env variable{% endif %}</span>
+            </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:1rem;border:1px solid var(--border);border-radius:8px">
+            <div style="width:12px;height:12px;border-radius:50%;background:{% if config.ghl.location_id %}#5cb85c{% else %}#f0ad4e{% endif %}"></div>
+            <div>
+                <strong>GHL Location ID</strong><br>
+                <span style="font-size:0.85em;color:var(--text-dim)">{% if config.ghl.location_id %}{{ config.ghl.location_id }}{% else %}Not configured — set GHL_LOCATION_ID env variable{% endif %}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Channel Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.5rem;margin-bottom:2rem">
+
+    <!-- Email Channel -->
+    <div class="card" style="border-top:4px solid #3498db">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+            <span style="font-size:2rem">&#9993;</span>
+            <div>
+                <h3 style="margin:0">Email Channel</h3>
+                <span style="font-size:0.85em;color:var(--text-dim)">Automated email sequences</span>
+            </div>
+        </div>
+        <div style="font-size:0.9em;line-height:1.7">
+            <strong>Capabilities:</strong>
+            <ul style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Welcome email series for new subscribers</li>
+                <li>Sponsor intro and follow-up sequences</li>
+                <li>Win-back campaigns for inactive readers</li>
+                <li>Upsell sequences for paid tier conversion</li>
+                <li>Event announcements and launches</li>
+            </ul>
+            <strong>Setup:</strong>
+            <ol style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Create email templates in GHL</li>
+                <li>Build automation workflows with triggers</li>
+                <li>Link GHL Workflow ID to campaigns here</li>
+                <li>Monitor delivery via outreach log</li>
+            </ol>
+        </div>
+        <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+            <a href="/admin/marketing/templates" class="btn btn-sm">View Email Templates</a>
+        </div>
+    </div>
+
+    <!-- SMS Channel -->
+    <div class="card" style="border-top:4px solid #27ae60">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+            <span style="font-size:2rem">&#128172;</span>
+            <div>
+                <h3 style="margin:0">SMS / Text Channel</h3>
+                <span style="font-size:0.85em;color:var(--text-dim)">Instant text message outreach</span>
+            </div>
+        </div>
+        <div style="font-size:0.9em;line-height:1.7">
+            <strong>Capabilities:</strong>
+            <ul style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Subscribe invitations with direct links</li>
+                <li>Sponsor follow-up after email outreach</li>
+                <li>Event reminders and new issue alerts</li>
+                <li>Two-way conversational SMS flows</li>
+                <li>Opt-in/opt-out compliance management</li>
+            </ul>
+            <strong>Setup:</strong>
+            <ol style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Configure GHL phone number / Twilio integration</li>
+                <li>Create SMS templates (160 char recommended)</li>
+                <li>Set up compliance opt-in workflows</li>
+                <li>Assign phone numbers to campaign channels</li>
+            </ol>
+        </div>
+        <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+            <a href="/admin/marketing/templates" class="btn btn-sm">View SMS Templates</a>
+        </div>
+    </div>
+
+    <!-- Voice Channel -->
+    <div class="card" style="border-top:4px solid #e67e22">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+            <span style="font-size:2rem">&#128222;</span>
+            <div>
+                <h3 style="margin:0">Voice Call Channel</h3>
+                <span style="font-size:0.85em;color:var(--text-dim)">AI-powered phone outreach</span>
+            </div>
+        </div>
+        <div style="font-size:0.9em;line-height:1.7">
+            <strong>Capabilities:</strong>
+            <ul style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Scripted sponsor outreach calls</li>
+                <li>AI voice agent for prospect qualification</li>
+                <li>Voicemail drops for busy contacts</li>
+                <li>Call scheduling and calendar booking</li>
+                <li>Call recording and transcript logging</li>
+            </ul>
+            <strong>Setup:</strong>
+            <ol style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Enable GHL voice/phone features</li>
+                <li>Create voice scripts for each campaign type</li>
+                <li>Configure AI voice agent personality</li>
+                <li>Set call hours and compliance rules</li>
+            </ol>
+        </div>
+        <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+            <a href="/admin/marketing/templates" class="btn btn-sm">View Voice Scripts</a>
+        </div>
+    </div>
+
+    <!-- AI Agent Channel -->
+    <div class="card" style="border-top:4px solid #9b59b6">
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem">
+            <span style="font-size:2rem">&#129302;</span>
+            <div>
+                <h3 style="margin:0">AI Agent Channel</h3>
+                <span style="font-size:0.85em;color:var(--text-dim)">Conversational AI for lead gen</span>
+            </div>
+        </div>
+        <div style="font-size:0.9em;line-height:1.7">
+            <strong>Capabilities:</strong>
+            <ul style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Automated prospect research and briefing</li>
+                <li>Personalized outreach message generation</li>
+                <li>Conversational lead qualification</li>
+                <li>Sponsor pitch angle recommendations</li>
+                <li>Subscriber interest matching to editions</li>
+            </ul>
+            <strong>Setup:</strong>
+            <ol style="margin:0.5rem 0;padding-left:1.25rem">
+                <li>Configure AI prompts per campaign type</li>
+                <li>Set up GHL conversation AI workflows</li>
+                <li>Define qualification criteria and scoring</li>
+                <li>Connect to CRM for contact enrichment</li>
+            </ol>
+        </div>
+        <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+            <a href="/admin/marketing/templates" class="btn btn-sm">View AI Prompts</a>
+        </div>
+    </div>
+</div>
+
+<!-- Environment Variables Reference -->
+<div class="card">
+    <h3 style="margin-top:0">Environment Variables</h3>
+    <p style="color:var(--text-dim);font-size:0.9em">Set these environment variables to enable GoHighLevel integration:</p>
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>GHL_API_KEY</code></td>
+                    <td>GoHighLevel API key for authentication</td>
+                    <td>{% if config.ghl.api_key %}<span class="badge badge-success">Set</span>{% else %}<span class="badge badge-danger">Not set</span>{% endif %}</td>
+                </tr>
+                <tr>
+                    <td><code>GHL_LOCATION_ID</code></td>
+                    <td>GHL location/sub-account identifier</td>
+                    <td>{% if config.ghl.location_id %}<span class="badge badge-success">Set</span>{% else %}<span class="badge badge-warning">Not set</span>{% endif %}</td>
+                </tr>
+                <tr>
+                    <td><code>GHL_WEBHOOK_URL</code></td>
+                    <td>Webhook endpoint for GHL event callbacks</td>
+                    <td>{% if config.webhooks.secret %}<span class="badge badge-success">Set</span>{% else %}<span class="badge badge-warning">Not set</span>{% endif %}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

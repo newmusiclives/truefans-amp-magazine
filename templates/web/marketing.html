@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Marketing Hub — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_marketing %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Marketing &amp; Promotion Hub</h2>
+    <p class="subtitle">Grow subscribers and sell sponsor ads via GoHighLevel channels</p>
+</div>
+
+<!-- KPI Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem">
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Total Campaigns</div>
+        <div style="font-size:2rem;font-weight:700;color:var(--accent)">{{ stats.total_campaigns }}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Active Campaigns</div>
+        <div style="font-size:2rem;font-weight:700;color:#5cb85c">{{ stats.active_campaigns }}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Total Prospects</div>
+        <div style="font-size:2rem;font-weight:700;color:#f0ad4e">{{ stats.total_prospects }}</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem">
+        <div style="font-size:0.85em;color:var(--text-dim);margin-bottom:0.5rem">Total Outreach</div>
+        <div style="font-size:2rem;font-weight:700;color:#5bc0de">{{ stats.total_outreach }}</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card" style="margin-bottom:2rem;padding:1.5rem">
+    <h3 style="margin-top:0">Quick Actions</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1rem">
+        <a href="/admin/marketing/campaigns" class="card" style="text-align:center;padding:1.5rem;text-decoration:none;border:2px solid var(--accent);cursor:pointer;transition:transform 0.1s">
+            <div style="font-size:2rem;margin-bottom:0.5rem">&#127919;</div>
+            <div style="font-weight:600;color:var(--text)">New Growth Campaign</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">Subscriber acquisition campaigns</div>
+        </a>
+        <a href="/admin/marketing/prospects" class="card" style="text-align:center;padding:1.5rem;text-decoration:none;border:2px solid #f0ad4e;cursor:pointer;transition:transform 0.1s">
+            <div style="font-size:2rem;margin-bottom:0.5rem">&#128188;</div>
+            <div style="font-weight:600;color:var(--text)">Sponsor Outreach</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">Manage sponsor prospect pipeline</div>
+        </a>
+        <a href="/admin/marketing/templates" class="card" style="text-align:center;padding:1.5rem;text-decoration:none;border:2px solid #5bc0de;cursor:pointer;transition:transform 0.1s">
+            <div style="font-size:2rem;margin-bottom:0.5rem">&#128196;</div>
+            <div style="font-weight:600;color:var(--text)">Templates Library</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">Pre-built email, SMS, voice &amp; AI templates</div>
+        </a>
+        <a href="/admin/marketing/ghl" class="card" style="text-align:center;padding:1.5rem;text-decoration:none;border:2px solid #5cb85c;cursor:pointer;transition:transform 0.1s">
+            <div style="font-size:2rem;margin-bottom:0.5rem">&#128241;</div>
+            <div style="font-weight:600;color:var(--text)">GHL Integration</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">GoHighLevel channel configuration</div>
+        </a>
+    </div>
+</div>
+
+<!-- Recent Campaigns -->
+<div class="card" style="margin-bottom:2rem">
+    <h3>Recent Campaigns</h3>
+    {% if campaigns %}
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Channel</th>
+                    <th>Status</th>
+                    <th>Goal</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in campaigns %}
+                <tr>
+                    <td><strong>{{ c.name }}</strong></td>
+                    <td>{{ c.campaign_type | replace('_', ' ') | title }}</td>
+                    <td>
+                        {% if c.channel == 'email' %}&#9993;{% elif c.channel == 'sms' %}&#128172;{% elif c.channel == 'voice' %}&#128222;{% elif c.channel == 'ai_agent' %}&#129302;{% elif c.channel == 'social' %}&#127760;{% else %}&#128279;{% endif %}
+                        {{ c.channel | replace('_', ' ') | title }}
+                    </td>
+                    <td>
+                        <span class="badge {% if c.status == 'active' %}badge-success{% elif c.status == 'draft' %}badge-secondary{% elif c.status == 'completed' %}badge-info{% elif c.status == 'paused' %}badge-warning{% else %}badge-default{% endif %}">{{ c.status }}</span>
+                    </td>
+                    <td>{{ c.goal_description[:40] if c.goal_description else '-' }}{% if c.goal_target %} ({{ c.goal_achieved }}/{{ c.goal_target }}){% endif %}</td>
+                    <td>{{ c.created_at[:10] if c.created_at else '' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="margin-top:0.75rem"><a href="/admin/marketing/campaigns">View all campaigns &rarr;</a></p>
+    {% else %}
+    <p class="text-muted">No campaigns yet. <a href="/admin/marketing/campaigns">Create your first campaign</a>.</p>
+    {% endif %}
+</div>
+
+<!-- Sponsor Pipeline -->
+<div class="card" style="margin-bottom:2rem">
+    <h3>Sponsor Pipeline</h3>
+    {% if prospects %}
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Budget</th>
+                    <th>Editions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for p in prospects %}
+                <tr>
+                    <td><strong>{{ p.company_name }}</strong></td>
+                    <td>{{ p.contact_name }}{% if p.contact_email %} <span style="color:var(--text-dim)">({{ p.contact_email }})</span>{% endif %}</td>
+                    <td>
+                        <span class="badge {% if p.status == 'closed_won' %}badge-success{% elif p.status == 'closed_lost' %}badge-danger{% elif p.status in ('proposal','negotiating') %}badge-warning{% elif p.status == 'contacted' %}badge-info{% else %}badge-secondary{% endif %}">{{ p.status | replace('_', ' ') }}</span>
+                    </td>
+                    <td>{{ p.estimated_budget or '-' }}</td>
+                    <td>{{ p.target_editions or '-' }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p style="margin-top:0.75rem"><a href="/admin/marketing/prospects">View full pipeline &rarr;</a></p>
+    {% else %}
+    <p class="text-muted">No prospects yet. <a href="/admin/marketing/prospects">Add your first sponsor prospect</a>.</p>
+    {% endif %}
+</div>
+
+<!-- GHL Channels Overview -->
+<div class="card" style="margin-bottom:2rem">
+    <h3>GoHighLevel Channels</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-top:1rem">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1.25rem">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem">&#9993;</div>
+            <div style="font-weight:600">Email</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">Automated email sequences via GHL workflows. Welcome series, sponsor pitches, win-back campaigns.</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1.25rem">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem">&#128172;</div>
+            <div style="font-weight:600">SMS / Text</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">Text message outreach for instant engagement. Subscribe invites, sponsor follow-ups, event alerts.</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1.25rem">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem">&#128222;</div>
+            <div style="font-weight:600">Voice Call</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">AI-powered voice calls for sponsor outreach. Scripted conversations, call scheduling, voicemail drops.</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:1.25rem">
+            <div style="font-size:1.5rem;margin-bottom:0.5rem">&#129302;</div>
+            <div style="font-weight:600">AI Agent</div>
+            <div style="font-size:0.85em;color:var(--text-dim);margin-top:0.25rem">Conversational AI for prospect qualification. Research, personalized outreach, and lead scoring.</div>
+        </div>
+    </div>
+    <p style="margin-top:1rem"><a href="/admin/marketing/ghl">Configure GHL integration &rarr;</a></p>
+</div>
+{% endblock %}

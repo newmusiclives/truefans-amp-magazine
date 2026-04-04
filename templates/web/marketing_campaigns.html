@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Campaigns — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_campaigns %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Marketing Campaigns</h2>
+    <p class="subtitle">Create and manage subscriber growth and sponsor outreach campaigns</p>
+</div>
+
+<!-- Create Campaign Form -->
+<div class="card" style="margin-bottom:2rem">
+    <h3 style="margin-top:0">Create New Campaign</h3>
+    <div id="campaign-result"></div>
+    <form hx-post="/admin/marketing/campaigns/create" hx-target="#campaign-result" hx-swap="innerHTML" style="display:grid;gap:1rem">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+            <div>
+                <label for="name"><strong>Campaign Name</strong></label>
+                <input type="text" id="name" name="name" required class="form-control" placeholder="e.g. Q2 Subscriber Growth Push">
+            </div>
+            <div>
+                <label for="campaign_type"><strong>Type</strong></label>
+                <select id="campaign_type" name="campaign_type" required class="form-control">
+                    {% for value, label in campaign_types %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="channel"><strong>Channel</strong></label>
+                <select id="channel" name="channel" class="form-control">
+                    {% for value, label in channels %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
+            <div>
+                <label for="target_audience"><strong>Target Audience</strong></label>
+                <input type="text" id="target_audience" name="target_audience" class="form-control" placeholder="e.g. Music industry professionals">
+            </div>
+            <div>
+                <label for="goal_description"><strong>Goal</strong></label>
+                <input type="text" id="goal_description" name="goal_description" class="form-control" placeholder="e.g. Add 500 new subscribers">
+            </div>
+            <div>
+                <label for="goal_target"><strong>Goal Target (number)</strong></label>
+                <input type="number" id="goal_target" name="goal_target" class="form-control" value="0" min="0">
+            </div>
+        </div>
+        <div>
+            <label for="template_content"><strong>Template / Content</strong></label>
+            <textarea id="template_content" name="template_content" class="form-control" rows="4" placeholder="Email body, SMS text, or AI prompt..."></textarea>
+        </div>
+        <div>
+            <label for="notes"><strong>Notes</strong></label>
+            <textarea id="notes" name="notes" class="form-control" rows="2" placeholder="Internal notes about this campaign..."></textarea>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-primary">Create Campaign</button>
+        </div>
+    </form>
+</div>
+
+<!-- Campaign List -->
+<div class="card">
+    <h3 style="margin-top:0">All Campaigns</h3>
+    {% if campaigns %}
+    <div style="overflow-x:auto">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Channel</th>
+                    <th>Status</th>
+                    <th>Target Audience</th>
+                    <th>Goal</th>
+                    <th>Progress</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in campaigns %}
+                <tr>
+                    <td>{{ c.id }}</td>
+                    <td><strong>{{ c.name }}</strong></td>
+                    <td>{{ c.campaign_type | replace('_', ' ') | title }}</td>
+                    <td>{{ c.channel | replace('_', ' ') | title }}</td>
+                    <td id="status-{{ c.id }}">
+                        <span class="badge {% if c.status == 'active' %}badge-success{% elif c.status == 'draft' %}badge-secondary{% elif c.status == 'completed' %}badge-info{% elif c.status == 'paused' %}badge-warning{% else %}badge-default{% endif %}">{{ c.status }}</span>
+                    </td>
+                    <td>{{ c.target_audience or '-' }}</td>
+                    <td>{{ c.goal_description[:30] if c.goal_description else '-' }}</td>
+                    <td>{{ c.goal_achieved }}/{{ c.goal_target }}</td>
+                    <td>{{ c.created_at[:10] if c.created_at else '' }}</td>
+                    <td>
+                        <form hx-post="/admin/marketing/campaigns/{{ c.id }}/status" hx-target="#status-{{ c.id }}" hx-swap="innerHTML" style="display:flex;gap:0.25rem;align-items:center">
+                            <select name="status" class="form-control" style="width:auto;font-size:0.8em;padding:2px 6px">
+                                <option value="draft">Draft</option>
+                                <option value="scheduled">Scheduled</option>
+                                <option value="active">Active</option>
+                                <option value="paused">Paused</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button type="submit" class="btn btn-sm" style="font-size:0.8em;padding:2px 8px">Set</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No campaigns yet. Create one above to get started.</p>
+    {% endif %}
+</div>
+{% endblock %}
