@@ -903,6 +903,23 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
             except integrity:
                 pass
 
+    # --- Demo licensee for Nashville ---
+    exists = conn.execute(
+        f"SELECT id FROM licensees WHERE email = {ph}", ("demo@nashvillemusic.com",)
+    ).fetchone()
+    if not exists:
+        try:
+            import bcrypt
+            pw_hash = bcrypt.hashpw(b"Nashville2026!", bcrypt.gensalt()).decode()
+            conn.execute(
+                f"""INSERT INTO licensees (company_name, contact_name, email, password_hash, city_market_slug, edition_slugs, license_type, license_fee_cents, revenue_share_pct, status)
+                    VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, 'active')""",
+                ("Nashville Music Media LLC", "Taylor Reed", "demo@nashvillemusic.com", pw_hash, "nashville", "fan,artist,industry", "monthly", 9900, 20.0),
+            )
+            seeded += 1
+        except integrity:
+            pass
+
     conn.commit()
     conn.close()
     if seeded:
