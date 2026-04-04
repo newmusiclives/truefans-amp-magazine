@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Content Personalization — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_section_analytics %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Content Personalization</h2>
+    <p>AI-powered section reordering based on subscriber engagement</p>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <span class="card-title">Status</span>
+    </div>
+    <div class="card-body" style="padding: 1.25rem;">
+        {% if config.section_engagement.reorder_by_engagement %}
+            <span class="badge badge-success">Enabled</span>
+            <p style="margin-top: 0.75rem;">Sections are being reordered per-subscriber based on engagement history.</p>
+        {% else %}
+            <span class="badge badge-muted">Disabled</span>
+            <p style="margin-top: 0.75rem;">Personalization is not active. All subscribers receive the same section order.</p>
+            <p style="margin-top: 0.5rem; color: var(--muted);">
+                Set <code>section_engagement.reorder_by_engagement: true</code> in config to activate.
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <span class="card-title">How It Works</span>
+    </div>
+    <div class="card-body" style="padding: 1.25rem;">
+        <p>When enabled, sections are reordered per-subscriber based on engagement history. Subscribers who consistently interact with certain sections will see those sections higher in their newsletter. This increases relevance and drives better open and click-through rates.</p>
+        <p style="margin-top: 0.75rem;">The system uses <strong>subscriber interest profiles</strong> (engagement scores per section) to sort sections at assembly time. Subscribers without engagement data receive the default section order.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Segment Distribution</span>
+    </div>
+    {% if segments and segments | length > 0 %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Segment</th>
+                    <th>Subscribers</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for name, count in segments.items() %}
+                <tr>
+                    <td><code>{{ name }}</code></td>
+                    <td>{{ count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card-body" style="padding: 1.25rem;">
+        <p style="color: var(--muted);">No segment data available yet. Segments are built from subscriber genre preferences and engagement scores.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

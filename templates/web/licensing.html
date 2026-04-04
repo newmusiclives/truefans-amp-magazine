@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Licensing — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_licensing %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>City Edition Licensing</h2>
+    <p class="subtitle">Manage franchise licensees for city-specific editions</p>
+</div>
+
+<!-- Summary Stats -->
+<div style="display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap">
+    <div class="card" style="flex:1;min-width:180px;text-align:center;padding:1.25rem">
+        <div style="font-size:2rem;font-weight:700;color:var(--primary)">{{ licensees|length }}</div>
+        <div style="font-size:0.85rem;color:var(--muted)">Total Licensees</div>
+    </div>
+    <div class="card" style="flex:1;min-width:180px;text-align:center;padding:1.25rem">
+        <div style="font-size:2rem;font-weight:700;color:#22c55e">{{ licensees|selectattr('status','equalto','active')|list|length }}</div>
+        <div style="font-size:0.85rem;color:var(--muted)">Active</div>
+    </div>
+    <div class="card" style="flex:1;min-width:180px;text-align:center;padding:1.25rem">
+        {% set active_list = licensees|selectattr('status','equalto','active')|list %}
+        {% set monthly_rev = active_list|sum(attribute='license_fee_cents') %}
+        <div style="font-size:2rem;font-weight:700;color:var(--primary)">${{ "%.2f"|format(monthly_rev / 100) }}</div>
+        <div style="font-size:0.85rem;color:var(--muted)">Monthly License Revenue</div>
+    </div>
+</div>
+
+<!-- Create Licensee Form -->
+<div class="card" style="margin-bottom:2rem">
+    <h3>Add Licensee</h3>
+    <form hx-post="/admin/licensing/create" hx-target="#licensee-result" hx-swap="innerHTML" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:end">
+        <div>
+            <label>Company Name</label>
+            <input type="text" name="company_name" required placeholder="e.g. Nashville Music Media" style="width:200px">
+        </div>
+        <div>
+            <label>Contact Name</label>
+            <input type="text" name="contact_name" required placeholder="Full name" style="width:180px">
+        </div>
+        <div>
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="contact@example.com" style="width:200px">
+        </div>
+        <div>
+            <label>Password</label>
+            <input type="password" name="password" required placeholder="Initial password" style="width:160px">
+        </div>
+        <div>
+            <label>City Market</label>
+            <select name="city_market_slug" style="width:180px">
+                <option value="">No market (global)</option>
+                {% for m in markets %}
+                <option value="{{ m.market_slug }}">{{ m.market_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Editions</label>
+            <div style="display:flex;gap:0.75rem;padding-top:4px">
+                <label style="font-weight:normal;font-size:0.85rem"><input type="checkbox" name="edition_fan" checked> Fan</label>
+                <label style="font-weight:normal;font-size:0.85rem"><input type="checkbox" name="edition_artist" checked> Artist</label>
+                <label style="font-weight:normal;font-size:0.85rem"><input type="checkbox" name="edition_industry" checked> Industry</label>
+            </div>
+            <input type="hidden" name="edition_slugs" value="fan,artist,industry">
+        </div>
+        <button type="submit" class="btn btn-primary">Create Licensee</button>
+    </form>
+    <div id="licensee-result" style="margin-top:0.75rem"></div>
+</div>
+
+<!-- Licensee Table -->
+<div class="card">
+    <h3>Licensees</h3>
+    {% if licensees %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Contact</th>
+                <th>Email</th>
+                <th>City</th>
+                <th>License</th>
+                <th>Fee</th>
+                <th>Rev Share</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for l in licensees %}
+            <tr>
+                <td><strong><a href="/admin/licensing/{{ l.id }}">{{ l.company_name }}</a></strong></td>
+                <td>{{ l.contact_name }}</td>
+                <td>{{ l.email }}</td>
+                <td>{{ l.city_market_slug or 'Global' }}</td>
+                <td><span class="badge">{{ l.license_type }}</span></td>
+                <td>${{ "%.2f"|format(l.license_fee_cents / 100) }}/mo</td>
+                <td>{{ l.revenue_share_pct }}%</td>
+                <td id="status-{{ l.id }}">
+                    {% if l.status == 'active' %}
+                    <span class="badge badge-success">{{ l.status }}</span>
+                    {% elif l.status == 'pending' %}
+                    <span class="badge badge-warning">{{ l.status }}</span>
+                    {% elif l.status == 'suspended' or l.status == 'cancelled' %}
+                    <span class="badge badge-danger">{{ l.status }}</span>
+                    {% else %}
+                    <span class="badge badge-info">{{ l.status }}</span>
+                    {% endif %}
+                </td>
+                <td style="white-space:nowrap">
+                    {% if l.status == 'pending' %}
+                    <button class="btn btn-sm btn-primary" hx-post="/admin/licensing/{{ l.id }}/status" hx-vals='{"status":"approved"}' hx-target="#status-{{ l.id }}" hx-swap="innerHTML">Approve</button>
+                    {% elif l.status == 'approved' %}
+                    <button class="btn btn-sm btn-primary" hx-post="/admin/licensing/{{ l.id }}/status" hx-vals='{"status":"active"}' hx-target="#status-{{ l.id }}" hx-swap="innerHTML">Activate</button>
+                    {% elif l.status == 'active' %}
+                    <button class="btn btn-sm btn-warning" hx-post="/admin/licensing/{{ l.id }}/status" hx-vals='{"status":"suspended"}' hx-target="#status-{{ l.id }}" hx-swap="innerHTML">Suspend</button>
+                    {% elif l.status == 'suspended' %}
+                    <button class="btn btn-sm btn-primary" hx-post="/admin/licensing/{{ l.id }}/status" hx-vals='{"status":"active"}' hx-target="#status-{{ l.id }}" hx-swap="innerHTML">Reactivate</button>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted)">No licensees yet. Create one above to get started.</p>
+    {% endif %}
+</div>
+{% endblock %}

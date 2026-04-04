@@ -804,6 +804,26 @@ def seed_content(db_path: str = "", database_url: str = "", backend: str = "") -
             except integrity:
                 pass
 
+    # --- Artist newsletter templates ---
+    nl_templates = [
+        ("minimal", "Minimal", "<div style='max-width:600px;margin:0 auto;padding:20px;font-family:Georgia,serif;'><div style='text-align:center;padding:20px 0;border-bottom:2px solid {{brand_color}};'><h1 style='margin:0;color:{{brand_color}};'>{{artist_name}}</h1><p style='color:#666;margin:4px 0 0;'>{{tagline}}</p></div><div style='padding:20px 0;'>{{content}}</div><div style='border-top:1px solid #eee;padding:16px 0;font-size:12px;color:#999;text-align:center;'>Powered by TrueFans NEWSLETTERS</div></div>", 1),
+        ("bold", "Bold", "<div style='max-width:600px;margin:0 auto;background:#1a1a1a;color:#fff;font-family:-apple-system,sans-serif;'><div style='padding:32px;text-align:center;background:{{brand_color}};'><h1 style='margin:0;font-size:28px;'>{{artist_name}}</h1><p style='margin:8px 0 0;opacity:0.8;'>{{tagline}}</p></div><div style='padding:24px;'>{{content}}</div><div style='padding:16px 24px;font-size:12px;color:#666;text-align:center;'>Powered by TrueFans NEWSLETTERS</div></div>", 0),
+        ("clean", "Clean & Modern", "<div style='max-width:600px;margin:0 auto;padding:24px;font-family:-apple-system,sans-serif;'><div style='display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid #e5e7eb;'><div style='width:48px;height:48px;background:{{brand_color}};border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;'>{{artist_initials}}</div><div><h2 style='margin:0;font-size:18px;'>{{artist_name}}</h2><p style='margin:0;font-size:13px;color:#666;'>{{tagline}}</p></div></div><div style='padding:20px 0;'>{{content}}</div><div style='border-top:1px solid #e5e7eb;padding:16px 0;font-size:12px;color:#9ca3af;text-align:center;'>Powered by TrueFans NEWSLETTERS</div></div>", 0),
+    ]
+    for slug, name, html, is_default in nl_templates:
+        exists = conn.execute(
+            f"SELECT id FROM artist_newsletter_templates WHERE slug = {ph}", (slug,)
+        ).fetchone()
+        if not exists:
+            try:
+                conn.execute(
+                    f"INSERT INTO artist_newsletter_templates (name, slug, html_template, is_default) VALUES ({ph}, {ph}, {ph}, {ph})",
+                    (name, slug, html, is_default),
+                )
+                seeded += 1
+            except integrity:
+                pass
+
     conn.commit()
     conn.close()
     if seeded:

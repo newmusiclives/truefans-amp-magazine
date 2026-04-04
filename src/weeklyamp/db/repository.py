@@ -3892,3 +3892,161 @@ class Repository:
         conn.execute("UPDATE admin_users SET role = ? WHERE id = ?", (role, user_id))
         conn.commit()
         conn.close()
+
+    # ---- Licensing ----
+
+    def create_licensee(self, company_name: str, contact_name: str, email: str, password_hash: str, city_market_slug: str = "", edition_slugs: str = "", license_type: str = "monthly", license_fee_cents: int = 0, revenue_share_pct: float = 20.0) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO licensees (company_name, contact_name, email, password_hash, city_market_slug, edition_slugs, license_type, license_fee_cents, revenue_share_pct)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (company_name, contact_name, email, password_hash, city_market_slug, edition_slugs, license_type, license_fee_cents, revenue_share_pct),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_licensees(self, status: str = "") -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute("SELECT * FROM licensees WHERE status = ? ORDER BY created_at DESC", (status,)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM licensees ORDER BY created_at DESC").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_licensee(self, licensee_id: int):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM licensees WHERE id = ?", (licensee_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_licensee_by_email(self, email: str):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM licensees WHERE email = ?", (email,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_licensee_status(self, licensee_id: int, status: str) -> None:
+        conn = self._conn()
+        updates = "status = ?, updated_at = CURRENT_TIMESTAMP"
+        params = [status]
+        if status == "active":
+            updates += ", activated_at = CURRENT_TIMESTAMP"
+        conn.execute(f"UPDATE licensees SET {updates} WHERE id = ?", (*params, licensee_id))
+        conn.commit()
+        conn.close()
+
+    def get_license_revenue(self, licensee_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute("SELECT * FROM license_revenue WHERE licensee_id = ? ORDER BY month DESC", (licensee_id,)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_license_revenue(self, licensee_id: int, month: str, sponsor_cents: int = 0, affiliate_cents: int = 0, subscriber_cents: int = 0, share_pct: float = 20.0) -> int:
+        total = sponsor_cents + affiliate_cents + subscriber_cents
+        platform_share = int(total * share_pct / 100)
+        licensee_share = total - platform_share
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO license_revenue (licensee_id, month, sponsor_revenue_cents, affiliate_revenue_cents, subscriber_revenue_cents, platform_share_cents, licensee_share_cents)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (licensee_id, month, sponsor_cents, affiliate_cents, subscriber_cents, platform_share, licensee_share),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    # ---- Artist Newsletter Product ----
+
+    def get_artist_newsletter(self, newsletter_id: int):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM artist_newsletters WHERE id = ?", (newsletter_id,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_artist_newsletter_by_slug(self, slug: str):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM artist_newsletters WHERE slug = ?", (slug,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_artist_newsletters(self, status: str = "") -> list[dict]:
+        conn = self._conn()
+        if status:
+            rows = conn.execute("SELECT * FROM artist_newsletters WHERE status = ? ORDER BY created_at DESC", (status,)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM artist_newsletters ORDER BY created_at DESC").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_artist_newsletter(self, artist_name: str, slug: str, artist_profile_id: int = 0, brand_color: str = "#e8645a", tagline: str = "", template_style: str = "minimal") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO artist_newsletters (artist_name, slug, artist_profile_id, brand_color, tagline, template_style, status) VALUES (?, ?, ?, ?, ?, ?, 'setup')",
+            (artist_name, slug, artist_profile_id or None, brand_color, tagline, template_style),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def update_artist_newsletter(self, newsletter_id: int, **kwargs) -> None:
+        allowed = {"artist_name", "brand_color", "tagline", "template_style", "schedule", "status", "logo_url"}
+        fields = {k: v for k, v in kwargs.items() if k in allowed}
+        if not fields:
+            return
+        conn = self._conn()
+        set_clause = ", ".join(f"{k} = ?" for k in fields)
+        conn.execute(f"UPDATE artist_newsletters SET {set_clause} WHERE id = ?", (*fields.values(), newsletter_id))
+        conn.commit()
+        conn.close()
+
+    def get_artist_nl_subscriber_count(self, newsletter_id: int) -> int:
+        conn = self._conn()
+        row = conn.execute("SELECT COUNT(*) as count FROM artist_newsletter_subscribers WHERE newsletter_id = ? AND status = 'active'", (newsletter_id,)).fetchone()
+        conn.close()
+        return dict(row)["count"] if row else 0
+
+    def add_artist_nl_subscriber(self, newsletter_id: int, email: str, first_name: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO artist_newsletter_subscribers (newsletter_id, email, first_name) VALUES (?, ?, ?)",
+            (newsletter_id, email, first_name),
+        )
+        conn.commit()
+        # Update count
+        count = conn.execute("SELECT COUNT(*) FROM artist_newsletter_subscribers WHERE newsletter_id = ? AND status = 'active'", (newsletter_id,)).fetchone()[0]
+        conn.execute("UPDATE artist_newsletters SET subscriber_count = ? WHERE id = ?", (count, newsletter_id))
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_artist_nl_issues(self, newsletter_id: int) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute("SELECT * FROM artist_newsletter_issues WHERE newsletter_id = ? ORDER BY issue_number DESC", (newsletter_id,)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def create_artist_nl_issue(self, newsletter_id: int, subject: str, html_content: str = "", plain_text: str = "") -> int:
+        conn = self._conn()
+        # Get next issue number
+        row = conn.execute("SELECT COALESCE(MAX(issue_number), 0) + 1 as next_num FROM artist_newsletter_issues WHERE newsletter_id = ?", (newsletter_id,)).fetchone()
+        next_num = dict(row)["next_num"]
+        cur = conn.execute(
+            "INSERT INTO artist_newsletter_issues (newsletter_id, issue_number, subject, html_content, plain_text) VALUES (?, ?, ?, ?, ?)",
+            (newsletter_id, next_num, subject, html_content, plain_text),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_artist_nl_templates(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute("SELECT * FROM artist_newsletter_templates ORDER BY is_default DESC, name").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]

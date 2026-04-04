@@ -394,3 +394,36 @@ def get_subscriber_segments(repo) -> dict:
         segments.setdefault(segment_key, []).append(row_dict)
 
     return segments
+
+
+def get_personalized_section_order(repo, subscriber_id: int, sections: list[dict]) -> list[dict]:
+    """Reorder sections based on subscriber's engagement history.
+
+    Higher-engagement sections appear first. Falls back to default order
+    if no engagement data exists.
+    """
+    if not subscriber_id:
+        return sections
+
+    conn = repo._conn()
+    rows = conn.execute(
+        """SELECT section_slug, engagement_score
+           FROM subscriber_interest_profiles
+           WHERE subscriber_id = ?
+           ORDER BY engagement_score DESC""",
+        (subscriber_id,),
+    ).fetchall()
+    conn.close()
+
+    if not rows:
+        return sections
+
+    # Build score map
+    scores = {dict(r)["section_slug"]: dict(r)["engagement_score"] for r in rows}
+
+    # Sort sections by engagement score (higher first), preserving order for unscored
+    def sort_key(section):
+        slug = section.get("section_slug", "")
+        return -scores.get(slug, 0)  # negative for descending
+
+    return sorted(sections, key=sort_key)

@@ -360,8 +360,10 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import artist_newsletters as artist_newsletters_routes
     from weeklyamp.web.routes import segments as segments_routes
     from weeklyamp.web.routes import mobile_app as mobile_app_routes
+    from weeklyamp.web.routes import mobile_api as mobile_api_routes
     from weeklyamp.web.routes import setup as setup_routes
     from weeklyamp.web.routes import users as users_routes
+    from weeklyamp.web.routes import licensing as licensing_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -420,10 +422,14 @@ def create_app() -> FastAPI:
     app.include_router(segments_routes.router, prefix="/admin/segments")
     # Mobile app waitlist
     app.include_router(mobile_app_routes.router)
+    # Mobile JSON API (v1)
+    app.include_router(mobile_api_routes.router, prefix="/api/v1")
     # Setup & deliverability guide
     app.include_router(setup_routes.router, prefix="/admin/setup")
     # v29+ admin user management
     app.include_router(users_routes.router, prefix="/admin/users")
+    # v30+ city edition licensing
+    app.include_router(licensing_routes.router, prefix="/admin/licensing")
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

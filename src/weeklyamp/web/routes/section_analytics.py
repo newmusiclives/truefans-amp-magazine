@@ -123,3 +123,14 @@ async def recompute_scores():
         message=message,
         level=level,
     )
+
+
+@router.get("/personalization", response_class=HTMLResponse)
+async def personalization_settings():
+    """Content personalization settings and segment overview."""
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.content.assembly import get_subscriber_segments
+    segments = get_subscriber_segments(repo)
+    segment_summary = {k: len(v) for k, v in segments.items()}
+    return HTMLResponse(render("personalization.html", segments=segment_summary, config=config))

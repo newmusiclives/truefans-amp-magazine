@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}{{ newsletter.artist_name }} Newsletter — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_artist_newsletters %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ newsletter.artist_name }} Newsletter</h2>
+    <p class="subtitle">Dashboard for artist-branded newsletter</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;">
+    <div class="card" style="text-align:center;padding:1.5rem;">
+        <div style="font-size:2rem;font-weight:700;color:{{ newsletter.brand_color or '#e8645a' }};">{{ sub_count }}</div>
+        <div style="font-size:0.85rem;color:#888;">Subscribers</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem;">
+        <div style="font-size:2rem;font-weight:700;">{{ issues|length }}</div>
+        <div style="font-size:0.85rem;color:#888;">Issues</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem;">
+        <div style="width:40px;height:40px;border-radius:8px;background:{{ newsletter.brand_color or '#e8645a' }};margin:0 auto 0.5rem;"></div>
+        <div style="font-size:0.85rem;color:#888;">Brand Color</div>
+    </div>
+    <div class="card" style="text-align:center;padding:1.5rem;">
+        <div style="font-size:1rem;font-weight:600;">{{ newsletter.template_style or 'minimal' }}</div>
+        <div style="font-size:0.85rem;color:#888;">Template</div>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;">
+        <span style="font-size:0.8rem;background:#1a1a2e;color:#e8645a;padding:2px 10px;border-radius:999px;">{{ newsletter.status or 'setup' }}</span>
+        <span style="font-size:0.85rem;color:#888;">{{ newsletter.tagline }}</span>
+    </div>
+    <div style="font-size:0.85rem;color:#666;">
+        Public page: <a href="/n/{{ newsletter.slug }}" target="_blank" style="color:#e8645a;">/n/{{ newsletter.slug }}</a>
+        &nbsp;|&nbsp; Schedule: {{ newsletter.schedule or 'monthly' }}
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem;">
+    <div class="card">
+        <h3>Settings</h3>
+        <form hx-post="/admin/artist-newsletters/{{ newsletter.id }}/update" hx-target="#settings-result" hx-swap="innerHTML">
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">Brand Color</label>
+                <input type="color" name="brand_color" value="{{ newsletter.brand_color or '#e8645a' }}" style="width:60px;height:36px;border:none;cursor:pointer;">
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">Tagline</label>
+                <input type="text" name="tagline" value="{{ newsletter.tagline or '' }}" placeholder="Your newsletter tagline" style="width:100%;padding:8px;border:1px solid #333;border-radius:6px;background:#1a1a2e;color:#fff;">
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">Template Style</label>
+                <select name="template_style" style="width:100%;padding:8px;border:1px solid #333;border-radius:6px;background:#1a1a2e;color:#fff;">
+                    {% for t in templates %}
+                    <option value="{{ t.slug }}" {% if t.slug == newsletter.template_style %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Settings</button>
+            <div id="settings-result" style="margin-top:0.75rem;"></div>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Create Issue</h3>
+        <form hx-post="/admin/artist-newsletters/{{ newsletter.id }}/issue" hx-target="#issue-result" hx-swap="innerHTML">
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">Subject</label>
+                <input type="text" name="subject" required placeholder="Issue subject line" style="width:100%;padding:8px;border:1px solid #333;border-radius:6px;background:#1a1a2e;color:#fff;">
+            </div>
+            <div style="margin-bottom:1rem;">
+                <label style="display:block;font-size:0.85rem;margin-bottom:4px;">Content (HTML)</label>
+                <textarea name="content" rows="6" placeholder="Write your newsletter content..." style="width:100%;padding:8px;border:1px solid #333;border-radius:6px;background:#1a1a2e;color:#fff;font-family:monospace;font-size:0.85rem;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Issue</button>
+            <div id="issue-result" style="margin-top:0.75rem;"></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Issues</h3>
+    {% if issues %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Issue #</th>
+                <th>Subject</th>
+                <th>Status</th>
+                <th>Opens</th>
+                <th>Clicks</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for issue in issues %}
+            <tr>
+                <td>{{ issue.issue_number }}</td>
+                <td>{{ issue.subject }}</td>
+                <td>
+                    {% if issue.status == 'sent' %}
+                    <span class="badge badge-success">sent</span>
+                    {% elif issue.status == 'scheduled' %}
+                    <span class="badge badge-info">scheduled</span>
+                    {% else %}
+                    <span class="badge">draft</span>
+                    {% endif %}
+                </td>
+                <td>{{ issue.opens }}</td>
+                <td>{{ issue.clicks }}</td>
+                <td>{{ issue.created_at or '—' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No issues yet. Create your first one above.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -159,6 +159,31 @@ async def test_send():
     return render("partials/alert.html", message="Test send failed — check SMTP settings", level="error")
 
 
+@router.get("/spam-check/{issue_id}", response_class=HTMLResponse)
+async def spam_check(issue_id: int, request: Request):
+    repo = get_repo()
+    assembled = repo.get_assembled(issue_id)
+    if not assembled:
+        return HTMLResponse('<div class="alert alert-warning">Issue not assembled yet.</div>')
+    from weeklyamp.content.spam_check import check_spam_score
+    result = check_spam_score(assembled.get("html_content", ""), assembled.get("subject", ""))
+
+    color = "#10b981" if result["score"] <= 25 else "#f59e0b" if result["score"] <= 50 else "#ef4444"
+    html = f'<div class="card" style="margin-top:1rem">'
+    html += f'<h4>Spam Score: <span style="color:{color};font-size:24px;">{result["score"]}/100</span> — {result["rating"]}</h4>'
+    html += f'<p>Words: {result["word_count"]} | Links: {result["link_count"]} | Images: {result["image_count"]}</p>'
+    if result["issues"]:
+        html += '<h5>Issues</h5><ul>'
+        for issue in result["issues"]:
+            html += f'<li style="color:#ef4444;">{issue}</li>'
+        html += '</ul>'
+    html += '<h5>Recommendations</h5><ul>'
+    for rec in result["recommendations"]:
+        html += f'<li>{rec}</li>'
+    html += '</ul></div>'
+    return HTMLResponse(html)
+
+
 @router.post("/generate-audio", response_class=HTMLResponse)
 async def generate_audio(request: Request, issue_id: int = Form(...)):
     repo = get_repo()

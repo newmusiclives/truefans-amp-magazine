@@ -70,6 +70,23 @@ async def generate_social(issue_id: int = Form(...)):
             message=f"Failed: {e}", level="error")
 
 
+@router.post("/social/publish/{post_id}", response_class=HTMLResponse)
+async def publish_post(post_id: int, request: Request):
+    repo = get_repo()
+    from weeklyamp.delivery.social import publish_social_post
+    result = publish_social_post(repo, post_id)
+    if result["status"] == "posted":
+        return HTMLResponse(f'<span class="badge badge-success">Posted</span>')
+    return HTMLResponse(f'<span class="badge badge-danger">Failed: {result.get("message", "")}</span>')
+
+@router.post("/social/publish-all", response_class=HTMLResponse)
+async def publish_all(request: Request):
+    repo = get_repo()
+    from weeklyamp.delivery.social import publish_all_pending
+    results = publish_all_pending(repo)
+    return HTMLResponse(f'<div class="alert alert-success">Posted: {results["posted"]}, Failed: {results["failed"]}, Skipped: {results["skipped"]}</div>')
+
+
 @router.get("/report", response_class=HTMLResponse)
 async def weekly_report(request: Request):
     repo = get_repo()
@@ -78,3 +95,14 @@ async def weekly_report(request: Request):
 
     report_html = generate_weekly_report(repo, config)
     return HTMLResponse(render("weekly_report.html", report_html=report_html))
+
+
+@router.post("/report/send", response_class=HTMLResponse)
+async def send_report_email(request: Request):
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.content.weekly_report import send_weekly_report_email
+    success = send_weekly_report_email(repo, config)
+    if success:
+        return HTMLResponse('<div class="alert alert-success">Report sent to admin email.</div>')
+    return HTMLResponse('<div class="alert alert-warning">Email not configured or send failed. Check SMTP settings.</div>')

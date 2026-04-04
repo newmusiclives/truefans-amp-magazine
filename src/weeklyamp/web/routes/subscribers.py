@@ -47,6 +47,29 @@ async def sync():
         return render("partials/alert.html", message=f"Sync failed: {exc}", level="error")
 
 
+@router.get("/export", response_class=HTMLResponse)
+async def export_subscribers(request: Request):
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+
+    repo = get_repo()
+    subscribers = repo.get_subscribers("active")
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["email", "status", "source_channel", "subscribed_at"])
+    for sub in subscribers:
+        writer.writerow([sub.get("email", ""), sub.get("status", ""), sub.get("source_channel", ""), sub.get("subscribed_at", "")])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=subscribers_export.csv"},
+    )
+
+
 @router.get("/import", response_class=HTMLResponse)
 async def import_page(request: Request):
     config = get_config()

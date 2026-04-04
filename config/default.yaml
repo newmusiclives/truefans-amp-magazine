@@ -234,6 +234,14 @@ artist_newsletters:
   enabled: false
   waitlist_enabled: true
 
+# --- City edition licensing ---
+licensing:
+  enabled: true
+  default_monthly_fee_cents: 9900
+  default_annual_fee_cents: 99900
+  default_revenue_share_pct: 20.0
+  trial_days: 30
+
 rate_limits:
   login_max: 5
   login_window: 900

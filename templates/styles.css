@@ -116,3 +116,13 @@ body {
     color: #444;
     border-bottom: 1px solid #e0e0e0;
 }
+
+@media (prefers-color-scheme: dark) {
+    body { background-color: #1a1a2e !important; }
+    .newsletter-wrapper { background-color: #16213e !important; color: #e0e0e0 !important; }
+    .header { border-color: #333 !important; }
+    .section-title { color: #e0e0e0 !important; }
+    .section-content { color: #ccc !important; }
+    .section-content a { color: #64b5f6 !important; }
+    .footer { background-color: #0f3460 !important; color: #999 !important; }
+}

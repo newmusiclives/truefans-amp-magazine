@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}{{ licensee.company_name }} — Licensing — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_licensing %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ licensee.company_name }}</h2>
+    <p class="subtitle">Licensee details and revenue history</p>
+</div>
+
+<!-- Licensee Info Card -->
+<div class="card" style="margin-bottom:2rem">
+    <h3>Licensee Information</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;margin-top:1rem">
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Company</div>
+            <div style="font-weight:600">{{ licensee.company_name }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Contact</div>
+            <div>{{ licensee.contact_name }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Email</div>
+            <div>{{ licensee.email }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">City Market</div>
+            <div>{{ licensee.city_market_slug or 'Global' }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Editions</div>
+            <div>{{ licensee.edition_slugs or 'None' }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">License Type</div>
+            <div><span class="badge">{{ licensee.license_type }}</span></div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Monthly Fee</div>
+            <div style="font-weight:600">${{ "%.2f"|format(licensee.license_fee_cents / 100) }}</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Revenue Share</div>
+            <div>{{ licensee.revenue_share_pct }}% platform / {{ 100 - licensee.revenue_share_pct }}% licensee</div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Status</div>
+            <div id="licensee-status">
+                {% if licensee.status == 'active' %}
+                <span class="badge badge-success">{{ licensee.status }}</span>
+                {% elif licensee.status == 'pending' %}
+                <span class="badge badge-warning">{{ licensee.status }}</span>
+                {% elif licensee.status == 'suspended' or licensee.status == 'cancelled' %}
+                <span class="badge badge-danger">{{ licensee.status }}</span>
+                {% else %}
+                <span class="badge badge-info">{{ licensee.status }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div>
+            <div style="font-size:0.8rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px">Activated</div>
+            <div>{{ licensee.activated_at or 'Not yet' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Actions -->
+<div class="card" style="margin-bottom:2rem">
+    <h3>Status Management</h3>
+    <div style="display:flex;gap:0.75rem;margin-top:1rem;flex-wrap:wrap">
+        {% if licensee.status == 'pending' %}
+        <button class="btn btn-primary" hx-post="/admin/licensing/{{ licensee.id }}/status" hx-vals='{"status":"approved"}' hx-target="#licensee-status" hx-swap="innerHTML">Approve</button>
+        {% endif %}
+        {% if licensee.status == 'approved' %}
+        <button class="btn btn-primary" hx-post="/admin/licensing/{{ licensee.id }}/status" hx-vals='{"status":"active"}' hx-target="#licensee-status" hx-swap="innerHTML">Activate</button>
+        {% endif %}
+        {% if licensee.status == 'active' %}
+        <button class="btn btn-warning" hx-post="/admin/licensing/{{ licensee.id }}/status" hx-vals='{"status":"suspended"}' hx-target="#licensee-status" hx-swap="innerHTML">Suspend</button>
+        {% endif %}
+        {% if licensee.status == 'suspended' %}
+        <button class="btn btn-primary" hx-post="/admin/licensing/{{ licensee.id }}/status" hx-vals='{"status":"active"}' hx-target="#licensee-status" hx-swap="innerHTML">Reactivate</button>
+        {% endif %}
+        {% if licensee.status != 'cancelled' %}
+        <button class="btn btn-danger" hx-post="/admin/licensing/{{ licensee.id }}/status" hx-vals='{"status":"cancelled"}' hx-target="#licensee-status" hx-swap="innerHTML" hx-confirm="Cancel this license? This cannot be easily undone.">Cancel License</button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Revenue History -->
+<div class="card">
+    <h3>Revenue History</h3>
+    {% if revenue %}
+    <table class="data-table" style="margin-top:1rem">
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Sponsor Rev</th>
+                <th>Affiliate Rev</th>
+                <th>Subscriber Rev</th>
+                <th>Platform Share</th>
+                <th>Licensee Share</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in revenue %}
+            <tr>
+                <td><strong>{{ r.month }}</strong></td>
+                <td>${{ "%.2f"|format(r.sponsor_revenue_cents / 100) }}</td>
+                <td>${{ "%.2f"|format(r.affiliate_revenue_cents / 100) }}</td>
+                <td>${{ "%.2f"|format(r.subscriber_revenue_cents / 100) }}</td>
+                <td>${{ "%.2f"|format(r.platform_share_cents / 100) }}</td>
+                <td style="font-weight:600">${{ "%.2f"|format(r.licensee_share_cents / 100) }}</td>
+                <td>
+                    {% if r.status == 'paid' %}
+                    <span class="badge badge-success">{{ r.status }}</span>
+                    {% elif r.status == 'invoiced' %}
+                    <span class="badge badge-warning">{{ r.status }}</span>
+                    {% else %}
+                    <span class="badge">{{ r.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted);margin-top:1rem">No revenue records yet for this licensee.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top:1.5rem">
+    <a href="/admin/licensing" class="btn">Back to Licensing</a>
+</div>
+{% endblock %}

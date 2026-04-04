@@ -1232,3 +1232,85 @@ CREATE TABLE IF NOT EXISTS admin_users (
 CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (29);
+
+-- v30: Licensing infrastructure for city editions
+
+CREATE TABLE IF NOT EXISTS licensees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    contact_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    phone TEXT DEFAULT '',
+    website TEXT DEFAULT '',
+    city_market_slug TEXT DEFAULT '',
+    edition_slugs TEXT DEFAULT '',
+    license_type TEXT DEFAULT 'monthly' CHECK (license_type IN ('monthly','annual','trial')),
+    license_fee_cents INTEGER DEFAULT 0,
+    revenue_share_pct REAL DEFAULT 20.0,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending','approved','active','suspended','cancelled')),
+    trial_ends_at TIMESTAMP,
+    activated_at TIMESTAMP,
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_licensees_email ON licensees(email);
+CREATE INDEX IF NOT EXISTS idx_licensees_status ON licensees(status);
+
+CREATE TABLE IF NOT EXISTS license_revenue (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    licensee_id INTEGER NOT NULL REFERENCES licensees(id),
+    month TEXT NOT NULL,
+    sponsor_revenue_cents INTEGER DEFAULT 0,
+    affiliate_revenue_cents INTEGER DEFAULT 0,
+    subscriber_revenue_cents INTEGER DEFAULT 0,
+    platform_share_cents INTEGER DEFAULT 0,
+    licensee_share_cents INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'calculated' CHECK (status IN ('calculated','invoiced','paid')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_license_revenue_licensee ON license_revenue(licensee_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (30);
+
+-- v31: Artist newsletter product — subscriber lists, issues, templates
+
+CREATE TABLE IF NOT EXISTS artist_newsletter_subscribers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    newsletter_id INTEGER NOT NULL REFERENCES artist_newsletters(id),
+    email TEXT NOT NULL,
+    first_name TEXT DEFAULT '',
+    status TEXT DEFAULT 'active' CHECK (status IN ('active','unsubscribed')),
+    subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(newsletter_id, email)
+);
+CREATE INDEX IF NOT EXISTS idx_artist_nl_subs_newsletter ON artist_newsletter_subscribers(newsletter_id);
+
+CREATE TABLE IF NOT EXISTS artist_newsletter_issues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    newsletter_id INTEGER NOT NULL REFERENCES artist_newsletters(id),
+    issue_number INTEGER DEFAULT 1,
+    subject TEXT NOT NULL,
+    html_content TEXT DEFAULT '',
+    plain_text TEXT DEFAULT '',
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft','scheduled','sent')),
+    scheduled_at TIMESTAMP,
+    sent_at TIMESTAMP,
+    opens INTEGER DEFAULT 0,
+    clicks INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_artist_nl_issues ON artist_newsletter_issues(newsletter_id);
+
+CREATE TABLE IF NOT EXISTS artist_newsletter_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    slug TEXT UNIQUE NOT NULL,
+    html_template TEXT DEFAULT '',
+    preview_image_url TEXT DEFAULT '',
+    is_default INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (31);

@@ -877,6 +877,14 @@ class ArtistNewslettersConfig(BaseModel):
     waitlist_enabled: bool = True
 
 
+class LicensingConfig(BaseModel):
+    enabled: bool = False
+    default_monthly_fee_cents: int = 9900  # $99/mo
+    default_annual_fee_cents: int = 99900  # $999/yr
+    default_revenue_share_pct: float = 20.0
+    trial_days: int = 30
+
+
 class RateLimitConfig(BaseModel):
     login_max: int = 5
     login_window: int = 900
@@ -919,6 +927,7 @@ class AppConfig(BaseModel):
     community: CommunityConfig = Field(default_factory=CommunityConfig)
     edition_markets: EditionMarketsConfig = Field(default_factory=EditionMarketsConfig)
     artist_newsletters: ArtistNewslettersConfig = Field(default_factory=ArtistNewslettersConfig)
+    licensing: LicensingConfig = Field(default_factory=LicensingConfig)
     rate_limits: RateLimitConfig = Field(default_factory=RateLimitConfig)
     db_path: str = "data/weeklyamp.db"
     db_backend: str = "sqlite"  # "sqlite" or "postgres"
