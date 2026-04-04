@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Import Subscribers — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_import %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Import Subscribers</h2>
+    <p>Bulk import subscribers from a CSV file</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Upload CSV</span>
+    </div>
+    <div class="card-body">
+        <form hx-post="/subscribers/import"
+              hx-target="#import-results"
+              hx-encoding="multipart/form-data"
+              hx-indicator="#import-spinner">
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="csv_file">CSV File</label>
+                <input type="file" name="csv_file" id="csv_file" accept=".csv" class="form-control" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="edition_slug">Default Edition</label>
+                <select name="edition_slug" id="edition_slug" class="form-control">
+                    {% for edition in editions %}
+                    <option value="{{ edition.slug }}" {% if edition.slug == 'fan' %}selected{% endif %}>
+                        {{ edition.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small style="color: var(--text-muted);">Used when the CSV row doesn't specify an edition.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                <span class="spinner htmx-indicator" id="import-spinner"></span>
+                Import Subscribers
+            </button>
+        </form>
+
+        <div id="import-results" style="margin-top: 1rem;"></div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+        <span class="card-title">Instructions</span>
+    </div>
+    <div class="card-body">
+        <p>CSV should have an <strong>email</strong> column. Optional columns: <strong>first_name</strong>, <strong>edition</strong>.</p>
+        <p>The importer recognises these column name variants:</p>
+        <ul>
+            <li><code>email</code>, <code>Email</code>, or <code>EMAIL</code></li>
+            <li><code>first_name</code>, <code>First Name</code>, <code>name</code>, or <code>Name</code></li>
+            <li><code>edition</code> or <code>Edition</code> (slug, e.g. <code>fan</code>, <code>artist</code>, <code>industry</code>)</li>
+        </ul>
+        <p><strong>Example CSV:</strong></p>
+        <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;">email,first_name,edition
+alice@example.com,Alice,fan
+bob@example.com,Bob,artist</pre>
+    </div>
+</div>
+{% endblock %}

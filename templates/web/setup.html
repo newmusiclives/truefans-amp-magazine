@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Setup & Deliverability — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_setup %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Setup & Deliverability</h2>
+    <p>Configuration checklist and DNS setup guide</p>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="card-title">Configuration Checklist</span>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Setting</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>SMTP Email</td>
+                    <td>
+                        {% if checks.smtp %}
+                            <span style="color: var(--green);">&#10004; Configured</span>
+                        {% else %}
+                            <span style="color: var(--red);">&#10008; Not configured</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Admin Password</td>
+                    <td>
+                        {% if checks.admin_password %}
+                            <span style="color: var(--green);">&#10004; Set</span>
+                        {% else %}
+                            <span style="color: var(--red);">&#10008; Not set</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Secret Key</td>
+                    <td>
+                        {% if checks.secret_key %}
+                            <span style="color: var(--green);">&#10004; Set</span>
+                        {% else %}
+                            <span style="color: var(--red);">&#10008; Not set</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Tracking Domain</td>
+                    <td>
+                        {% if checks.tracking_domain %}
+                            <span style="color: var(--green);">&#10004; Set</span>
+                        {% else %}
+                            <span style="color: var(--red);">&#10008; Not set</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Stripe</td>
+                    <td>
+                        {% if checks.stripe %}
+                            <span style="color: var(--green);">&#10004; Configured</span>
+                        {% else %}
+                            <span style="color: var(--red);">&#10008; Not configured</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>Site Domain</td>
+                    <td>
+                        {% if checks.site_domain %}
+                            <span style="color: var(--green);">&#10004; Customized</span>
+                        {% else %}
+                            <span style="color: var(--red);">&#10008; Default</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+        <span class="card-title">DNS Setup Guide</span>
+    </div>
+    <div class="card-body">
+        <p>Configure these DNS records to maximize email deliverability and avoid spam filters.</p>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">SPF Record</h3>
+        <p>Add a TXT record to your domain's DNS:</p>
+        <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;">v=spf1 include:mailgun.org ~all</pre>
+        <p><small style="color: var(--text-muted);">Replace <code>mailgun.org</code> with your email provider's SPF include if different.</small></p>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">DKIM Record</h3>
+        <p>Add the DKIM TXT record from your email provider. This is typically a long TXT record at a subdomain like:</p>
+        <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;">smtp._domainkey.yourdomain.com  TXT  "v=DKIM1; k=rsa; p=YOUR_PUBLIC_KEY"</pre>
+        <p><small style="color: var(--text-muted);">Your email provider (Mailgun, SES, Postmark, etc.) will give you the exact record to add.</small></p>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">DMARC Record</h3>
+        <p>Add a TXT record at <code>_dmarc.yourdomain.com</code>:</p>
+        <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;">v=DMARC1; p=none; rua=mailto:dmarc@yourdomain.com</pre>
+        <p><small style="color: var(--text-muted);">Start with <code>p=none</code> to monitor, then move to <code>p=quarantine</code> or <code>p=reject</code> once verified.</small></p>
+
+        <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem;">Tracking Subdomain</h3>
+        <p>Create a CNAME record for click/open tracking:</p>
+        <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 6px; overflow-x: auto;">trk.yourdomain.com  CNAME  your-email-provider-tracking-domain</pre>
+        <p><small style="color: var(--text-muted);">Using a custom tracking domain improves deliverability and link reputation.</small></p>
+    </div>
+</div>
+{% endblock %}

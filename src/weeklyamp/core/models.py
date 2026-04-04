@@ -848,6 +848,9 @@ class ReaderContentConfig(BaseModel):
 
 class PaidTiersConfig(BaseModel):
     enabled: bool = False
+    payment_provider: str = "manifest"  # "manifest" or "stripe"
+    manifest_api_key: str = ""
+    manifest_webhook_secret: str = ""
     stripe_publishable_key: str = ""
     stripe_secret_key: str = ""
     webhook_secret: str = ""

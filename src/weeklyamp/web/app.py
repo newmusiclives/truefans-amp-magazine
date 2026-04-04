@@ -135,7 +135,7 @@ def create_app() -> FastAPI:
         stop_scheduler()
         logger.info("Shutting down — closing database connections")
 
-    app = FastAPI(title="TrueFans NEWSLETTERS", docs_url=None, redoc_url=None, lifespan=lifespan)
+    app = FastAPI(title="TrueFans NEWSLETTERS", docs_url="/docs", redoc_url="/redoc", lifespan=lifespan)
 
     # Store config on app for access in routes
     app.state.config = config
@@ -360,6 +360,8 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import artist_newsletters as artist_newsletters_routes
     from weeklyamp.web.routes import segments as segments_routes
     from weeklyamp.web.routes import mobile_app as mobile_app_routes
+    from weeklyamp.web.routes import setup as setup_routes
+    from weeklyamp.web.routes import users as users_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -418,6 +420,10 @@ def create_app() -> FastAPI:
     app.include_router(segments_routes.router, prefix="/admin/segments")
     # Mobile app waitlist
     app.include_router(mobile_app_routes.router)
+    # Setup & deliverability guide
+    app.include_router(setup_routes.router, prefix="/admin/setup")
+    # v29+ admin user management
+    app.include_router(users_routes.router, prefix="/admin/users")
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Weekly Report — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_report %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Weekly Report</h2>
+    <p>AI-generated summary of platform performance, KPIs, and recommendations.</p>
+</div>
+
+<div class="card" style="padding: 2rem;">
+    {{ report_html | safe }}
+</div>
+
+<div style="margin-top: 1.5rem;">
+    <button class="btn btn-primary" disabled title="Coming soon — AI analysis of your metrics">
+        &#129302; Generate AI Analysis
+    </button>
+    <span style="margin-left: 0.75rem; color: var(--muted); font-size: 0.85rem;">Coming soon</span>
+</div>
+{% endblock %}

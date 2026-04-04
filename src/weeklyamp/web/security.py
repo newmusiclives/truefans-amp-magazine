@@ -57,7 +57,7 @@ def _get_session_max_age() -> int:
 _CSRF_COOKIE = "_csrf"
 
 # Routes that don't require authentication
-_PUBLIC_PREFIXES = ("/health", "/login", "/static", "/submit", "/subscribe", "/unsubscribe", "/verify", "/newsletters", "/api/", "/feed.xml", "/t/", "/preferences/", "/webhooks/inbound", "/artists", "/trivia/leaderboard", "/advertise", "/resources", "/refer", "/contests", "/contribute", "/embed", "/artist-newsletters", "/mobile-app", "/articles")
+_PUBLIC_PREFIXES = ("/health", "/login", "/static", "/submit", "/subscribe", "/unsubscribe", "/verify", "/newsletters", "/api/", "/feed.xml", "/t/", "/preferences/", "/webhooks/inbound", "/artists", "/trivia/leaderboard", "/advertise", "/resources", "/refer", "/contests", "/contribute", "/embed", "/artist-newsletters", "/mobile-app", "/articles", "/docs", "/redoc")
 _PUBLIC_EXACT = frozenset({"/"})
 
 _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web"

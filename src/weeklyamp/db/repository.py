@@ -3855,3 +3855,40 @@ class Repository:
         ).fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    # ---- Admin Users ----
+
+    def get_admin_users(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM admin_users WHERE is_active = 1 ORDER BY role, display_name"
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_admin_user_by_email(self, email: str):
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT * FROM admin_users WHERE email = ? AND is_active = 1", (email,)
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def create_admin_user(
+        self, email: str, password_hash: str, display_name: str = "", role: str = "viewer"
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO admin_users (email, password_hash, display_name, role) VALUES (?, ?, ?, ?)",
+            (email, password_hash, display_name, role),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def update_admin_user_role(self, user_id: int, role: str) -> None:
+        conn = self._conn()
+        conn.execute("UPDATE admin_users SET role = ? WHERE id = ?", (role, user_id))
+        conn.commit()
+        conn.close()

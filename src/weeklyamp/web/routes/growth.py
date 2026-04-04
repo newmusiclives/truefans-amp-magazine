@@ -5,6 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse
 
+from fastapi import Request
+
 from weeklyamp.agents.orchestrator import AgentOrchestrator
 from weeklyamp.web.deps import get_config, get_repo, render
 
@@ -66,3 +68,13 @@ async def generate_social(issue_id: int = Form(...)):
     except Exception as e:
         return render("partials/alert.html",
             message=f"Failed: {e}", level="error")
+
+
+@router.get("/report", response_class=HTMLResponse)
+async def weekly_report(request: Request):
+    repo = get_repo()
+    config = get_config()
+    from weeklyamp.content.weekly_report import generate_weekly_report
+
+    report_html = generate_weekly_report(repo, config)
+    return HTMLResponse(render("weekly_report.html", report_html=report_html))

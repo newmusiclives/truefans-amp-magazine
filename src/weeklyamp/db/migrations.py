@@ -1116,6 +1116,22 @@ CREATE TABLE IF NOT EXISTS mobile_app_waitlist (
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (28);
 """,
+    29: """
+-- v29: Admin users for multi-user role management
+CREATE TABLE IF NOT EXISTS admin_users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    display_name TEXT DEFAULT '',
+    role TEXT DEFAULT 'viewer' CHECK (role IN ('admin','editor','reviewer','viewer')),
+    is_active INTEGER DEFAULT 1,
+    last_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_admin_users_email ON admin_users(email);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (29);
+""",
 }
 
 

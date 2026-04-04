@@ -202,10 +202,13 @@ reader_content:
   auto_approve: false
   max_per_issue: 2
 
-# --- Paid subscriber tiers (INACTIVE — requires Stripe keys) ---
+# --- Paid subscriber tiers (INACTIVE — requires payment provider keys) ---
 paid_tiers:
   enabled: false
-  stripe_publishable_key: ""
+  payment_provider: "manifest"  # "manifest" (Manifest Financial) or "stripe"
+  manifest_api_key: ""
+  manifest_webhook_secret: ""
+  stripe_publishable_key: ""   # fallback if manifest not configured
   stripe_secret_key: ""
   webhook_secret: ""
 
