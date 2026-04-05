@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Affiliate Marketplace — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Affiliate Marketplace</h2>
+    <p class="subtitle">Browse music-related affiliate programs and start earning</p>
+</div>
+
+{% for cat, programs in categories.items() %}
+<div class="card" style="margin-bottom:20px;">
+    <h3 style="text-transform:capitalize;">{{ cat }}</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:16px;">
+        {% for p in programs %}
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+            <h4 style="margin-bottom:8px;">{{ p.name }}</h4>
+            <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">{{ p.description or 'Music affiliate program' }}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:13px;font-weight:600;color:var(--green);">{{ p.commission_rate or '10%' }} commission</span>
+                <a href="/affiliates/redirect/{{ p.slug }}" class="btn btn-sm" style="background:var(--accent);color:#fff;padding:6px 16px;font-size:12px;">Visit</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+
+{% if not categories %}
+<div class="card"><p class="text-muted">No affiliate programs available yet. Check back soon.</p></div>
+{% endif %}
+
+<div class="card" style="margin-top:24px;text-align:center;padding:32px;">
+    <h3>Want to become an affiliate partner?</h3>
+    <p style="color:var(--text-dim);margin:12px 0 20px;">Earn commissions by promoting music tools, services, and products to our newsletter audience.</p>
+    <a href="/affiliates/" class="btn btn-primary" style="display:inline-block;padding:12px 24px;">Apply to Join</a>
+</div>
+{% endblock %}

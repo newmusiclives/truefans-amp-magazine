@@ -211,15 +211,14 @@ reader_content:
   auto_approve: false
   max_per_issue: 2
 
-# --- Paid subscriber tiers (INACTIVE — requires payment provider keys) ---
+# --- Paid subscriber tiers (INACTIVE — requires Manifest Financial API keys) ---
 paid_tiers:
   enabled: false
-  payment_provider: "manifest"  # "manifest" (Manifest Financial) or "stripe"
-  manifest_api_key: ""
-  manifest_webhook_secret: ""
-  stripe_publishable_key: ""   # fallback if manifest not configured
-  stripe_secret_key: ""
-  webhook_secret: ""
+  payment_provider: "manifest"
+  manifest_api_key: ""          # Manifest Financial API key (or MANIFEST_API_KEY env var)
+  manifest_webhook_secret: ""   # Manifest webhook HMAC secret (or MANIFEST_WEBHOOK_SECRET env var)
+  dunning_enabled: false
+  dunning_grace_days: 3
 
 # --- Audio newsletter via TTS (INACTIVE) ---
 audio:
@@ -246,10 +245,46 @@ artist_newsletters:
 # --- City edition licensing ---
 licensing:
   enabled: true
-  default_monthly_fee_cents: 9900
+  default_monthly_fee_cents: 15000
   default_annual_fee_cents: 99900
   default_revenue_share_pct: 20.0
   trial_days: 30
+
+# --- White-label SaaS (INACTIVE) ---
+white_label:
+  enabled: false
+  custom_domain_support: false
+
+# --- Internationalization / multi-language (INACTIVE) ---
+i18n:
+  enabled: false
+  target_languages:
+    - es
+    - pt
+    - fr
+  auto_translate: false
+
+# --- Podcast generation from newsletter content (INACTIVE) ---
+podcast:
+  enabled: false
+  intro_text: "Welcome to TrueFans Newsletters, the podcast."
+  outro_text: "Thanks for listening to TrueFans Newsletters."
+  rss_enabled: false
+
+# --- Franchise / territory model (INACTIVE) ---
+franchise:
+  enabled: false
+  territory_exclusive: true
+  market_tiers:
+    - small
+    - medium
+    - large
+    - major
+
+# --- Data / analytics product (INACTIVE) ---
+data_product:
+  enabled: false
+  api_metered_billing: false
 
 rate_limits:
   login_max: 5

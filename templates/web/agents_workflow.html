@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}AI Staff Workflow — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_agents %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>AI Staff — Workflow &amp; Processes</h2>
+    <p class="subtitle">How the 29 AI agents work together to produce 9 newsletter issues per week</p>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:24px;">
+    <a href="/agents" class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);">Staff Dashboard</a>
+    <a href="/agents/workflow" class="btn btn-sm" style="background:var(--accent);color:#fff;">Workflow Guide</a>
+    <a href="/agents/tasks" class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);">Task Queue</a>
+</div>
+
+<!-- Overview -->
+<div class="card" style="margin-bottom:24px;background:linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);padding:28px;">
+    <h3 style="color:#fff;margin-bottom:16px;">The Autonomous Newsroom</h3>
+    <p style="color:#d1d5db;line-height:1.8;">TrueFans NEWSLETTERS runs on a team of AI agents, each with a specialized role. Together they research, write, edit, review, and promote 3 newsletter editions (Fan, Artist, Industry) across 3 send days per week — producing <strong style="color:#e8645a;">9 complete issues every week</strong> with minimal human oversight.</p>
+</div>
+
+<!-- Agent Roles -->
+<div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:20px;">The AI Staff — 7 Agent Types</h3>
+    <table class="data-table">
+        <thead><tr><th style="width:180px;">Agent</th><th>Role</th><th>Key Tasks</th><th>Runs</th></tr></thead>
+        <tbody>
+            <tr>
+                <td style="font-weight:700;color:#f59e0b;">Editor-in-Chief</td>
+                <td>Plans issues, assigns sections to writers, reviews all drafts for quality</td>
+                <td>plan_issue, assign_sections, review_drafts, approve_issue</td>
+                <td>Per issue</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#7c5cfc;">Research Analyst</td>
+                <td>Discovers content from 120+ sources, scores relevance, compiles research briefs</td>
+                <td>discover_content, compile_brief, find_guest_candidates</td>
+                <td>Every 6 hours</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#10b981;">Staff Writers (29)</td>
+                <td>Specialist writers — one per section. Each has a unique persona, tone, and expertise area</td>
+                <td>write_section, rewrite, adapt_tone</td>
+                <td>Per section</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#e8645a;">Sales Director</td>
+                <td>Identifies sponsor prospects, drafts outreach emails, manages the sales pipeline</td>
+                <td>identify_prospects, draft_outreach, update_pipeline</td>
+                <td>Weekly</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#06b6d4;">Growth Manager</td>
+                <td>Analyzes subscriber metrics, suggests growth tactics, drafts social media posts</td>
+                <td>analyze_metrics, suggest_tactics, draft_social_posts, plan_referral</td>
+                <td>Daily</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#ec4899;">Marketing Agent</td>
+                <td>Prospect scanning, outreach drafting, social content, retention campaigns</td>
+                <td>prospect_scan, draft_outreach, social_content, retention_check</td>
+                <td>Daily</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#8b5cf6;">Promotion Agent</td>
+                <td>Cross-promotion between editions, external partnerships, audience expansion</td>
+                <td>cross_promote, partnership_outreach, audience_analysis</td>
+                <td>Weekly</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- The Production Cycle -->
+<div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:20px;">The Production Cycle — 5 Steps</h3>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;">
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:28px;font-weight:900;color:#7c5cfc;margin-bottom:8px;">1</div>
+            <div style="font-weight:700;margin-bottom:8px;">Research</div>
+            <div style="font-size:13px;color:var(--text-dim);">Researcher fetches content from 120+ RSS feeds and web sources. Scores relevance. Tags by section.</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:28px;font-weight:900;color:#f59e0b;margin-bottom:8px;">2</div>
+            <div style="font-weight:700;margin-bottom:8px;">Plan</div>
+            <div style="font-size:13px;color:var(--text-dim);">Editor-in-Chief selects sections, assigns writers, creates editorial calendar.</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:28px;font-weight:900;color:#10b981;margin-bottom:8px;">3</div>
+            <div style="font-weight:700;margin-bottom:8px;">Write</div>
+            <div style="font-size:13px;color:var(--text-dim);">29 specialist writers generate drafts using section-specific prompts and research data.</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:28px;font-weight:900;color:#e8645a;margin-bottom:8px;">4</div>
+            <div style="font-weight:700;margin-bottom:8px;">Review</div>
+            <div style="font-size:13px;color:var(--text-dim);">Editor reviews each draft. Human checkpoint for approval, rewrite requests, or tone adjustments.</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:28px;font-weight:900;color:#06b6d4;margin-bottom:8px;">5</div>
+            <div style="font-weight:700;margin-bottom:8px;">Publish</div>
+            <div style="font-size:13px;color:var(--text-dim);">Assemble approved drafts, inject sponsors, generate subject lines, schedule send.</div>
+        </div>
+    </div>
+</div>
+
+<!-- Autonomy Levels -->
+<div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:16px;">Autonomy Levels</h3>
+    <p style="color:var(--text-dim);margin-bottom:16px;">Agents operate in one of three modes, controlled by the <code>agents.default_autonomy</code> setting:</p>
+    <table class="data-table">
+        <thead><tr><th>Level</th><th>Behavior</th><th>Human Involvement</th></tr></thead>
+        <tbody>
+            <tr>
+                <td style="font-weight:700;color:#e8645a;">Supervised</td>
+                <td>Agents generate content but all output requires human approval before publishing</td>
+                <td>Review every draft, approve/reject/rewrite</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#f59e0b;">Semi-Autonomous</td>
+                <td>Agents can auto-approve content that scores above quality thresholds</td>
+                <td>Spot-check flagged items, handle exceptions</td>
+            </tr>
+            <tr>
+                <td style="font-weight:700;color:#10b981;">Autonomous</td>
+                <td>Full auto-pilot — research, write, review, publish without human intervention</td>
+                <td>Monitor dashboards, adjust strategy</td>
+            </tr>
+        </tbody>
+    </table>
+    <p style="color:var(--text-dim);font-size:13px;margin-top:12px;">Current setting: <strong>{{ config.agents.default_autonomy }}</strong> | Review required: <strong>{{ 'Yes' if config.agents.review_required else 'No' }}</strong></p>
+</div>
+
+<!-- Background Jobs -->
+<div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:16px;">Automated Background Jobs</h3>
+    <table class="data-table">
+        <thead><tr><th>Job</th><th>Schedule</th><th>What It Does</th></tr></thead>
+        <tbody>
+            <tr><td>Research Fetch</td><td>Every 6 hours</td><td>Pulls new content from all RSS/scrape sources</td></tr>
+            <tr><td>Welcome Sequence</td><td>Every 30 minutes</td><td>Sends next welcome email to new subscribers</td></tr>
+            <tr><td>Scheduled Sends</td><td>Every 60 seconds</td><td>Processes the scheduled send queue</td></tr>
+            <tr><td>Re-engagement Check</td><td>Daily at 3am</td><td>Identifies and suppresses inactive subscribers</td></tr>
+            <tr><td>Prospect Scan</td><td>Monday 9am</td><td>AI identifies potential sponsors</td></tr>
+            <tr><td>Outreach Drafts</td><td>Daily 10am</td><td>AI drafts sponsor outreach emails</td></tr>
+            <tr><td>Social Posts</td><td>Daily 11am</td><td>AI generates social media content</td></tr>
+            <tr><td>Retention Check</td><td>Daily 2pm</td><td>Identifies at-risk subscribers, drafts win-backs</td></tr>
+            <tr><td>Weekly Report</td><td>Friday 4pm</td><td>Generates performance summary for the week</td></tr>
+            <tr><td>Billing Dunning</td><td>Daily 6am</td><td>Progresses past-due subscription states</td></tr>
+            <tr><td>Invoice Generation</td><td>1st of month</td><td>Generates invoices for licensees and artists</td></tr>
+            <tr><td>Spotify Releases</td><td>Daily 8am</td><td>Scans for new releases from tracked artists</td></tr>
+            <tr><td>Audio Generation</td><td>Daily noon</td><td>Generates TTS audio for published issues</td></tr>
+            <tr><td>Ad Auction</td><td>Daily 5am</td><td>Runs daily marketplace auction for sponsor slots</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- Cost Efficiency -->
+<div class="card" style="margin-bottom:24px;">
+    <h3 style="margin-bottom:16px;">AI Cost Efficiency</h3>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:24px;font-weight:900;color:#10b981;">~$0.40</div>
+            <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">Cost per edition (Claude Sonnet)</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:24px;font-weight:900;color:#10b981;">~$15-25</div>
+            <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">Monthly AI cost (9 issues/week)</div>
+        </div>
+        <div style="text-align:center;padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;">
+            <div style="font-size:24px;font-weight:900;color:#10b981;">25-30</div>
+            <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">API calls per edition</div>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;margin-top:24px;">
+    <a href="/agents" class="btn btn-primary">View AI Staff Dashboard</a>
+    <a href="/agents/tasks" class="btn" style="margin-left:12px;background:var(--bg-card);border:1px solid var(--border);">View Task Queue</a>
+</div>
+{% endblock %}

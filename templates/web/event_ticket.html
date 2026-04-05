@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Your Ticket — {{ ticket.title }} — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div style="max-width:500px;margin:60px auto;">
+    <div class="card" style="padding:32px;text-align:center;border:2px solid var(--accent);position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;right:0;height:4px;background:var(--accent);"></div>
+        <div style="font-size:13px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:16px;">Your Ticket</div>
+        <h2 style="margin-bottom:8px;">{{ ticket.title }}</h2>
+        <p style="color:var(--text-dim);margin-bottom:24px;">
+            {% if ticket.event_date %}{{ ticket.event_date }}{% endif %}
+            {% if ticket.location %} &mdash; {{ ticket.location }}{% endif %}
+        </p>
+        <div style="background:var(--bg);border:2px dashed var(--border);border-radius:12px;padding:24px;margin-bottom:24px;">
+            <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">TICKET CODE</div>
+            <div style="font-size:28px;font-weight:900;letter-spacing:3px;color:var(--accent);">{{ ticket.ticket_code }}</div>
+        </div>
+        <div style="text-align:left;">
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="color:var(--text-dim);">Name</span>
+                <span style="font-weight:600;">{{ ticket.name or 'Guest' }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="color:var(--text-dim);">Email</span>
+                <span style="font-weight:600;">{{ ticket.email }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+                <span style="color:var(--text-dim);">Type</span>
+                <span style="font-weight:600;text-transform:capitalize;">{{ ticket.event_type or 'general' }}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                <span style="color:var(--text-dim);">Payment</span>
+                <span style="font-weight:600;text-transform:capitalize;">{{ ticket.payment_status or 'free' }}</span>
+            </div>
+        </div>
+        {% if ticket.checked_in_at %}
+        <div style="margin-top:20px;padding:12px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:var(--green);font-weight:600;">
+            Checked in at {{ ticket.checked_in_at }}
+        </div>
+        {% endif %}
+        <p style="font-size:12px;color:var(--text-dim);margin-top:20px;">Present this ticket code at the door for entry. Screenshot or print this page.</p>
+    </div>
+</div>
+{% endblock %}

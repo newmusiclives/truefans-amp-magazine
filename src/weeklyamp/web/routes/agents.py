@@ -140,6 +140,12 @@ async def agents_page():
     )
 
 
+@router.get("/workflow", response_class=HTMLResponse)
+async def workflow_page():
+    config = get_config()
+    return render("agents_workflow.html", config=config)
+
+
 @router.get("/tasks", response_class=HTMLResponse)
 async def tasks_list(state: str = ""):
     repo = get_repo()

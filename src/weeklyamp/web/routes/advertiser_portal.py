@@ -72,3 +72,44 @@ async def submit_campaign(campaign_id: int, request: Request):
 async def rate_card(request: Request):
     config = get_config()
     return HTMLResponse(render("advertiser_dashboard.html", account={}, campaigns=[], config=config, show_rates=True))
+
+
+# ---- Ad Marketplace Bidding ----
+
+@router.get("/advertiser/marketplace", response_class=HTMLResponse)
+async def ad_marketplace_page(request: Request):
+    """View available ad slots and place bids."""
+    repo = get_repo()
+    config = get_config()
+    editions = repo.get_editions()
+    # Get upcoming available dates (next 7 days)
+    from datetime import datetime, timedelta
+    dates = [(datetime.utcnow() + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(1, 8)]
+    # Get existing bids for these dates
+    conn = repo._conn()
+    bids = conn.execute(
+        "SELECT * FROM ad_bids WHERE target_date >= ? ORDER BY target_date, bid_cents DESC",
+        (dates[0],),
+    ).fetchall()
+    conn.close()
+    return HTMLResponse(render("ad_marketplace.html",
+        editions=editions, dates=dates, bids=[dict(b) for b in bids], config=config))
+
+
+@router.post("/advertiser/marketplace/bid", response_class=HTMLResponse)
+async def place_bid(
+    request: Request,
+    campaign_id: int = Form(...),
+    advertiser_id: int = Form(...),
+    edition_slug: str = Form(...),
+    position: str = Form("mid"),
+    bid_cents: int = Form(...),
+    target_date: str = Form(...),
+):
+    """Place a bid on a sponsor slot."""
+    from weeklyamp.billing.ad_marketplace import AdMarketplace
+    repo = get_repo()
+    config = get_config()
+    marketplace = AdMarketplace(repo, config)
+    bid_id = marketplace.place_bid(campaign_id, advertiser_id, edition_slug, position, bid_cents, target_date)
+    return HTMLResponse(f'<div class="alert alert-success">Bid placed (${bid_cents/100:.2f} for {edition_slug} {position} on {target_date}). Auction runs daily at 5am.</div>')

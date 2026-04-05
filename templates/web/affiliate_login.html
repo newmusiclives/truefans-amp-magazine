@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Affiliate Login — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div style="max-width:400px;margin:80px auto;">
+    <div class="card" style="padding:32px;">
+        <h2 style="text-align:center;margin-bottom:24px;">Affiliate Partner Login</h2>
+        <form method="POST" action="/affiliates/dashboard">
+            <div style="margin-bottom:16px;">
+                <label style="display:block;font-size:14px;font-weight:600;margin-bottom:6px;">Email</label>
+                <input type="email" name="email" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;">
+            </div>
+            <button type="submit" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:15px;cursor:pointer;">Login</button>
+        </form>
+        <p style="text-align:center;margin-top:16px;font-size:13px;color:var(--text-dim);">Not a partner yet? <a href="/affiliates/marketplace" style="color:var(--accent);">Apply here</a></p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Franchise Territories — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_licensing %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Franchise Territories</h2>
+    <p class="subtitle">Territory exclusivity and market tier assignments</p>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:24px;">
+    <a href="/admin/licensing/" class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);">All Licensees</a>
+    <a href="/admin/licensing/franchise/territories" class="btn btn-sm" style="background:var(--accent);color:#fff;">Territories</a>
+    <a href="/admin/licensing/franchise/rollup" class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);">Revenue Rollup</a>
+</div>
+
+<div class="card">
+    <h3>Territory Map</h3>
+    {% if territories %}
+    <table class="data-table" style="margin-top:12px;">
+        <thead><tr><th>Company</th><th>Market</th><th>Tier</th><th>Exclusive</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for t in territories %}
+        <tr>
+            <td style="font-weight:600;">{{ t.company_name }}</td>
+            <td>{{ t.market_name or t.city_market_slug or '—' }}</td>
+            <td><span class="badge">{{ t.market_tier or 'medium' }}</span></td>
+            <td>{% if t.territory_exclusive %}<span style="color:var(--green);">Exclusive</span>{% else %}Open{% endif %}</td>
+            <td><span class="badge badge-{% if t.status == 'active' %}success{% else %}info{% endif %}">{{ t.status }}</span></td>
+            <td>
+                <form hx-post="/admin/licensing/{{ t.id }}/territory" hx-swap="outerHTML" style="display:flex;gap:4px;">
+                    <select name="market_tier" style="font-size:12px;padding:2px 4px;">
+                        <option value="small" {% if t.market_tier == 'small' %}selected{% endif %}>Small</option>
+                        <option value="medium" {% if t.market_tier == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="large" {% if t.market_tier == 'large' %}selected{% endif %}>Large</option>
+                        <option value="major" {% if t.market_tier == 'major' %}selected{% endif %}>Major</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm">Update</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted" style="margin-top:12px;">No territories configured. Activate licensees and assign territories.</p>
+    {% endif %}
+</div>
+{% endblock %}

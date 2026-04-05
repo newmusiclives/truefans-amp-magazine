@@ -181,6 +181,34 @@ DEFAULT_SECTIONS = [
     ("festival_economy", "FESTIVAL ECONOMY", 84, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Festival business models, trends, and market analysis"),
     ("catalog_watch", "CATALOG WATCH", 85, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Music catalog acquisitions, valuations, and investment trends"),
     ("sync_and_licensing", "SYNC & LICENSING", 86, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Sync placements, licensing deals, and opportunities in film, TV, and gaming"),
+    # Fan Edition expansion (sort 100-109)
+    ("new_music_friday", "NEW MUSIC FRIDAY", 100, "rotating", "medium", 300, "fan_engagement", "ongoing", 0, "Weekly roundup of the best new releases across all genres"),
+    ("hidden_tracks", "HIDDEN TRACKS", 101, "rotating", "medium", 400, "fan_engagement", "ongoing", 0, "Deep cuts, B-sides, and album tracks that deserve more attention"),
+    ("music_history", "THIS WEEK IN MUSIC HISTORY", 102, "rotating", "short", 200, "fan_engagement", "ongoing", 0, "Memorable music moments and milestones from this week in history"),
+    ("cover_stories", "COVER STORIES", 103, "rotating", "medium", 400, "fan_engagement", "ongoing", 0, "The best cover versions, reimaginings, and tribute performances"),
+    ("festival_guide", "FESTIVAL GUIDE", 104, "rotating", "medium", 400, "fan_engagement", "ongoing", 0, "Festival previews, survival guides, and lineup analysis"),
+    ("music_movies", "MUSIC ON SCREEN", 105, "rotating", "medium", 300, "fan_engagement", "ongoing", 0, "Music documentaries, biopics, concert films, and music in TV shows"),
+    # Artist Edition expansion (sort 110-119)
+    ("home_studio", "HOME STUDIO", 110, "rotating", "medium", 400, "technology", "ongoing", 0, "Setting up, optimizing, and upgrading your home recording space"),
+    ("music_video_diy", "MUSIC VIDEO DIY", 111, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Creating music videos on an indie budget with maximum impact"),
+    ("merch_masterclass", "MERCH MASTERCLASS", 112, "rotating", "medium", 400, "business", "ongoing", 0, "Designing, producing, and selling merchandise that fans actually want"),
+    ("email_game", "THE EMAIL GAME", 113, "rotating", "medium", 400, "business", "ongoing", 0, "Building and monetizing your email list as an independent artist"),
+    ("pitch_perfect", "PITCH PERFECT", 114, "rotating", "medium", 400, "artist_career", "ongoing", 0, "How to pitch blogs, playlists, press, and sync opportunities"),
+    ("sample_clearance", "SAMPLE CLEARANCE", 115, "rotating", "medium", 400, "business", "short", 3, "Navigating sample clearance, interpolation, and creative commons"),
+    # Industry Edition expansion (sort 120-129)
+    ("data_room", "THE DATA ROOM", 120, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Charts, data analysis, and metrics that matter for music business decisions"),
+    ("label_watch", "LABEL WATCH", 121, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Independent label profiles, strategies, and A&R philosophies"),
+    ("publishing_corner", "PUBLISHING CORNER", 122, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Music publishing deals, songwriter royalties, and collection strategies"),
+    ("live_nation_report", "LIVE SECTOR REPORT", 123, "rotating", "medium", 400, "industry_deep_dive", "ongoing", 0, "Touring economics, venue industry, and live music business trends"),
+    ("web3_music", "WEB3 & MUSIC", 124, "rotating", "medium", 400, "technology", "ongoing", 0, "Blockchain, NFTs, tokenized royalties, and decentralized music platforms"),
+    ("ai_disruption", "AI DISRUPTION", 125, "rotating", "medium", 400, "technology", "ongoing", 0, "How AI is reshaping music creation, distribution, and discovery"),
+    # Shared sections (sort 130-135)
+    ("hot_takes", "HOT TAKES", 130, "rotating", "short", 200, "community", "ongoing", 0, "Bold opinions and contrarian views on the state of music today"),
+    ("this_or_that", "THIS OR THAT", 131, "rotating", "short", 150, "community", "ongoing", 0, "Fun debates and comparisons that get the community talking"),
+    ("by_the_numbers", "BY THE NUMBERS", 132, "rotating", "short", 150, "community", "ongoing", 0, "Surprising music stats, milestones, and data points of the week"),
+    ("weekend_playlist", "WEEKEND PLAYLIST", 133, "rotating", "short", 200, "community", "ongoing", 0, "Staff-curated playlist for the weekend across genres"),
+    ("ask_the_editor", "ASK THE EDITOR", 134, "rotating", "medium", 300, "community", "ongoing", 0, "Reader questions answered by the editorial team"),
+    ("whats_next", "WHAT'S NEXT", 135, "rotating", "short", 200, "community", "ongoing", 0, "Preview of upcoming issues, features, and community events"),
 ]
 
 

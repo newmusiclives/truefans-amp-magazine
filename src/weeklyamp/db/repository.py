@@ -3432,11 +3432,11 @@ class Repository:
         conn.close()
         return dict(row) if row else None
 
-    def create_billing_record(self, subscriber_id: int, tier_id: int, stripe_customer_id: str = "", stripe_subscription_id: str = "") -> int:
+    def create_billing_record(self, subscriber_id: int, tier_id: int, payment_customer_id: str = "", payment_subscription_id: str = "", payment_provider: str = "manifest") -> int:
         conn = self._conn()
         cur = conn.execute(
-            "INSERT INTO subscriber_billing (subscriber_id, tier_id, stripe_customer_id, stripe_subscription_id) VALUES (?, ?, ?, ?)",
-            (subscriber_id, tier_id, stripe_customer_id, stripe_subscription_id),
+            "INSERT INTO subscriber_billing (subscriber_id, tier_id, payment_customer_id, payment_subscription_id, payment_provider) VALUES (?, ?, ?, ?, ?)",
+            (subscriber_id, tier_id, payment_customer_id, payment_subscription_id, payment_provider),
         )
         conn.commit()
         row_id = cur.lastrowid
@@ -3455,14 +3455,129 @@ class Repository:
         conn.close()
         return dict(row) if row else None
 
-    def update_billing_status(self, stripe_subscription_id: str, status: str, current_period_end: str = "") -> None:
+    def get_billing_by_payment_id(self, payment_subscription_id: str):
+        conn = self._conn()
+        row = conn.execute(
+            """SELECT sb.*, st.slug as tier_slug, st.name as tier_name
+               FROM subscriber_billing sb
+               JOIN subscriber_tiers st ON st.id = sb.tier_id
+               WHERE sb.payment_subscription_id = ? LIMIT 1""",
+            (payment_subscription_id,),
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def update_billing_status(self, payment_subscription_id: str, status: str, current_period_end: str = "") -> None:
         conn = self._conn()
         conn.execute(
-            "UPDATE subscriber_billing SET status = ?, current_period_end = ?, updated_at = CURRENT_TIMESTAMP WHERE stripe_subscription_id = ?",
-            (status, current_period_end, stripe_subscription_id),
+            "UPDATE subscriber_billing SET status = ?, current_period_end = ?, updated_at = CURRENT_TIMESTAMP WHERE payment_subscription_id = ?",
+            (status, current_period_end, payment_subscription_id),
         )
         conn.commit()
         conn.close()
+
+    def update_dunning_state(self, payment_subscription_id: str, dunning_state: str) -> None:
+        conn = self._conn()
+        if dunning_state and dunning_state != "":
+            conn.execute(
+                "UPDATE subscriber_billing SET dunning_state = ?, dunning_started_at = COALESCE(dunning_started_at, CURRENT_TIMESTAMP), updated_at = CURRENT_TIMESTAMP WHERE payment_subscription_id = ?",
+                (dunning_state, payment_subscription_id),
+            )
+        else:
+            conn.execute(
+                "UPDATE subscriber_billing SET dunning_state = '', dunning_started_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE payment_subscription_id = ?",
+                (payment_subscription_id,),
+            )
+        conn.commit()
+        conn.close()
+
+    def get_past_due_subscriptions(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT sb.*, st.slug as tier_slug FROM subscriber_billing sb JOIN subscriber_tiers st ON st.id = sb.tier_id WHERE sb.status = 'past_due' AND sb.dunning_state != 'cancelled'"
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Invoices ----
+
+    def create_invoice(self, invoice_number: str, entity_type: str, entity_id: int, amount_cents: int, line_items_json: str = "[]", due_date: str = "", notes: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO invoices (invoice_number, entity_type, entity_id, amount_cents, line_items_json, due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (invoice_number, entity_type, entity_id, amount_cents, line_items_json, due_date, notes),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_invoices(self, entity_type: str = "", entity_id: int = 0, status: str = "") -> list[dict]:
+        conn = self._conn()
+        sql = "SELECT * FROM invoices WHERE 1=1"
+        params: list = []
+        if entity_type:
+            sql += " AND entity_type = ?"
+            params.append(entity_type)
+        if entity_id:
+            sql += " AND entity_id = ?"
+            params.append(entity_id)
+        if status:
+            sql += " AND status = ?"
+            params.append(status)
+        sql += " ORDER BY created_at DESC"
+        rows = conn.execute(sql, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_invoice_status(self, invoice_id: int, status: str, payment_transaction_id: str = "") -> None:
+        conn = self._conn()
+        if status == "paid":
+            conn.execute(
+                "UPDATE invoices SET status = ?, payment_transaction_id = ?, paid_at = CURRENT_TIMESTAMP WHERE id = ?",
+                (status, payment_transaction_id, invoice_id),
+            )
+        else:
+            conn.execute("UPDATE invoices SET status = ? WHERE id = ?", (status, invoice_id))
+        conn.commit()
+        conn.close()
+
+    # ---- Coupons ----
+
+    def create_coupon(self, code: str, description: str = "", discount_type: str = "percentage", discount_value: int = 0, applies_to: str = "subscription", max_uses: int = 0, valid_from: str = "", valid_until: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO coupons (code, description, discount_type, discount_value, applies_to, max_uses, valid_from, valid_until) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (code, description, discount_type, discount_value, applies_to, max_uses, valid_from, valid_until),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_coupon_by_code(self, code: str):
+        conn = self._conn()
+        row = conn.execute("SELECT * FROM coupons WHERE code = ? AND is_active = 1", (code,)).fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+    def get_active_coupons(self) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute("SELECT * FROM coupons WHERE is_active = 1 ORDER BY created_at DESC").fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def redeem_coupon(self, coupon_id: int, subscriber_id: int = 0, licensee_id: int = 0, discount_applied_cents: int = 0) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            "INSERT INTO coupon_redemptions (coupon_id, subscriber_id, licensee_id, discount_applied_cents) VALUES (?, ?, ?, ?)",
+            (coupon_id, subscriber_id if subscriber_id else None, licensee_id if licensee_id else None, discount_applied_cents),
+        )
+        conn.execute("UPDATE coupons SET current_uses = current_uses + 1 WHERE id = ?", (coupon_id,))
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
 
     # ---- Community Forum ----
 

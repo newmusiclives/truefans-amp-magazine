@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Artist CRM — {{ newsletter.artist_name }} — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ newsletter.artist_name }} — Artist CRM</h2>
+    <p class="subtitle">Unified dashboard: Newsletter + Fans + Revenue + Streaming + Events</p>
+</div>
+
+<!-- Tab Navigation -->
+<div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border,#e5e7eb);padding-bottom:0;">
+    <button class="tab-btn active" onclick="showTab('overview')" id="tab-overview" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;border-bottom:2px solid var(--accent,#e8645a);margin-bottom:-2px;">Overview</button>
+    <button class="tab-btn" onclick="showTab('subscribers')" id="tab-subscribers" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;color:var(--text-dim,#888);">Fans ({{ sub_count }})</button>
+    <button class="tab-btn" onclick="showTab('content')" id="tab-content" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;color:var(--text-dim,#888);">Content</button>
+    <button class="tab-btn" onclick="showTab('revenue')" id="tab-revenue" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;color:var(--text-dim,#888);">Revenue</button>
+    <button class="tab-btn" onclick="showTab('streaming')" id="tab-streaming" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;color:var(--text-dim,#888);">Streaming</button>
+    <button class="tab-btn" onclick="showTab('events')" id="tab-events" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;color:var(--text-dim,#888);">Events</button>
+    <button class="tab-btn" onclick="showTab('billing')" id="tab-billing" style="padding:10px 20px;border:none;background:none;font-weight:600;cursor:pointer;color:var(--text-dim,#888);">Billing</button>
+</div>
+
+<!-- Overview Tab -->
+<div id="panel-overview" class="tab-panel">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+        <div class="card" style="text-align:center;padding:20px;">
+            <div style="font-size:32px;font-weight:900;color:var(--accent,#e8645a);">{{ sub_count }}</div>
+            <div style="font-size:13px;color:var(--text-dim,#888);">Total Fans</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px;">
+            <div style="font-size:32px;font-weight:900;color:var(--accent,#e8645a);">{{ issues|length }}</div>
+            <div style="font-size:13px;color:var(--text-dim,#888);">Issues Sent</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px;">
+            <div style="font-size:32px;font-weight:900;color:#10b981;">${{ "%.2f"|format((revenue_total.total or 0) / 100) }}</div>
+            <div style="font-size:13px;color:var(--text-dim,#888);">Total Revenue</div>
+        </div>
+        <div class="card" style="text-align:center;padding:20px;">
+            <div style="font-size:32px;font-weight:900;color:var(--accent,#e8645a);">{{ links|length }}</div>
+            <div style="font-size:13px;color:var(--text-dim,#888);">Active Links</div>
+        </div>
+    </div>
+    {% if artist_profile %}
+    <div class="card" style="margin-bottom:16px;">
+        <h3>Artist Profile</h3>
+        <p>Genre: {{ artist_profile.genre or 'Not set' }} | Status: {{ artist_profile.status }}</p>
+        {% if artist_profile.bio %}<p style="margin-top:8px;color:var(--text-dim,#888);">{{ artist_profile.bio[:200] }}</p>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Subscribers Tab -->
+<div id="panel-subscribers" class="tab-panel" style="display:none;">
+    <div class="card">
+        <h3>Fan List ({{ sub_count }} total)</h3>
+        <table class="data-table" style="margin-top:12px;">
+            <thead><tr><th>Email</th><th>Name</th><th>Status</th><th>Subscribed</th></tr></thead>
+            <tbody>
+            {% for sub in subscribers %}
+            <tr><td>{{ sub.email }}</td><td>{{ sub.first_name or '-' }}</td><td>{{ sub.status }}</td><td>{{ sub.subscribed_at[:10] if sub.subscribed_at else '-' }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Content Tab -->
+<div id="panel-content" class="tab-panel" style="display:none;">
+    <div class="card" style="margin-bottom:16px;">
+        <h3>Issues</h3>
+        <table class="data-table" style="margin-top:12px;">
+            <thead><tr><th>#</th><th>Subject</th><th>Status</th><th>Sent</th></tr></thead>
+            <tbody>
+            {% for issue in issues %}
+            <tr><td>{{ issue.issue_number }}</td><td>{{ issue.subject }}</td><td>{{ issue.status }}</td><td>{{ issue.sent_at or '-' }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card">
+        <h3>Links</h3>
+        <table class="data-table" style="margin-top:12px;">
+            <thead><tr><th>Type</th><th>Label</th><th>URL</th></tr></thead>
+            <tbody>
+            {% for link in links %}
+            <tr><td>{{ link.link_type }}</td><td>{{ link.label }}</td><td><a href="{{ link.url }}" target="_blank">{{ link.url[:40] }}...</a></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Revenue Tab -->
+<div id="panel-revenue" class="tab-panel" style="display:none;">
+    <div class="card">
+        <h3>Revenue Breakdown</h3>
+        <table class="data-table" style="margin-top:12px;">
+            <thead><tr><th>Month</th><th>Sponsors</th><th>Affiliates</th><th>Merch</th><th>Tickets</th><th>Total</th></tr></thead>
+            <tbody>
+            {% for r in revenue %}
+            <tr>
+                <td>{{ r.month }}</td>
+                <td>${{ "%.2f"|format(r.sponsor_revenue_cents / 100) }}</td>
+                <td>${{ "%.2f"|format(r.affiliate_revenue_cents / 100) }}</td>
+                <td>${{ "%.2f"|format(r.merch_revenue_cents / 100) }}</td>
+                <td>${{ "%.2f"|format(r.ticket_revenue_cents / 100) }}</td>
+                <td style="font-weight:700;">${{ "%.2f"|format(r.total_revenue_cents / 100) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Streaming Tab -->
+<div id="panel-streaming" class="tab-panel" style="display:none;">
+    {% if spotify_data %}
+    <div class="card">
+        <h3>Spotify Data</h3>
+        <table class="data-table" style="margin-top:12px;">
+            <tbody>
+            <tr><td>Followers</td><td style="font-weight:700;">{{ "{:,}".format(spotify_data.spotify_followers or 0) }}</td></tr>
+            <tr><td>Genres</td><td>{{ spotify_data.genres or 'N/A' }}</td></tr>
+            <tr><td>Popularity</td><td>{{ spotify_data.popularity or 'N/A' }}/100</td></tr>
+            <tr><td>Last Updated</td><td>{{ spotify_data.updated_at or 'N/A' }}</td></tr>
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card"><p style="color:var(--text-dim,#888);">No Spotify data available. Connect a Spotify artist profile to see streaming analytics.</p></div>
+    {% endif %}
+</div>
+
+<!-- Events Tab -->
+<div id="panel-events" class="tab-panel" style="display:none;">
+    <div class="card">
+        <h3>Events</h3>
+        {% if events %}
+        <table class="data-table" style="margin-top:12px;">
+            <thead><tr><th>Title</th><th>Date</th><th>Type</th><th>Status</th></tr></thead>
+            <tbody>
+            {% for e in events %}
+            <tr><td>{{ e.title }}</td><td>{{ e.event_date or '-' }}</td><td>{{ e.event_type }}</td><td>{{ e.status }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--text-dim,#888);">No events yet. Create events from the Events manager.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Billing Tab -->
+<div id="panel-billing" class="tab-panel" style="display:none;">
+    <div class="card">
+        <h3>Invoices</h3>
+        {% if invoices %}
+        <table class="data-table" style="margin-top:12px;">
+            <thead><tr><th>Invoice #</th><th>Amount</th><th>Status</th><th>Due</th></tr></thead>
+            <tbody>
+            {% for inv in invoices %}
+            <tr><td>{{ inv.invoice_number }}</td><td>${{ "%.2f"|format(inv.amount_cents / 100) }}</td><td>{{ inv.status }}</td><td>{{ inv.due_date or '-' }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--text-dim,#888);">No invoices yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function showTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => { b.style.borderBottom = 'none'; b.style.color = 'var(--text-dim,#888)'; b.classList.remove('active'); });
+    document.getElementById('panel-' + name).style.display = 'block';
+    const btn = document.getElementById('tab-' + name);
+    btn.style.borderBottom = '2px solid var(--accent,#e8645a)';
+    btn.style.color = 'inherit';
+    btn.classList.add('active');
+}
+</script>
+{% endblock %}

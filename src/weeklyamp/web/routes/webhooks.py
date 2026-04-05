@@ -32,7 +32,7 @@ async def webhooks_page():
     hooks = [dict(r) for r in hooks]
 
     logs = conn.execute(
-        "SELECT * FROM webhook_logs ORDER BY created_at DESC LIMIT 50"
+        "SELECT * FROM webhook_log ORDER BY created_at DESC LIMIT 50"
     ).fetchall()
     logs = [dict(r) for r in logs]
     conn.close()

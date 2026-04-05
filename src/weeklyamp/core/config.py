@@ -16,10 +16,20 @@ from weeklyamp.core.models import (
     AIProvider,
     AnalyticsConfig,
     AppConfig,
+    ArtistNewslettersConfig,
+    AudioConfig,
+    CommunityConfig,
+    DataProductConfig,
     DeliverabilityConfig,
+    EditionMarketsConfig,
+    FranchiseConfig,
     GHLConfig,
     EmailConfig,
+    I18nConfig,
+    LicensingConfig,
     NewsletterConfig,
+    PaidTiersConfig,
+    PodcastConfig,
     RateLimitConfig,
     ReengagementConfig,
     ReferralConfig,
@@ -40,6 +50,7 @@ from weeklyamp.core.models import (
     TriviaPollsConfig,
     WebhookConfig,
     WelcomeSequenceConfig,
+    WhiteLabelConfig,
 )
 
 # Project root is 3 levels up from this file (src/weeklyamp/core/config.py)
@@ -247,6 +258,57 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
     rc_data = yaml_data.get("reader_content", {})
     reader_content = ReaderContentConfig(**rc_data) if rc_data else ReaderContentConfig()
 
+    # Paid tiers / Manifest Financial config
+    pt_data = yaml_data.get("paid_tiers", {})
+    paid_tiers = PaidTiersConfig(
+        enabled=pt_data.get("enabled", False),
+        payment_provider=pt_data.get("payment_provider", "manifest"),
+        manifest_api_key=os.getenv("MANIFEST_API_KEY", pt_data.get("manifest_api_key", "")),
+        manifest_webhook_secret=os.getenv("MANIFEST_WEBHOOK_SECRET", pt_data.get("manifest_webhook_secret", "")),
+        dunning_enabled=pt_data.get("dunning_enabled", False),
+        dunning_grace_days=int(pt_data.get("dunning_grace_days", 3)),
+    )
+
+    # Audio / TTS config
+    audio_data = yaml_data.get("audio", {})
+    audio = AudioConfig(**audio_data) if audio_data else AudioConfig()
+
+    # Community config
+    comm_data = yaml_data.get("community", {})
+    community = CommunityConfig(**comm_data) if comm_data else CommunityConfig()
+
+    # Edition markets config
+    em_data = yaml_data.get("edition_markets", {})
+    edition_markets = EditionMarketsConfig(**em_data) if em_data else EditionMarketsConfig()
+
+    # Artist newsletters config
+    an_data = yaml_data.get("artist_newsletters", {})
+    artist_newsletters = ArtistNewslettersConfig(**an_data) if an_data else ArtistNewslettersConfig()
+
+    # Licensing config
+    lic_data = yaml_data.get("licensing", {})
+    licensing = LicensingConfig(**lic_data) if lic_data else LicensingConfig()
+
+    # White-label SaaS config
+    wl_data = yaml_data.get("white_label", {})
+    white_label = WhiteLabelConfig(**wl_data) if wl_data else WhiteLabelConfig()
+
+    # Internationalization config
+    i18n_data = yaml_data.get("i18n", {})
+    i18n = I18nConfig(**i18n_data) if i18n_data else I18nConfig()
+
+    # Podcast config
+    pod_data = yaml_data.get("podcast", {})
+    podcast = PodcastConfig(**pod_data) if pod_data else PodcastConfig()
+
+    # Franchise config
+    fran_data = yaml_data.get("franchise", {})
+    franchise = FranchiseConfig(**fran_data) if fran_data else FranchiseConfig()
+
+    # Data product config
+    dp_data = yaml_data.get("data_product", {})
+    data_product = DataProductConfig(**dp_data) if dp_data else DataProductConfig()
+
     # DB path and backend
     db_path = os.getenv("WEEKLYAMP_DB_PATH", yaml_data.get("db_path", "data/weeklyamp.db"))
     db_backend = os.getenv("WEEKLYAMP_DB_BACKEND", yaml_data.get("db_backend", "sqlite"))
@@ -292,6 +354,17 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
         sponsor_portal=sponsor_portal,
         contests=contests,
         reader_content=reader_content,
+        paid_tiers=paid_tiers,
+        audio=audio,
+        community=community,
+        edition_markets=edition_markets,
+        artist_newsletters=artist_newsletters,
+        licensing=licensing,
+        white_label=white_label,
+        i18n=i18n,
+        podcast=podcast,
+        franchise=franchise,
+        data_product=data_product,
         rate_limits=rate_limits,
         db_path=db_path,
         db_backend=db_backend,

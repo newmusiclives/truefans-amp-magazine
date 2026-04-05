@@ -1451,6 +1451,220 @@ CREATE INDEX IF NOT EXISTS idx_artist_nl_revenue ON artist_newsletter_revenue(ne
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (37);
 """,
+
+    38: """
+-- v38: Manifest Financial billing — rename stripe columns, add invoices/coupons/dunning
+
+-- Rename stripe-specific columns to provider-agnostic names
+ALTER TABLE subscriber_billing RENAME COLUMN stripe_customer_id TO payment_customer_id;
+ALTER TABLE subscriber_billing RENAME COLUMN stripe_subscription_id TO payment_subscription_id;
+ALTER TABLE subscriber_billing ADD COLUMN payment_provider TEXT DEFAULT 'manifest';
+ALTER TABLE subscriber_billing ADD COLUMN dunning_state TEXT DEFAULT '';
+ALTER TABLE subscriber_billing ADD COLUMN dunning_started_at TIMESTAMP;
+
+-- Invoice tracking for licensees, artist newsletters, and subscribers
+CREATE TABLE IF NOT EXISTS invoices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    invoice_number TEXT UNIQUE NOT NULL,
+    entity_type TEXT NOT NULL CHECK (entity_type IN ('subscriber', 'licensee', 'artist_newsletter')),
+    entity_id INTEGER NOT NULL,
+    amount_cents INTEGER NOT NULL DEFAULT 0,
+    currency TEXT DEFAULT 'usd',
+    status TEXT DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'paid', 'overdue', 'void')),
+    payment_provider TEXT DEFAULT 'manifest',
+    payment_transaction_id TEXT DEFAULT '',
+    due_date TEXT DEFAULT '',
+    paid_at TIMESTAMP,
+    line_items_json TEXT DEFAULT '[]',
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_invoices_entity ON invoices(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+
+-- Coupon / discount system
+CREATE TABLE IF NOT EXISTS coupons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    description TEXT DEFAULT '',
+    discount_type TEXT DEFAULT 'percentage' CHECK (discount_type IN ('percentage', 'fixed_cents')),
+    discount_value INTEGER NOT NULL DEFAULT 0,
+    applies_to TEXT DEFAULT 'subscription' CHECK (applies_to IN ('subscription', 'license', 'event', 'all')),
+    max_uses INTEGER DEFAULT 0,
+    current_uses INTEGER DEFAULT 0,
+    valid_from TEXT DEFAULT '',
+    valid_until TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS coupon_redemptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    coupon_id INTEGER NOT NULL REFERENCES coupons(id),
+    subscriber_id INTEGER REFERENCES subscribers(id),
+    licensee_id INTEGER REFERENCES licensees(id),
+    discount_applied_cents INTEGER DEFAULT 0,
+    redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_coupon_redemptions ON coupon_redemptions(coupon_id);
+
+-- New payment index (replaces old stripe index)
+CREATE INDEX IF NOT EXISTS idx_billing_payment ON subscriber_billing(payment_subscription_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (38);
+""",
+
+    39: """
+-- v39: White-label SaaS + programmatic ad marketplace
+
+-- White-label columns on editions
+ALTER TABLE newsletter_editions ADD COLUMN custom_domain TEXT DEFAULT '';
+ALTER TABLE newsletter_editions ADD COLUMN custom_logo_url TEXT DEFAULT '';
+ALTER TABLE newsletter_editions ADD COLUMN custom_css TEXT DEFAULT '';
+ALTER TABLE newsletter_editions ADD COLUMN custom_footer_html TEXT DEFAULT '';
+
+-- Ad bid marketplace
+CREATE TABLE IF NOT EXISTS ad_bids (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    campaign_id INTEGER REFERENCES advertiser_campaigns(id),
+    advertiser_id INTEGER,
+    edition_slug TEXT DEFAULT '',
+    position TEXT DEFAULT 'mid' CHECK (position IN ('top', 'mid', 'bottom')),
+    bid_cents INTEGER NOT NULL DEFAULT 0,
+    target_date TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'won', 'lost', 'cancelled')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_ad_bids_date ON ad_bids(target_date, status);
+CREATE INDEX IF NOT EXISTS idx_ad_bids_campaign ON ad_bids(campaign_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (39);
+""",
+
+    40: """
+-- v40: Mobile push tokens + event ticketing + podcast episodes
+
+-- Push notification tokens for mobile app
+CREATE TABLE IF NOT EXISTS push_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    platform TEXT NOT NULL CHECK (platform IN ('ios', 'android', 'web')),
+    token TEXT NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(subscriber_id, token)
+);
+CREATE INDEX IF NOT EXISTS idx_push_tokens_sub ON push_tokens(subscriber_id);
+
+-- Event ticketing fields
+ALTER TABLE event_registrations ADD COLUMN payment_status TEXT DEFAULT 'free';
+ALTER TABLE event_registrations ADD COLUMN ticket_code TEXT DEFAULT '';
+ALTER TABLE event_registrations ADD COLUMN payment_transaction_id TEXT DEFAULT '';
+ALTER TABLE event_registrations ADD COLUMN checked_in_at TIMESTAMP;
+
+-- Podcast episodes
+CREATE TABLE IF NOT EXISTS podcast_episodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue_id INTEGER REFERENCES issues(id),
+    edition_slug TEXT DEFAULT '',
+    title TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    audio_url TEXT DEFAULT '',
+    duration_seconds INTEGER DEFAULT 0,
+    file_size_bytes INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'generating', 'ready', 'published', 'failed')),
+    published_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_podcast_episodes_issue ON podcast_episodes(issue_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (40);
+""",
+
+    41: """
+-- v41: Multi-language translations + AI subscriber segmentation
+
+-- Translated drafts for multi-language support
+CREATE TABLE IF NOT EXISTS translated_drafts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    draft_id INTEGER NOT NULL REFERENCES drafts(id),
+    language TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    ai_model TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(draft_id, language)
+);
+CREATE INDEX IF NOT EXISTS idx_translated_drafts ON translated_drafts(draft_id, language);
+
+-- AI subscriber segments
+CREATE TABLE IF NOT EXISTS subscriber_segments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT DEFAULT '',
+    segment_type TEXT DEFAULT 'auto' CHECK (segment_type IN ('auto', 'manual', 'ai')),
+    criteria_json TEXT DEFAULT '{}',
+    subscriber_count INTEGER DEFAULT 0,
+    last_computed_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS subscriber_segment_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    segment_id INTEGER NOT NULL REFERENCES subscriber_segments(id),
+    subscriber_id INTEGER NOT NULL REFERENCES subscribers(id),
+    score FLOAT DEFAULT 0.0,
+    added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(segment_id, subscriber_id)
+);
+CREATE INDEX IF NOT EXISTS idx_segment_members ON subscriber_segment_members(segment_id);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (41);
+""",
+
+    42: """
+-- v42: Franchise model + data analytics product
+
+-- Franchise territory fields on licensees
+ALTER TABLE licensees ADD COLUMN territory_exclusive INTEGER DEFAULT 1;
+ALTER TABLE licensees ADD COLUMN market_tier TEXT DEFAULT 'medium';
+ALTER TABLE licensees ADD COLUMN territory_radius_km INTEGER DEFAULT 0;
+ALTER TABLE licensees ADD COLUMN parent_franchise_id INTEGER REFERENCES licensees(id);
+
+-- Data product access / metered billing
+CREATE TABLE IF NOT EXISTS data_product_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    organization_name TEXT NOT NULL,
+    api_key_hash TEXT NOT NULL,
+    api_key_prefix TEXT DEFAULT '',
+    tier TEXT DEFAULT 'basic' CHECK (tier IN ('basic', 'professional', 'enterprise')),
+    monthly_quota INTEGER DEFAULT 1000,
+    current_month_usage INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS data_product_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    key_id INTEGER NOT NULL REFERENCES data_product_keys(id),
+    endpoint TEXT NOT NULL,
+    request_count INTEGER DEFAULT 1,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_data_usage_key ON data_product_usage(key_id);
+
+-- Industry trend reports
+CREATE TABLE IF NOT EXISTS industry_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_type TEXT NOT NULL CHECK (report_type IN ('genre_trends', 'engagement_patterns', 'streaming_data', 'market_overview')),
+    period TEXT NOT NULL,
+    data_json TEXT DEFAULT '{}',
+    summary TEXT DEFAULT '',
+    is_public INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (42);
+""",
 }
 
 

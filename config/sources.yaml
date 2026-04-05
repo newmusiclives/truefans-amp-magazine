@@ -257,3 +257,370 @@ sources:
     type: "rss"
     url: "https://www.musicconnection.com/feed/"
     target_sections: "songcraft,money_moves,coaching,deal_or_no_deal"
+
+  # ── International Music Industry (UK, Europe) ──
+  - name: "Music Week"
+    type: "scrape"
+    url: "https://www.musicweek.com"
+    target_sections: "industry_pulse,deal_or_no_deal,backstage_pass"
+
+  - name: "IQ Magazine"
+    type: "scrape"
+    url: "https://www.iq-mag.net"
+    target_sections: "industry_pulse,stage_ready,deal_or_no_deal"
+
+  - name: "NME"
+    type: "rss"
+    url: "https://www.nme.com/feed"
+    target_sections: "backstage_pass,artist_spotlight,industry_pulse"
+
+  - name: "Clash Magazine"
+    type: "rss"
+    url: "https://www.clashmusic.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "Complete Music Update"
+    type: "rss"
+    url: "https://completemusicupdate.com/feed/"
+    target_sections: "industry_pulse,rights_and_royalties,deal_or_no_deal"
+
+  - name: "The Line of Best Fit"
+    type: "rss"
+    url: "https://www.thelineofbestfit.com/feed"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  # ── International Music Industry (Asia, Latin America, Africa) ──
+  - name: "Billboard Japan"
+    type: "scrape"
+    url: "https://www.billboard-japan.com"
+    target_sections: "industry_pulse,streaming_dashboard,backstage_pass"
+
+  - name: "Soompi (K-pop)"
+    type: "rss"
+    url: "https://www.soompi.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,fan_mail"
+
+  - name: "allkpop"
+    type: "rss"
+    url: "https://www.allkpop.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,fan_mail"
+
+  - name: "Bandwagon Asia"
+    type: "scrape"
+    url: "https://www.bandwagon.asia"
+    target_sections: "backstage_pass,stage_ready,industry_pulse"
+
+  - name: "Sounds and Colours (Latin America)"
+    type: "rss"
+    url: "https://soundsandcolours.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "Billboard Espanol"
+    type: "scrape"
+    url: "https://www.billboard.com/latin/"
+    target_sections: "industry_pulse,streaming_dashboard,backstage_pass"
+
+  - name: "Music In Africa"
+    type: "scrape"
+    url: "https://www.musicinafrica.net"
+    target_sections: "industry_pulse,artist_spotlight,backstage_pass"
+
+  - name: "OkayAfrica Music"
+    type: "rss"
+    url: "https://www.okayafrica.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  # ── Music Technology & AI ──
+  - name: "Music Tech Magazine"
+    type: "rss"
+    url: "https://www.musictech.net/feed/"
+    target_sections: "tech_talk,ai_music_lab,gear_garage,production_notes"
+
+  - name: "CDM (Create Digital Music)"
+    type: "rss"
+    url: "https://cdm.link/feed/"
+    target_sections: "tech_talk,ai_music_lab,production_notes,gear_garage"
+
+  - name: "AI Music News (MusicAlly)"
+    type: "scrape"
+    url: "https://musically.com/tag/ai/"
+    target_sections: "ai_music_lab,tech_talk,industry_pulse"
+
+  - name: "Water & Music"
+    type: "scrape"
+    url: "https://www.waterandmusic.com"
+    target_sections: "tech_talk,ai_music_lab,industry_pulse,streaming_dashboard"
+
+  - name: "The Verge Music"
+    type: "rss"
+    url: "https://www.theverge.com/rss/music/index.xml"
+    target_sections: "tech_talk,ai_music_lab,streaming_dashboard"
+
+  - name: "LANDR Blog"
+    type: "rss"
+    url: "https://blog.landr.com/feed/"
+    target_sections: "production_notes,ai_music_lab,tech_talk,coaching"
+
+  # ── Music Production & Gear ──
+  - name: "Reverb News"
+    type: "rss"
+    url: "https://reverb.com/news/feed"
+    target_sections: "gear_garage,vinyl_vault,production_notes"
+
+  - name: "Sweetwater inSync"
+    type: "rss"
+    url: "https://www.sweetwater.com/insync/feed/"
+    target_sections: "gear_garage,production_notes,tech_talk"
+
+  - name: "Gearnews"
+    type: "rss"
+    url: "https://www.gearnews.com/feed/"
+    target_sections: "gear_garage,production_notes,tech_talk"
+
+  - name: "Recording Magazine"
+    type: "scrape"
+    url: "https://recordingmag.com"
+    target_sections: "production_notes,gear_garage,vocal_booth"
+
+  - name: "iZotope Blog"
+    type: "rss"
+    url: "https://www.izotope.com/en/learn/feed.xml"
+    target_sections: "production_notes,tech_talk,vocal_booth"
+
+  - name: "Mix Online"
+    type: "rss"
+    url: "https://www.mixonline.com/feed"
+    target_sections: "production_notes,gear_garage,stage_ready"
+
+  - name: "Pro Sound Web"
+    type: "rss"
+    url: "https://www.prosoundweb.com/feed/"
+    target_sections: "gear_garage,stage_ready,production_notes"
+
+  # ── Songwriter & Musician Blogs ──
+  - name: "Fretboard Journal"
+    type: "rss"
+    url: "https://www.fretboardjournal.com/feed/"
+    target_sections: "gear_garage,artist_spotlight,songcraft"
+
+  - name: "Premier Guitar"
+    type: "rss"
+    url: "https://www.premierguitar.com/feed"
+    target_sections: "gear_garage,artist_spotlight,production_notes"
+
+  - name: "Songwriter 101"
+    type: "scrape"
+    url: "https://www.songwriter101.com"
+    target_sections: "songcraft,creative_fuel,the_muse"
+
+  - name: "ASCAP We Create Music"
+    type: "rss"
+    url: "https://www.ascap.com/feed"
+    target_sections: "songcraft,rights_and_royalties,greatest_songwriters"
+
+  - name: "BMI News"
+    type: "scrape"
+    url: "https://www.bmi.com/news"
+    target_sections: "songcraft,rights_and_royalties,greatest_songwriters"
+
+  - name: "The Creative Independent"
+    type: "rss"
+    url: "https://thecreativeindependent.com/feed/"
+    target_sections: "creative_fuel,the_muse,artist_spotlight"
+
+  # ── Music Marketing & Social Media ──
+  - name: "Cyber PR Music"
+    type: "rss"
+    url: "https://www.cyberprmusic.com/blog/feed/"
+    target_sections: "diy_marketing,social_playbook,brand_building"
+
+  - name: "Music Marketing Blog (Musosoup)"
+    type: "scrape"
+    url: "https://musosoup.com/blog/"
+    target_sections: "diy_marketing,social_playbook,brand_building"
+
+  - name: "Indepreneur"
+    type: "scrape"
+    url: "https://indepreneur.io/blog/"
+    target_sections: "diy_marketing,social_playbook,truefans_connect,money_moves"
+
+  - name: "Feature.fm Blog"
+    type: "rss"
+    url: "https://blog.feature.fm/feed/"
+    target_sections: "diy_marketing,social_playbook,streaming_dashboard"
+
+  # ── Music Rights, Royalties & Legal ──
+  - name: "Music Technology Policy"
+    type: "rss"
+    url: "https://musictechpolicy.com/feed/"
+    target_sections: "rights_and_royalties,industry_pulse,money_moves"
+
+  - name: "The Music Law Blog"
+    type: "scrape"
+    url: "https://www.themusicesq.com/blog"
+    target_sections: "rights_and_royalties,money_moves,deal_or_no_deal"
+
+  - name: "Copyright and Technology"
+    type: "scrape"
+    url: "https://copyrightandtechnology.com"
+    target_sections: "rights_and_royalties,tech_talk,ai_music_lab"
+
+  # ── Music Streaming & Analytics ──
+  - name: "Chartmetric Blog"
+    type: "rss"
+    url: "https://blog.chartmetric.com/feed/"
+    target_sections: "streaming_dashboard,industry_pulse,diy_marketing"
+
+  - name: "Spotify for Artists Blog"
+    type: "scrape"
+    url: "https://artists.spotify.com/blog"
+    target_sections: "streaming_dashboard,diy_marketing,coaching"
+
+  # ── Independent Artist Resources ──
+  - name: "ReverbNation Blog"
+    type: "rss"
+    url: "https://blog.reverbnation.com/feed/"
+    target_sections: "coaching,diy_marketing,stage_ready,money_moves"
+
+  - name: "Amuse Blog"
+    type: "scrape"
+    url: "https://www.amuse.io/blog"
+    target_sections: "coaching,money_moves,diy_marketing"
+
+  - name: "iMusician Blog"
+    type: "rss"
+    url: "https://imusician.pro/en/resources/blog/feed/"
+    target_sections: "coaching,money_moves,diy_marketing,rights_and_royalties"
+
+  - name: "Ditto Music Blog"
+    type: "scrape"
+    url: "https://dittomusic.com/en/blog"
+    target_sections: "coaching,money_moves,streaming_dashboard"
+
+  - name: "Symphonic Blog"
+    type: "rss"
+    url: "https://symphonic.blog/feed/"
+    target_sections: "coaching,money_moves,diy_marketing,social_playbook"
+
+  # ── Music Business Podcasts (Show Notes RSS) ──
+  - name: "Music Industry Revealed Podcast"
+    type: "rss"
+    url: "https://feeds.buzzsprout.com/1033406.rss"
+    target_sections: "industry_pulse,coaching,money_moves"
+
+  - name: "The New Music Business with Ari Herstand"
+    type: "rss"
+    url: "https://feeds.simplecast.com/M8Gk6RBj"
+    target_sections: "coaching,money_moves,diy_marketing,guest_column"
+
+  - name: "Music Biz Weekly"
+    type: "rss"
+    url: "https://musicbizweekly.libsyn.com/rss"
+    target_sections: "industry_pulse,money_moves,deal_or_no_deal"
+
+  - name: "Switched On Pop"
+    type: "rss"
+    url: "https://feeds.megaphone.fm/switchedonpop"
+    target_sections: "lyrics_unpacked,production_notes,backstage_pass"
+
+  - name: "Song Exploder Podcast"
+    type: "rss"
+    url: "https://feed.songexploder.net/SongExploder"
+    target_sections: "songcraft,production_notes,lyrics_unpacked,the_muse"
+
+  - name: "Broken Record Podcast"
+    type: "rss"
+    url: "https://feeds.simplecast.com/VLlQBJHp"
+    target_sections: "backstage_pass,artist_spotlight,greatest_songwriters"
+
+  # ── Genre-Specific: Hip-Hop & R&B ──
+  - name: "Complex Music"
+    type: "rss"
+    url: "https://www.complex.com/music/rss"
+    target_sections: "backstage_pass,artist_spotlight,lyrics_unpacked"
+
+  - name: "Rap Radar"
+    type: "scrape"
+    url: "https://rapradar.com"
+    target_sections: "backstage_pass,artist_spotlight,lyrics_unpacked"
+
+  - name: "Rated R&B"
+    type: "scrape"
+    url: "https://ratedrnb.com"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  # ── Genre-Specific: Country ──
+  - name: "The Boot"
+    type: "rss"
+    url: "https://theboot.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,songcraft"
+
+  - name: "Taste of Country"
+    type: "rss"
+    url: "https://tasteofcountry.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  # ── Genre-Specific: Electronic & Dance ──
+  - name: "Dancing Astronaut"
+    type: "rss"
+    url: "https://dancingastronaut.com/feed/"
+    target_sections: "backstage_pass,production_notes,artist_spotlight"
+
+  - name: "Mixmag"
+    type: "rss"
+    url: "https://mixmag.net/feed"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  # ── Genre-Specific: Jazz & Blues ──
+  - name: "All About Jazz"
+    type: "rss"
+    url: "https://www.allaboutjazz.com/feed"
+    target_sections: "backstage_pass,artist_spotlight,vinyl_vault"
+
+  - name: "London Jazz News"
+    type: "rss"
+    url: "https://londonjazznews.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  # ── Genre-Specific: Latin ──
+  - name: "Reggaeton by Spotify (Leila Cobo)"
+    type: "scrape"
+    url: "https://www.billboard.com/music/latin/"
+    target_sections: "backstage_pass,artist_spotlight,streaming_dashboard"
+
+  # ── Music Venue & Live Industry ──
+  - name: "NIVA (National Independent Venue Association)"
+    type: "scrape"
+    url: "https://www.nivassoc.org/news"
+    target_sections: "stage_ready,industry_pulse,community_wins"
+
+  - name: "Live Music Blog (Songkick)"
+    type: "scrape"
+    url: "https://www.songkick.com/blog"
+    target_sections: "stage_ready,fan_mail,community_wins"
+
+  - name: "Audiofemme"
+    type: "rss"
+    url: "https://audiofemme.com/feed/"
+    target_sections: "backstage_pass,artist_spotlight,stage_ready"
+
+  # ── Music Education ──
+  - name: "Berklee Now"
+    type: "scrape"
+    url: "https://college.berklee.edu/berklee-now"
+    target_sections: "coaching,songcraft,production_notes"
+
+  - name: "NAMM Foundation"
+    type: "scrape"
+    url: "https://www.nammfoundation.org/news"
+    target_sections: "coaching,gear_garage,community_wins"
+
+  - name: "Musicnotes Now"
+    type: "rss"
+    url: "https://www.musicnotes.com/now/feed/"
+    target_sections: "songcraft,coaching,creative_fuel"
+
+  - name: "Soundfly Flypaper"
+    type: "rss"
+    url: "https://flypaper.soundfly.com/feed/"
+    target_sections: "coaching,production_notes,songcraft,creative_fuel"

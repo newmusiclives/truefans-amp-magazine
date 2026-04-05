@@ -146,6 +146,11 @@ def create_app() -> FastAPI:
     app.add_middleware(AuthMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=500)
 
+    # White-label domain routing (inactive unless white_label.enabled=true)
+    if config.white_label.enabled:
+        from weeklyamp.web.middleware.domain_router import DomainRoutingMiddleware
+        app.add_middleware(DomainRoutingMiddleware, config=config)
+
     # Auth routes
     app.add_api_route("/login", login_page, methods=["GET"])
     app.add_api_route("/login", login_submit, methods=["POST"])
@@ -374,6 +379,8 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import events as events_routes
     from weeklyamp.web.routes import marketplace as marketplace_routes
     from weeklyamp.web.routes import developer_api as developer_api_routes
+    # v38+ Developer API v2
+    from weeklyamp.web.routes import api_v2 as api_v2_routes
 
     # Routes
     app.include_router(dashboard.router)
@@ -456,6 +463,16 @@ def create_app() -> FastAPI:
     app.include_router(events_routes.router, prefix="/events")
     app.include_router(marketplace_routes.router, prefix="/marketplace")
     app.include_router(developer_api_routes.router, prefix="/admin/api")
+    # v38+ Developer API v2 (public, auth via API key)
+    app.include_router(api_v2_routes.router)
+
+    # Convenience redirects for common short URLs
+    from fastapi.responses import RedirectResponse as _Redir
+
+    @app.get("/revenue")
+    @app.get("/revenue/")
+    async def _revenue_redirect():
+        return _Redir("/admin/revenue/", status_code=302)
 
     # Security logs (authenticated, uses Jinja2 template with autoescape)
     from jinja2 import Environment, FileSystemLoader

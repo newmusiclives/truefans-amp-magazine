@@ -125,3 +125,137 @@ async def api_trivia():
         "options": json.loads(r.get("options_json", "[]")),
         "edition_slug": r.get("edition_slug", ""),
     } for r in [dict(row) for row in rows]])
+
+
+# ---- Write Endpoints (require auth) ----
+
+@router.post("/profile/preferences")
+async def api_update_preferences(request: Request, authorization: str = Header("")):
+    """Update subscriber preferences (frequency, timezone, interests)."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    body = await request.json()
+    from weeklyamp.content.preferences import PreferenceManager
+    config = get_config()
+    mgr = PreferenceManager(repo, config)
+    mgr.update_preferences(subscriber["id"], body)
+    return JSONResponse({"status": "updated"})
+
+
+@router.post("/profile/genres")
+async def api_update_genres(request: Request, authorization: str = Header("")):
+    """Set subscriber genre preferences."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    body = await request.json()
+    genres = body.get("genres", [])
+    conn = repo._conn()
+    conn.execute("DELETE FROM subscriber_genres WHERE subscriber_id = ?", (subscriber["id"],))
+    for genre in genres[:5]:  # max 5 genres
+        conn.execute("INSERT INTO subscriber_genres (subscriber_id, genre) VALUES (?, ?)", (subscriber["id"], genre))
+    conn.commit()
+    conn.close()
+    return JSONResponse({"status": "updated", "genres": genres[:5]})
+
+
+@router.post("/trivia/{trivia_id}/vote")
+async def api_trivia_vote(trivia_id: int, request: Request, authorization: str = Header("")):
+    """Submit a trivia/poll vote."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    body = await request.json()
+    option_index = body.get("option_index", 0)
+    from weeklyamp.content.trivia_polls import TriviaManager
+    config = get_config()
+    mgr = TriviaManager(repo, config)
+    mgr.record_vote(trivia_id, subscriber["id"], option_index)
+    return JSONResponse({"status": "voted"})
+
+
+@router.get("/refer")
+async def api_referral_info(authorization: str = Header("")):
+    """Get subscriber's referral code and stats."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    from weeklyamp.content.referrals import ReferralManager
+    config = get_config()
+    mgr = ReferralManager(repo, config)
+    code = mgr.get_or_create_code(subscriber["id"])
+    stats = mgr.get_referral_stats(subscriber["id"])
+    return JSONResponse({"code": code, "stats": stats})
+
+
+@router.post("/subscribe/{edition_slug}")
+async def api_subscribe_edition(edition_slug: str, request: Request, authorization: str = Header("")):
+    """Subscribe to an additional edition."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    conn = repo._conn()
+    edition = conn.execute("SELECT id FROM newsletter_editions WHERE slug = ?", (edition_slug,)).fetchone()
+    if not edition:
+        conn.close()
+        return JSONResponse({"error": "Edition not found"}, status_code=404)
+    conn.execute(
+        "INSERT OR IGNORE INTO subscriber_editions (subscriber_id, edition_id) VALUES (?, ?)",
+        (subscriber["id"], edition["id"]),
+    )
+    conn.commit()
+    conn.close()
+    return JSONResponse({"status": "subscribed", "edition": edition_slug})
+
+
+@router.post("/push/register")
+async def api_register_push(request: Request, authorization: str = Header("")):
+    """Register a push notification token."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    body = await request.json()
+    push_token = body.get("token", "")
+    platform = body.get("platform", "ios")
+    if not push_token:
+        return JSONResponse({"error": "Token required"}, status_code=400)
+    conn = repo._conn()
+    conn.execute(
+        "INSERT OR IGNORE INTO push_tokens (subscriber_id, platform, token) VALUES (?, ?, ?)",
+        (subscriber["id"], platform, push_token),
+    )
+    conn.commit()
+    conn.close()
+    return JSONResponse({"status": "registered"})
+
+
+@router.get("/notifications")
+async def api_notifications(authorization: str = Header(""), limit: int = 20):
+    """Get notification feed (public notifications)."""
+    repo = get_repo()
+    token = authorization.replace("Bearer ", "").strip()
+    subscriber = _get_subscriber(repo, token)
+    if not subscriber:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    from weeklyamp.notifications.manager import NotificationManager
+    mgr = NotificationManager(repo)
+    notifications = mgr.get_recent(limit=limit, category="content")
+    return JSONResponse([{
+        "title": n.get("title", ""),
+        "message": n.get("message", ""),
+        "type": n.get("notification_type", "info"),
+        "created_at": str(n.get("created_at", "")),
+    } for n in notifications])

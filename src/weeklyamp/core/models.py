@@ -851,12 +851,40 @@ class ReaderContentConfig(BaseModel):
 
 class PaidTiersConfig(BaseModel):
     enabled: bool = False
-    payment_provider: str = "manifest"  # "manifest" or "stripe"
+    payment_provider: str = "manifest"
     manifest_api_key: str = ""
     manifest_webhook_secret: str = ""
-    stripe_publishable_key: str = ""
-    stripe_secret_key: str = ""
-    webhook_secret: str = ""
+    dunning_enabled: bool = False
+    dunning_grace_days: int = 3
+
+
+class WhiteLabelConfig(BaseModel):
+    enabled: bool = False
+    custom_domain_support: bool = False
+
+
+class I18nConfig(BaseModel):
+    enabled: bool = False
+    target_languages: list[str] = Field(default_factory=lambda: ["es", "pt", "fr"])
+    auto_translate: bool = False
+
+
+class PodcastConfig(BaseModel):
+    enabled: bool = False
+    intro_text: str = "Welcome to TrueFans Newsletters, the podcast."
+    outro_text: str = "Thanks for listening to TrueFans Newsletters."
+    rss_enabled: bool = False
+
+
+class FranchiseConfig(BaseModel):
+    enabled: bool = False
+    territory_exclusive: bool = True
+    market_tiers: list[str] = Field(default_factory=lambda: ["small", "medium", "large", "major"])
+
+
+class DataProductConfig(BaseModel):
+    enabled: bool = False
+    api_metered_billing: bool = False
 
 
 class AudioConfig(BaseModel):
@@ -882,7 +910,7 @@ class ArtistNewslettersConfig(BaseModel):
 
 class LicensingConfig(BaseModel):
     enabled: bool = False
-    default_monthly_fee_cents: int = 9900  # $99/mo
+    default_monthly_fee_cents: int = 15000  # $150/mo
     default_annual_fee_cents: int = 99900  # $999/yr
     default_revenue_share_pct: float = 20.0
     trial_days: int = 30
@@ -931,6 +959,11 @@ class AppConfig(BaseModel):
     edition_markets: EditionMarketsConfig = Field(default_factory=EditionMarketsConfig)
     artist_newsletters: ArtistNewslettersConfig = Field(default_factory=ArtistNewslettersConfig)
     licensing: LicensingConfig = Field(default_factory=LicensingConfig)
+    white_label: WhiteLabelConfig = Field(default_factory=WhiteLabelConfig)
+    i18n: I18nConfig = Field(default_factory=I18nConfig)
+    podcast: PodcastConfig = Field(default_factory=PodcastConfig)
+    franchise: FranchiseConfig = Field(default_factory=FranchiseConfig)
+    data_product: DataProductConfig = Field(default_factory=DataProductConfig)
     rate_limits: RateLimitConfig = Field(default_factory=RateLimitConfig)
     db_path: str = "data/weeklyamp.db"
     db_backend: str = "sqlite"  # "sqlite" or "postgres"

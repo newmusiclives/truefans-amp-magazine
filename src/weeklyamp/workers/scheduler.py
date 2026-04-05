@@ -209,9 +209,143 @@ def start_scheduler():
     _scheduler.add_job(_marketing_retention, "cron", hour=14, id="marketing_retention", name="AI retention check")
     _scheduler.add_job(_marketing_weekly_report, "cron", day_of_week="fri", hour=16, id="marketing_weekly_report", name="Weekly marketing report")
 
+    # Billing automation
+    _scheduler.add_job(_billing_dunning, "cron", hour=6, id="billing_dunning", name="Billing dunning check")
+    _scheduler.add_job(_billing_invoice_generation, "cron", day=1, hour=2, id="billing_invoices", name="Monthly invoice generation")
+
+    # Spotify release scanning
+    _scheduler.add_job(_spotify_release_scan, "cron", hour=8, id="spotify_releases", name="Spotify release scan")
+
+    # Audio/TTS generation (runs after scheduled sends to generate audio for published issues)
+    _scheduler.add_job(_audio_generation, "cron", hour=12, id="audio_generation", name="Audio newsletter generation")
+
+    # Ad marketplace daily auction
+    _scheduler.add_job(_ad_auction, "cron", hour=5, id="ad_auction", name="Daily ad marketplace auction")
+
     _scheduler.start()
     logger.info("Background scheduler started with %d jobs", len(_scheduler.get_jobs()))
     return _scheduler
+
+
+def _billing_dunning():
+    """Check for past-due subscriptions and progress dunning state."""
+    try:
+        config = _load_config()
+        if not config.paid_tiers.enabled or not config.paid_tiers.dunning_enabled:
+            return
+        from weeklyamp.db.repository import Repository
+        repo = Repository(config.db_path)
+        past_due = repo.get_past_due_subscriptions()
+        from datetime import datetime, timedelta
+        grace_days = config.paid_tiers.dunning_grace_days
+        for billing in past_due:
+            state = billing.get("dunning_state", "")
+            started = billing.get("dunning_started_at")
+            if not started:
+                repo.update_dunning_state(billing["payment_subscription_id"], "grace")
+                continue
+            try:
+                start_dt = datetime.fromisoformat(started)
+            except (ValueError, TypeError):
+                continue
+            days_elapsed = (datetime.utcnow() - start_dt).days
+            if state == "grace" and days_elapsed >= grace_days:
+                repo.update_dunning_state(billing["payment_subscription_id"], "retry_1")
+            elif state == "retry_1" and days_elapsed >= grace_days * 2:
+                repo.update_dunning_state(billing["payment_subscription_id"], "retry_2")
+            elif state == "retry_2" and days_elapsed >= grace_days * 3:
+                repo.update_dunning_state(billing["payment_subscription_id"], "retry_3")
+            elif state == "retry_3" and days_elapsed >= grace_days * 4:
+                repo.update_billing_status(billing["payment_subscription_id"], "cancelled")
+                repo.update_dunning_state(billing["payment_subscription_id"], "cancelled")
+        logger.info("Dunning check complete: %d past-due subscriptions", len(past_due))
+    except Exception:
+        logger.exception("Billing dunning job failed")
+
+
+def _billing_invoice_generation():
+    """Monthly: Generate invoices for all licensees and artist newsletters."""
+    try:
+        config = _load_config()
+        from weeklyamp.billing.invoices import InvoiceManager
+        from weeklyamp.db.repository import Repository
+        repo = Repository(config.db_path)
+        mgr = InvoiceManager(repo, config)
+        lic_ids = mgr.generate_all_licensee_invoices()
+        art_ids = mgr.generate_all_artist_newsletter_invoices()
+        logger.info("Invoice generation: %d licensee, %d artist newsletter", len(lic_ids), len(art_ids))
+    except Exception:
+        logger.exception("Invoice generation job failed")
+
+
+def _spotify_release_scan():
+    """Daily: Scan for new releases from artists in profiles."""
+    try:
+        config = _load_config()
+        if not config.spotify.enabled:
+            return
+        from weeklyamp.content.spotify import SpotifyClient
+        from weeklyamp.db.repository import Repository
+        repo = Repository(config.db_path)
+        client = SpotifyClient(config.spotify)
+        conn = repo._conn()
+        artists = conn.execute(
+            "SELECT id, spotify_id FROM artist_profiles WHERE spotify_id != '' AND is_active = 1"
+        ).fetchall()
+        conn.close()
+        synced = 0
+        for artist in artists:
+            try:
+                client.sync_releases(repo, artist["spotify_id"])
+                synced += 1
+            except Exception:
+                continue
+        logger.info("Spotify release scan: checked %d artists, synced %d", len(artists), synced)
+    except Exception:
+        logger.exception("Spotify release scan job failed")
+
+
+def _audio_generation():
+    """Generate audio/TTS versions of published issues."""
+    try:
+        config = _load_config()
+        if not config.audio.enabled:
+            return
+        from weeklyamp.content.audio import generate_audio_for_issue
+        from weeklyamp.db.repository import Repository
+        repo = Repository(config.db_path)
+        conn = repo._conn()
+        issues = conn.execute(
+            "SELECT ai.issue_id, ai.html_content FROM assembled_issues ai "
+            "JOIN issues i ON i.id = ai.issue_id "
+            "WHERE i.status = 'published' AND ai.audio_url = '' "
+            "ORDER BY ai.id DESC LIMIT 3"
+        ).fetchall()
+        conn.close()
+        for issue in issues:
+            try:
+                generate_audio_for_issue(repo, config, issue["issue_id"])
+            except Exception:
+                logger.exception("Audio generation failed for issue %s", issue["issue_id"])
+        logger.info("Audio generation: processed %d issues", len(issues))
+    except Exception:
+        logger.exception("Audio generation job failed")
+
+
+def _ad_auction():
+    """Daily: Run ad marketplace auction for tomorrow's sponsor slots."""
+    try:
+        config = _load_config()
+        if not config.sponsor_portal.enabled:
+            return
+        from weeklyamp.billing.ad_marketplace import AdMarketplace
+        from weeklyamp.db.repository import Repository
+        repo = Repository(config.db_path)
+        marketplace = AdMarketplace(repo, config)
+        results = marketplace.run_daily_auction()
+        logger.info("Ad auction: %d winners", len(results.get("winners", [])))
+    except Exception:
+        logger.exception("Ad auction job failed")
 
 
 def stop_scheduler():

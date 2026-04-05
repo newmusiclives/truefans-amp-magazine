@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Revenue Rollup — TrueFans NEWSLETTERS{% endblock %}
+{% block nav_licensing %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Franchise Revenue Rollup</h2>
+    <p class="subtitle">Aggregated revenue across all franchise territories</p>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:24px;">
+    <a href="/admin/licensing/" class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);">All Licensees</a>
+    <a href="/admin/licensing/franchise/territories" class="btn btn-sm" style="background:var(--bg-card);border:1px solid var(--border);">Territories</a>
+    <a href="/admin/licensing/franchise/rollup" class="btn btn-sm" style="background:var(--accent);color:#fff;">Revenue Rollup</a>
+</div>
+
+<div class="card">
+    <h3>Revenue by Market Tier</h3>
+    {% if rollup %}
+    <table class="data-table" style="margin-top:12px;">
+        <thead><tr><th>Market Tier</th><th>Licensees</th><th>Total Revenue</th><th>Platform Share</th></tr></thead>
+        <tbody>
+        {% for r in rollup %}
+        <tr>
+            <td style="font-weight:700;text-transform:capitalize;">{{ r.market_tier or 'Unassigned' }}</td>
+            <td>{{ r.licensees }}</td>
+            <td style="font-weight:700;color:var(--green);">${{ "%.2f"|format((r.total_revenue_cents or 0) / 100) }}</td>
+            <td style="color:var(--accent);">${{ "%.2f"|format((r.platform_share_cents or 0) / 100) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted" style="margin-top:12px;">No revenue data yet. Revenue will appear here as licensees generate income.</p>
+    {% endif %}
+</div>
+{% endblock %}

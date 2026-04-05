@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Payment Successful — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;margin:80px auto;text-align:center;">
+    <div style="font-size:64px;margin-bottom:16px;">&#10003;</div>
+    <h2 style="margin-bottom:12px;">Payment Successful!</h2>
+    <p style="color:var(--text-dim);font-size:16px;margin-bottom:32px;">Your subscription is now active. Thank you for supporting TrueFans NEWSLETTERS.</p>
+    <div class="card" style="padding:24px;margin-bottom:24px;">
+        <h3 style="margin-bottom:12px;">What happens next?</h3>
+        <ul style="text-align:left;list-style:none;padding:0;">
+            <li style="padding:8px 0;border-bottom:1px solid var(--border);">&#10003; Your account has been upgraded</li>
+            <li style="padding:8px 0;border-bottom:1px solid var(--border);">&#10003; Premium content is now unlocked</li>
+            <li style="padding:8px 0;border-bottom:1px solid var(--border);">&#10003; You'll receive a confirmation email shortly</li>
+            <li style="padding:8px 0;">&#10003; Manage your subscription anytime from billing settings</li>
+        </ul>
+    </div>
+    <a href="/" class="btn btn-primary" style="display:inline-block;padding:12px 32px;">Go to Dashboard</a>
+    <a href="/billing/manage" class="btn" style="display:inline-block;padding:12px 32px;margin-left:8px;background:var(--bg-card);border:1px solid var(--border);">Manage Billing</a>
+</div>
+{% endblock %}

@@ -1,76 +1,74 @@
-"""Payment integration for paid subscriber tiers.
+"""Payment integration via Manifest Financial.
 
-Supports Manifest Financial for transactional processing.
-Stripe kept as fallback option. DISABLED by default —
-requires paid_tiers.enabled=true and valid API keys.
+Manifest Financial is the exclusive payment provider for TrueFans NEWSLETTERS.
+DISABLED by default — requires paid_tiers.enabled=true and valid API keys.
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import json
 import logging
 from typing import Optional
 
+import httpx
+
 logger = logging.getLogger(__name__)
+
+_MANIFEST_BASE = "https://api.manifestfinancial.com/v1"
 
 
 class PaymentClient:
-    """Manage payment checkout, billing portal, and webhook events.
-
-    Primary: Manifest Financial (https://manifestfinancial.com)
-    Fallback: Stripe (if manifest keys not set but stripe keys are)
-    """
+    """Manage payment checkout, billing portal, and webhook events via Manifest Financial."""
 
     def __init__(self, config) -> None:
         self.config = config
-        self._provider = None
 
     @property
     def enabled(self) -> bool:
-        return self.config.enabled and bool(
-            self.config.manifest_api_key or self.config.stripe_secret_key
-        )
+        return self.config.enabled and bool(self.config.manifest_api_key)
 
     @property
     def provider_name(self) -> str:
         if self.config.manifest_api_key:
             return "manifest"
-        if self.config.stripe_secret_key:
-            return "stripe"
         return "none"
 
+    def _headers(self) -> dict:
+        return {
+            "Authorization": f"Bearer {self.config.manifest_api_key}",
+            "Content-Type": "application/json",
+        }
+
+    # ---- Checkout ----
+
     def create_checkout_session(
-        self, price_id: str, subscriber_email: str, success_url: str, cancel_url: str
+        self, price_id: str, customer_email: str, success_url: str, cancel_url: str,
+        metadata: Optional[dict] = None, coupon_code: str = "",
     ) -> Optional[str]:
-        """Create a checkout session. Returns the session URL."""
+        """Create a Manifest Financial checkout session. Returns the session URL."""
         if not self.enabled:
-            logger.warning("Payment provider not configured")
+            logger.warning("Manifest Financial not configured — payment disabled")
             return None
 
-        if self.provider_name == "manifest":
-            return self._manifest_checkout(price_id, subscriber_email, success_url, cancel_url)
-        elif self.provider_name == "stripe":
-            return self._stripe_checkout(price_id, subscriber_email, success_url, cancel_url)
-        return None
+        payload: dict = {
+            "price_id": price_id,
+            "customer_email": customer_email,
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "mode": "subscription",
+        }
+        if metadata:
+            payload["metadata"] = metadata
+        if coupon_code:
+            payload["coupon_code"] = coupon_code
 
-    def _manifest_checkout(
-        self, price_id: str, subscriber_email: str, success_url: str, cancel_url: str
-    ) -> Optional[str]:
-        """Create checkout via Manifest Financial API."""
         try:
-            import httpx
             response = httpx.post(
-                "https://api.manifestfinancial.com/v1/checkout/sessions",
-                headers={
-                    "Authorization": f"Bearer {self.config.manifest_api_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "price_id": price_id,
-                    "customer_email": subscriber_email,
-                    "success_url": success_url,
-                    "cancel_url": cancel_url,
-                    "mode": "subscription",
-                },
+                f"{_MANIFEST_BASE}/checkout/sessions",
+                headers=self._headers(),
+                json=payload,
                 timeout=30,
             )
             response.raise_for_status()
@@ -80,85 +78,157 @@ class PaymentClient:
             logger.exception("Manifest Financial checkout failed")
             return None
 
-    def _stripe_checkout(
-        self, price_id: str, subscriber_email: str, success_url: str, cancel_url: str
-    ) -> Optional[str]:
-        """Fallback: Create checkout via Stripe."""
-        try:
-            import stripe
-            stripe.api_key = self.config.stripe_secret_key
-            session = stripe.checkout.Session.create(
-                payment_method_types=["card"],
-                line_items=[{"price": price_id, "quantity": 1}],
-                mode="subscription",
-                customer_email=subscriber_email,
-                success_url=success_url,
-                cancel_url=cancel_url,
-            )
-            return session.url
-        except Exception:
-            logger.exception("Stripe checkout failed")
-            return None
+    # ---- Billing Portal ----
 
     def create_billing_portal_session(
         self, customer_id: str, return_url: str
     ) -> Optional[str]:
-        """Create a billing management portal session."""
+        """Create a Manifest Financial billing management portal session."""
         if not self.enabled:
             return None
-        if self.provider_name == "manifest":
-            try:
-                import httpx
-                response = httpx.post(
-                    "https://api.manifestfinancial.com/v1/billing/portal",
-                    headers={"Authorization": f"Bearer {self.config.manifest_api_key}"},
-                    json={"customer_id": customer_id, "return_url": return_url},
-                    timeout=30,
-                )
-                response.raise_for_status()
-                return response.json().get("url")
-            except Exception:
-                logger.exception("Manifest billing portal failed")
-                return None
-        elif self.provider_name == "stripe":
-            try:
-                import stripe
-                stripe.api_key = self.config.stripe_secret_key
-                session = stripe.billing_portal.Session.create(
-                    customer=customer_id, return_url=return_url,
-                )
-                return session.url
-            except Exception:
-                logger.exception("Stripe billing portal failed")
-                return None
-        return None
+        try:
+            response = httpx.post(
+                f"{_MANIFEST_BASE}/billing/portal",
+                headers=self._headers(),
+                json={"customer_id": customer_id, "return_url": return_url},
+                timeout=30,
+            )
+            response.raise_for_status()
+            return response.json().get("url")
+        except Exception:
+            logger.exception("Manifest billing portal failed")
+            return None
+
+    # ---- Customer Management ----
+
+    def create_customer(self, email: str, name: str = "", metadata: Optional[dict] = None) -> Optional[str]:
+        """Create a Manifest Financial customer. Returns customer_id."""
+        if not self.enabled:
+            return None
+        payload: dict = {"email": email}
+        if name:
+            payload["name"] = name
+        if metadata:
+            payload["metadata"] = metadata
+        try:
+            response = httpx.post(
+                f"{_MANIFEST_BASE}/customers",
+                headers=self._headers(),
+                json=payload,
+                timeout=30,
+            )
+            response.raise_for_status()
+            return response.json().get("id") or response.json().get("customer_id")
+        except Exception:
+            logger.exception("Manifest create customer failed")
+            return None
+
+    # ---- Subscription Lifecycle ----
+
+    def get_subscription(self, subscription_id: str) -> Optional[dict]:
+        """Get subscription details from Manifest Financial."""
+        if not self.enabled:
+            return None
+        try:
+            response = httpx.get(
+                f"{_MANIFEST_BASE}/subscriptions/{subscription_id}",
+                headers=self._headers(),
+                timeout=30,
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            logger.exception("Manifest get subscription failed")
+            return None
+
+    def cancel_subscription(self, subscription_id: str, at_period_end: bool = True) -> bool:
+        """Cancel a subscription. By default cancels at end of current period."""
+        if not self.enabled:
+            return False
+        try:
+            response = httpx.post(
+                f"{_MANIFEST_BASE}/subscriptions/{subscription_id}/cancel",
+                headers=self._headers(),
+                json={"at_period_end": at_period_end},
+                timeout=30,
+            )
+            response.raise_for_status()
+            return True
+        except Exception:
+            logger.exception("Manifest cancel subscription failed")
+            return False
+
+    def update_subscription(self, subscription_id: str, new_price_id: str) -> bool:
+        """Update a subscription to a new price/plan."""
+        if not self.enabled:
+            return False
+        try:
+            response = httpx.post(
+                f"{_MANIFEST_BASE}/subscriptions/{subscription_id}",
+                headers=self._headers(),
+                json={"price_id": new_price_id},
+                timeout=30,
+            )
+            response.raise_for_status()
+            return True
+        except Exception:
+            logger.exception("Manifest update subscription failed")
+            return False
+
+    # ---- Coupons ----
+
+    def apply_coupon(self, subscription_id: str, coupon_code: str) -> bool:
+        """Apply a coupon/discount to an existing subscription."""
+        if not self.enabled:
+            return False
+        try:
+            response = httpx.post(
+                f"{_MANIFEST_BASE}/subscriptions/{subscription_id}/coupon",
+                headers=self._headers(),
+                json={"coupon_code": coupon_code},
+                timeout=30,
+            )
+            response.raise_for_status()
+            return True
+        except Exception:
+            logger.exception("Manifest apply coupon failed")
+            return False
+
+    # ---- Webhooks ----
+
+    def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
+        """Verify a Manifest Financial webhook signature using HMAC-SHA256."""
+        if not self.config.manifest_webhook_secret:
+            logger.warning("No webhook secret configured — skipping verification")
+            return True
+        expected = hmac.new(
+            self.config.manifest_webhook_secret.encode(),
+            payload,
+            hashlib.sha256,
+        ).hexdigest()
+        return hmac.compare_digest(expected, signature)
 
     def handle_webhook(self, payload: bytes, sig_header: str) -> Optional[dict]:
-        """Verify and parse a webhook event."""
+        """Verify and parse a Manifest Financial webhook event."""
         if not self.enabled:
             return None
-        if self.provider_name == "stripe":
-            try:
-                import stripe
-                stripe.api_key = self.config.stripe_secret_key
-                event = stripe.Webhook.construct_event(
-                    payload, sig_header, self.config.webhook_secret
-                )
-                return {"type": event["type"], "data": event["data"]["object"]}
-            except Exception:
-                logger.exception("Stripe webhook verification failed")
-                return None
-        # Manifest webhook handling
+
+        if not self.verify_webhook_signature(payload, sig_header):
+            logger.error("Manifest webhook signature verification failed")
+            return None
+
         try:
-            import json
             data = json.loads(payload)
-            return {"type": data.get("event_type", ""), "data": data.get("data", {})}
+            return {
+                "type": data.get("event_type", ""),
+                "data": data.get("data", {}),
+            }
         except Exception:
-            logger.exception("Webhook parsing failed")
+            logger.exception("Webhook payload parsing failed")
             return None
 
 
-# Backwards compatibility
+# Backwards compatibility alias
 StripeClient = PaymentClient
 
 
@@ -166,7 +236,6 @@ def check_tier_access(billing_record: Optional[dict], required_tier: str) -> boo
     """Check if a subscriber has access to a required tier level.
 
     Tier hierarchy: free < pro < premium.
-    Not enforced yet — infrastructure only.
     """
     tier_levels = {"free": 0, "pro": 1, "premium": 2}
     if not billing_record or billing_record.get("status") != "active":

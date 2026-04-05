@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Affiliate Dashboard — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Affiliate Partner Dashboard</h2>
+    <p class="subtitle">Track your clicks, conversions, and earnings</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
+    <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:28px;font-weight:900;color:var(--accent);">{{ placements|length }}</div>
+        <div style="font-size:13px;color:var(--text-dim);">Active Placements</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:28px;font-weight:900;color:var(--accent);">{{ placements|sum(attribute='click_count') if placements else 0 }}</div>
+        <div style="font-size:13px;color:var(--text-dim);">Total Clicks</div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px;">
+        <div style="font-size:28px;font-weight:900;color:var(--green);">$0.00</div>
+        <div style="font-size:13px;color:var(--text-dim);">Earnings (MTD)</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Your Placements</h3>
+    {% if placements %}
+    <table class="data-table" style="margin-top:12px;">
+        <thead><tr><th>Program</th><th>Placement</th><th>Clicks</th><th>Status</th><th>Created</th></tr></thead>
+        <tbody>
+        {% for p in placements %}
+        <tr>
+            <td style="font-weight:600;">{{ p.program_name or '—' }}</td>
+            <td>{{ p.placement_type or 'newsletter' }}</td>
+            <td>{{ p.click_count or 0 }}</td>
+            <td><span class="badge badge-{% if p.is_active %}success{% else %}muted{% endif %}">{{ 'active' if p.is_active else 'inactive' }}</span></td>
+            <td>{{ p.created_at[:10] if p.created_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted" style="margin-top:12px;">No placements yet. Browse the <a href="/affiliates/marketplace">marketplace</a> to find programs.</p>
+    {% endif %}
+</div>
+{% endblock %}

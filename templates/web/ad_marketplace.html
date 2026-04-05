@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Ad Marketplace — TrueFans NEWSLETTERS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Ad Marketplace</h2>
+    <p class="subtitle">Bid on sponsor slots across newsletter editions — highest bid wins</p>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;">
+    <div>
+        <div class="card" style="margin-bottom:20px;">
+            <h3>Available Slots — Next 7 Days</h3>
+            <table class="data-table" style="margin-top:12px;">
+                <thead><tr><th>Date</th><th>Edition</th><th>Position</th><th>Current High Bid</th><th>Status</th></tr></thead>
+                <tbody>
+                {% for date in dates %}
+                    {% for edition in editions %}
+                        {% for pos in ['top', 'mid', 'bottom'] %}
+                        <tr>
+                            <td>{{ date }}</td>
+                            <td>{{ edition.name }}</td>
+                            <td style="text-transform:capitalize;">{{ pos }}</td>
+                            <td>
+                                {% set ns = namespace(high=0) %}
+                                {% for b in bids %}
+                                    {% if b.target_date == date and b.edition_slug == edition.slug and b.position == pos and b.bid_cents > ns.high %}
+                                        {% set ns.high = b.bid_cents %}
+                                    {% endif %}
+                                {% endfor %}
+                                {% if ns.high > 0 %}
+                                    <span style="font-weight:700;color:var(--green);">${{ "%.2f"|format(ns.high / 100) }}</span>
+                                {% else %}
+                                    <span style="color:var(--text-dim);">No bids</span>
+                                {% endif %}
+                            </td>
+                            <td><span class="badge">Open</span></td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <div class="card" style="padding:24px;">
+            <h3 style="margin-bottom:16px;">Place a Bid</h3>
+            <form hx-post="/advertiser/marketplace/bid" hx-target="#bid-result" hx-swap="innerHTML">
+                <div style="margin-bottom:12px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Campaign ID</label>
+                    <input type="number" name="campaign_id" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Advertiser ID</label>
+                    <input type="number" name="advertiser_id" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);">
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Edition</label>
+                    <select name="edition_slug" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);">
+                        {% for e in editions %}<option value="{{ e.slug }}">{{ e.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Position</label>
+                    <select name="position" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);">
+                        <option value="top">Top (Premium)</option>
+                        <option value="mid" selected>Mid-Content</option>
+                        <option value="bottom">Bottom</option>
+                    </select>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Bid Amount (cents)</label>
+                    <input type="number" name="bid_cents" min="100" step="100" placeholder="5000" required style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);">
+                    <div style="font-size:11px;color:var(--text-dim);margin-top:2px;">e.g. 5000 = $50.00</div>
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Target Date</label>
+                    <select name="target_date" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);">
+                        {% for d in dates %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+                    </select>
+                </div>
+                <button type="submit" style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Place Bid</button>
+            </form>
+            <div id="bid-result" style="margin-top:12px;"></div>
+        </div>
+
+        <div class="card" style="padding:24px;margin-top:16px;">
+            <h4>How Auctions Work</h4>
+            <ul style="font-size:13px;color:var(--text-dim);line-height:2;padding-left:16px;">
+                <li>Auctions run daily at 5am UTC</li>
+                <li>Highest bid per slot wins</li>
+                <li>Winners are charged their bid amount</li>
+                <li>Losing bids are not charged</li>
+                <li>Bids can be cancelled before auction runs</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
