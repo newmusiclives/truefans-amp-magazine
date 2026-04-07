@@ -148,6 +148,50 @@ def _clear_attempts(ip: str, limit_type: str = "login") -> None:
         logger.warning("Failed to clear attempts for limit_type=%s", limit_type, exc_info=True)
 
 
+def _is_rate_limited_with(
+    ip: str, limit_type: str, max_attempts: int, window_seconds: int
+) -> bool:
+    """Check rate limit with custom threshold and window (not the login default)."""
+    try:
+        conn = _rate_limit_conn()
+        row = conn.execute(
+            "SELECT COUNT(*) FROM rate_limits "
+            "WHERE ip_address = ? AND limit_type = ? "
+            "AND attempted_at >= datetime('now', '-' || ? || ' seconds')",
+            (ip, limit_type, window_seconds),
+        ).fetchone()
+        conn.close()
+        return (row[0] if row else 0) >= max_attempts
+    except Exception:
+        logger.warning("Rate-limit check failed — allowing request", exc_info=True)
+        return False
+
+
+def rate_limit(limit_type: str, max_per_minute: int = 60):
+    """FastAPI dependency factory for per-IP rate limiting.
+
+    Usage::
+
+        @router.get("/endpoint", dependencies=[Depends(rate_limit("api_editions", 120))])
+        async def endpoint(): ...
+
+    On limit exceeded returns HTTP 429 with a JSON body. Uses the
+    persistent rate_limits table so limits survive restarts.
+    """
+    from fastapi import HTTPException
+
+    async def _check(request: Request) -> None:
+        ip = _get_client_ip(request)
+        if _is_rate_limited_with(ip, limit_type, max_per_minute, 60):
+            raise HTTPException(
+                status_code=429,
+                detail=f"Rate limit exceeded ({max_per_minute}/min for {limit_type})",
+            )
+        _record_attempt(ip, limit_type=limit_type)
+
+    return _check
+
+
 # ---- Secure cookie helpers ----
 
 def _is_secure(request: Request) -> bool:

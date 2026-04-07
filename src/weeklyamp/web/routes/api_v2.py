@@ -16,8 +16,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from weeklyamp.web.deps import get_config, get_repo
+from weeklyamp.web.security import rate_limit
 
-router = APIRouter(prefix="/api/v2")
+router = APIRouter(
+    prefix="/api/v2",
+    # Per-IP rate limit in addition to the per-api-key limit enforced
+    # inside verify_api_key. 300/min/IP is generous for legitimate use
+    # but stops a stolen key from being weaponised from a single host.
+    dependencies=[Depends(rate_limit("api_v2", max_per_minute=300))],
+)
 
 
 # ---- API Key Authentication ----

@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import sqlite3
 from datetime import datetime
 from typing import Optional
 
 from weeklyamp.core.database import get_connection
+
+logger = logging.getLogger(__name__)
 
 
 class _PgCursorAdapter:
@@ -4448,3 +4451,97 @@ class Repository:
             "active_campaigns": dict(active)["count"] if active else 0,
             "total_prospects": dict(prospects)["count"] if prospects else 0,
         }
+
+    # ---- Admin audit log ----
+
+    def log_admin_action(
+        self,
+        action: str,
+        actor_type: str = "admin",
+        actor_id: str = "",
+        target_type: str = "",
+        target_id: str = "",
+        ip_address: str = "",
+        user_agent: str = "",
+        detail: str = "",
+    ) -> None:
+        """Record an admin/licensee/system action for audit trail.
+
+        Best-effort: swallow errors so audit logging never blocks the
+        underlying operation. A failure to log an action is strictly
+        less bad than the action itself failing because logging broke.
+        """
+        try:
+            conn = self._conn()
+            conn.execute(
+                "INSERT INTO admin_audit_log "
+                "(actor_type, actor_id, action, target_type, target_id, "
+                " ip_address, user_agent, detail) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    actor_type, actor_id, action, target_type, target_id,
+                    ip_address, (user_agent or "")[:500], (detail or "")[:2000],
+                ),
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            logger.warning("Failed to write audit log entry", exc_info=True)
+
+    def get_audit_log(
+        self,
+        limit: int = 100,
+        actor_type: str = "",
+        action_like: str = "",
+    ) -> list[dict]:
+        """Return recent audit log entries, optionally filtered."""
+        conn = self._conn()
+        sql = "SELECT * FROM admin_audit_log WHERE 1=1"
+        params: list = []
+        if actor_type:
+            sql += " AND actor_type = ?"
+            params.append(actor_type)
+        if action_like:
+            sql += " AND action LIKE ?"
+            params.append(f"%{action_like}%")
+        sql += " ORDER BY occurred_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(sql, tuple(params)).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    # ---- Webhook idempotency ----
+
+    def has_processed_webhook_event(self, event_id: str) -> bool:
+        """Return True if this webhook event_id has already been processed."""
+        if not event_id:
+            return False
+        conn = self._conn()
+        row = conn.execute(
+            "SELECT 1 FROM payment_webhook_events WHERE event_id = ?",
+            (event_id,),
+        ).fetchone()
+        conn.close()
+        return row is not None
+
+    def record_webhook_event(self, event_id: str, event_type: str = "") -> None:
+        """Record that a webhook event_id has been processed.
+
+        Swallows unique-constraint violations so that a double-submit race
+        between two workers is harmless — the first write wins and the
+        second is silently ignored.
+        """
+        if not event_id:
+            return
+        conn = self._conn()
+        try:
+            conn.execute(
+                "INSERT INTO payment_webhook_events (event_id, event_type) VALUES (?, ?)",
+                (event_id, event_type),
+            )
+            conn.commit()
+        except Exception:
+            # Most likely a unique constraint violation from a concurrent retry
+            conn.rollback()
+        finally:
+            conn.close()

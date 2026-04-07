@@ -1003,6 +1003,33 @@ CREATE TABLE IF NOT EXISTS rate_limits (
 );
 CREATE INDEX IF NOT EXISTS idx_rate_limits_ip_type ON rate_limits(ip_address, limit_type);
 
+-- Payment webhook idempotency — stores processed event_ids so retries
+-- from Manifest Financial don't double-create billing records.
+CREATE TABLE IF NOT EXISTS payment_webhook_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id TEXT UNIQUE NOT NULL,
+    event_type TEXT DEFAULT '',
+    processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Admin audit log — records state-changing actions by admins and
+-- licensees for security review and incident investigation.
+CREATE TABLE IF NOT EXISTS admin_audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_type TEXT DEFAULT 'admin' CHECK (actor_type IN ('admin','licensee','system','webhook')),
+    actor_id TEXT DEFAULT '',
+    action TEXT NOT NULL,
+    target_type TEXT DEFAULT '',
+    target_id TEXT DEFAULT '',
+    ip_address TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    detail TEXT DEFAULT '',
+    occurred_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON admin_audit_log(actor_type, actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON admin_audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_audit_log_occurred ON admin_audit_log(occurred_at DESC);
+
 INSERT OR IGNORE INTO schema_version (version) VALUES (24);
 
 -- Sponsor block performance tracking events

@@ -1,16 +1,21 @@
 """Mobile API endpoints — JSON-based API for the TrueFans mobile app.
 
 All endpoints return JSON. Authentication via Bearer token (subscriber's unsubscribe_token as API key).
+Rate limited per-IP via the shared rate_limits table.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Header, Request
+from fastapi import APIRouter, Depends, Header, Request
 from fastapi.responses import JSONResponse
 
 from weeklyamp.web.deps import get_config, get_repo
+from weeklyamp.web.security import rate_limit
 
-router = APIRouter()
+router = APIRouter(
+    # Global read-endpoint rate limit — 120 req/min/IP for the whole router
+    dependencies=[Depends(rate_limit("mobile_api", max_per_minute=120))],
+)
 
 
 def _get_subscriber(repo, token: str):

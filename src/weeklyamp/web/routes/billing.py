@@ -53,7 +53,13 @@ async def billing_success(request: Request):
 
 @router.post("/billing/webhook")
 async def manifest_webhook(request: Request):
-    """Handle Manifest Financial webhook events."""
+    """Handle Manifest Financial webhook events.
+
+    Signature verification happens inside ``client.handle_webhook``.
+    Idempotency: we store processed event IDs in payment_webhook_events
+    and silently ack duplicates so retries from Manifest don't
+    double-create billing records or double-fire dunning state changes.
+    """
     config = get_config()
     from weeklyamp.billing.stripe_client import PaymentClient
     client = PaymentClient(config.paid_tiers)
@@ -65,7 +71,14 @@ async def manifest_webhook(request: Request):
 
     repo = get_repo()
     event_type = event["type"]
+    event_id = event.get("event_id", "")
     data = event["data"]
+
+    # Idempotency: if we've already processed this event_id, return 200
+    # without re-applying it. Manifest retries failed webhook deliveries
+    # so we must be safe to receive the same event multiple times.
+    if event_id and repo.has_processed_webhook_event(event_id):
+        return JSONResponse({"received": True, "duplicate": True})
 
     if event_type in ("subscription.created", "subscription.activated"):
         # New subscription — create billing record
@@ -102,6 +115,10 @@ async def manifest_webhook(request: Request):
         if sub_id:
             repo.update_dunning_state(sub_id, "")
             repo.update_billing_status(sub_id, "active")
+
+    # Record the event_id so retries of the same event are no-ops
+    if event_id:
+        repo.record_webhook_event(event_id, event_type)
 
     return JSONResponse({"received": True})
 

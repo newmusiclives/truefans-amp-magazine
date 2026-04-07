@@ -197,19 +197,36 @@ class PaymentClient:
     # ---- Webhooks ----
 
     def verify_webhook_signature(self, payload: bytes, signature: str) -> bool:
-        """Verify a Manifest Financial webhook signature using HMAC-SHA256."""
-        if not self.config.manifest_webhook_secret:
-            logger.warning("No webhook secret configured — skipping verification")
-            return True
+        """Verify a Manifest Financial webhook signature using HMAC-SHA256.
+
+        Fails *closed* — if no secret is configured the webhook is rejected.
+        Previously this returned True when no secret was set, which meant
+        any anonymous POST to /billing/webhook could manipulate billing
+        state. Production must always have MANIFEST_WEBHOOK_SECRET set.
+        """
+        secret = self.config.manifest_webhook_secret
+        if not secret:
+            logger.critical(
+                "Manifest webhook received but WEEKLYAMP_MANIFEST_WEBHOOK_SECRET "
+                "is not configured — rejecting. Set the env var in production."
+            )
+            return False
+        if not signature:
+            logger.warning("Manifest webhook received with empty signature header")
+            return False
         expected = hmac.new(
-            self.config.manifest_webhook_secret.encode(),
+            secret.encode(),
             payload,
             hashlib.sha256,
         ).hexdigest()
         return hmac.compare_digest(expected, signature)
 
     def handle_webhook(self, payload: bytes, sig_header: str) -> Optional[dict]:
-        """Verify and parse a Manifest Financial webhook event."""
+        """Verify and parse a Manifest Financial webhook event.
+
+        Returns a dict shaped as ``{"type": ..., "data": ..., "event_id": ...}``
+        on success, or None on any failure (signature, parse, disabled).
+        """
         if not self.enabled:
             return None
 
@@ -222,6 +239,7 @@ class PaymentClient:
             return {
                 "type": data.get("event_type", ""),
                 "data": data.get("data", {}),
+                "event_id": data.get("id", "") or data.get("event_id", ""),
             }
         except Exception:
             logger.exception("Webhook payload parsing failed")
