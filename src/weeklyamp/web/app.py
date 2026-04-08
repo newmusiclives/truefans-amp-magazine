@@ -126,14 +126,26 @@ def _setup_logging():
         import json
         class JSONFormatter(logging.Formatter):
             def format(self, record):
-                return json.dumps({
+                payload = {
                     "timestamp": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"),
                     "level": record.levelname,
                     "logger": record.name,
                     "message": record.getMessage(),
                     "module": record.module,
                     "line": record.lineno,
-                })
+                }
+                # Preserve traceback information when present so that
+                # `logger.exception()` calls remain diagnosable in
+                # production. Without this, every exception logged
+                # via .exception() loses its stack and the operator
+                # is left guessing — see incident 2026-04-08 where
+                # the scheduled_sends root cause was masked for
+                # several hours because the formatter dropped exc_info.
+                if record.exc_info:
+                    payload["exception"] = self.formatException(record.exc_info)
+                if record.stack_info:
+                    payload["stack"] = self.formatStack(record.stack_info)
+                return json.dumps(payload)
         handler = logging.StreamHandler()
         handler.setFormatter(JSONFormatter())
         handler.addFilter(PIIScrubFilter())

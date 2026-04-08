@@ -4,7 +4,13 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+
+
+def _utcnow() -> datetime:
+    """Timezone-aware UTC now. Replaces the deprecated _utcnow()
+    which becomes an error on Python 3.14+."""
+    return datetime.now(timezone.utc)
 from typing import Optional
 
 from weeklyamp.core.models import AppConfig
@@ -24,7 +30,7 @@ class InvoiceManager:
         """Generate a sequential invoice number."""
         existing = self.repo.get_invoices()
         seq = len(existing) + 1
-        now = datetime.utcnow()
+        now = _utcnow()
         return f"{prefix}-{now.strftime('%Y%m')}-{seq:05d}"
 
     # ---- Licensee Invoices ----
@@ -42,7 +48,7 @@ class InvoiceManager:
             return None
 
         if not month:
-            month = datetime.utcnow().strftime("%Y-%m")
+            month = _utcnow().strftime("%Y-%m")
 
         fee_cents = licensee.get("license_fee_cents", self.config.licensing.default_monthly_fee_cents)
         rev_share_pct = licensee.get("revenue_share_pct", self.config.licensing.default_revenue_share_pct)
@@ -62,7 +68,7 @@ class InvoiceManager:
                 "amount_cents": platform_share,
             })
 
-        due_date = (datetime.utcnow() + timedelta(days=30)).strftime("%Y-%m-%d")
+        due_date = (_utcnow() + timedelta(days=30)).strftime("%Y-%m-%d")
         invoice_number = self._next_invoice_number("LIC")
 
         return self.repo.create_invoice(
@@ -87,7 +93,7 @@ class InvoiceManager:
             return None
 
         if not month:
-            month = datetime.utcnow().strftime("%Y-%m")
+            month = _utcnow().strftime("%Y-%m")
 
         # Determine plan tier by subscriber count
         sub_count = self.repo.get_artist_nl_subscriber_count(newsletter_id)
@@ -103,7 +109,7 @@ class InvoiceManager:
             {"description": f"Subscribers: {sub_count}", "amount_cents": 0},
         ]
 
-        due_date = (datetime.utcnow() + timedelta(days=30)).strftime("%Y-%m-%d")
+        due_date = (_utcnow() + timedelta(days=30)).strftime("%Y-%m-%d")
         invoice_number = self._next_invoice_number("ART")
 
         return self.repo.create_invoice(
@@ -139,7 +145,7 @@ class InvoiceManager:
             entity_id=subscriber_id,
             amount_cents=tier["price_cents"],
             line_items_json=json.dumps(line_items),
-            due_date=(datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d"),
+            due_date=(_utcnow() + timedelta(days=7)).strftime("%Y-%m-%d"),
         )
 
     # ---- Mark Paid ----
@@ -253,7 +259,7 @@ class InvoiceManager:
     def generate_all_licensee_invoices(self, month: str = "") -> list[int]:
         """Generate invoices for all active licensees."""
         if not month:
-            month = datetime.utcnow().strftime("%Y-%m")
+            month = _utcnow().strftime("%Y-%m")
         licensees = self.repo.get_licensees(status="active")
         invoice_ids = []
         for lic in licensees:
@@ -266,7 +272,7 @@ class InvoiceManager:
     def generate_all_artist_newsletter_invoices(self, month: str = "") -> list[int]:
         """Generate invoices for all active artist newsletters."""
         if not month:
-            month = datetime.utcnow().strftime("%Y-%m")
+            month = _utcnow().strftime("%Y-%m")
         # Get all active artist newsletters
         conn = self.repo._conn()
         rows = conn.execute(

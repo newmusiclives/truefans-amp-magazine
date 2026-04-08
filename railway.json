@@ -2,7 +2,9 @@
   "$schema": "https://railway.com/railway.schema.json",
   "deploy": {
     "startCommand": "python start.py",
-    "restartPolicyType": "ON_FAILURE"
+    "restartPolicyType": "ON_FAILURE",
+    "healthcheckPath": "/health/ready",
+    "healthcheckTimeout": 30
   },
   "build": {
     "dockerfilePath": "Dockerfile"
