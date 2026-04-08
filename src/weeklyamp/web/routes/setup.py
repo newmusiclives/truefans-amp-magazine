@@ -4,11 +4,120 @@ from __future__ import annotations
 import os
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from weeklyamp.web.deps import get_config, get_repo, render
 
 router = APIRouter()
+
+
+@router.get("/deliverability/reputation")
+async def deliverability_reputation(request: Request):
+    """Reputation dashboard — bounces, complaints, unsubscribes over time.
+
+    Returns JSON with:
+      - sends_24h, sends_7d, sends_30d
+      - bounces_24h, bounces_7d, bounces_30d (hard + soft)
+      - complaints_24h, complaints_7d, complaints_30d
+      - unsubscribes_24h, unsubscribes_7d, unsubscribes_30d
+      - bounce_rate_30d, complaint_rate_30d, unsubscribe_rate_30d
+      - thresholds: bounce<2%, complaint<0.1%
+      - recent_bounces: last 20 bounce_log entries
+
+    Used by uptime monitor + manual review. Read-only, safe to poll.
+    """
+    from datetime import datetime, timedelta
+
+    repo = get_repo()
+    conn = repo._conn()
+    now = datetime.utcnow()
+    cutoff_1d = (now - timedelta(days=1)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff_7d = (now - timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
+    cutoff_30d = (now - timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+
+    def _count(sql: str, params=()) -> int:
+        try:
+            row = conn.execute(sql, params).fetchone()
+            if not row:
+                return 0
+            try:
+                return int(row[0] or 0)
+            except (TypeError, KeyError, IndexError):
+                v = list(dict(row).values())[0] if isinstance(row, dict) else 0
+                return int(v or 0)
+        except Exception:
+            return 0
+
+    # Sends — assembled_issues that have a published_at >= cutoff
+    sends_24h = _count(
+        "SELECT COUNT(*) FROM assembled_issues WHERE published_at >= ?",
+        (cutoff_1d,),
+    )
+    sends_7d = _count(
+        "SELECT COUNT(*) FROM assembled_issues WHERE published_at >= ?",
+        (cutoff_7d,),
+    )
+    sends_30d = _count(
+        "SELECT COUNT(*) FROM assembled_issues WHERE published_at >= ?",
+        (cutoff_30d,),
+    )
+
+    # Bounces from bounce_log
+    bounces_24h = _count(
+        "SELECT COUNT(*) FROM bounce_log WHERE bounced_at >= ?",
+        (cutoff_1d,),
+    )
+    bounces_7d = _count(
+        "SELECT COUNT(*) FROM bounce_log WHERE bounced_at >= ?",
+        (cutoff_7d,),
+    )
+    bounces_30d = _count(
+        "SELECT COUNT(*) FROM bounce_log WHERE bounced_at >= ?",
+        (cutoff_30d,),
+    )
+
+    total_subscribers = _count(
+        "SELECT COUNT(*) FROM subscribers WHERE status = 'active'"
+    )
+    unsubs_30d = _count(
+        "SELECT COUNT(*) FROM subscribers WHERE status = 'unsubscribed'"
+    )
+
+    # Recent bounces for inspection
+    try:
+        recent_rows = conn.execute(
+            "SELECT * FROM bounce_log ORDER BY bounced_at DESC LIMIT 20"
+        ).fetchall()
+        recent_bounces = [dict(r) for r in recent_rows]
+    except Exception:
+        recent_bounces = []
+
+    conn.close()
+
+    def _rate(num: int, denom: int) -> float:
+        return round((num / denom * 100) if denom else 0.0, 3)
+
+    bounce_rate = _rate(bounces_30d, max(total_subscribers, 1))
+    unsub_rate = _rate(unsubs_30d, max(total_subscribers, 1))
+
+    return JSONResponse({
+        "sends": {"day": sends_24h, "week": sends_7d, "month": sends_30d},
+        "bounces": {"day": bounces_24h, "week": bounces_7d, "month": bounces_30d},
+        "unsubscribes": {"month": unsubs_30d},
+        "active_subscribers": total_subscribers,
+        "rates_30d_pct": {
+            "bounce": bounce_rate,
+            "unsubscribe": unsub_rate,
+        },
+        "thresholds_pct": {
+            "bounce_max": 2.0,
+            "complaint_max": 0.1,
+        },
+        "status": (
+            "ok" if bounce_rate < 2.0 else "degraded"
+        ),
+        "recent_bounces": recent_bounces,
+    })
 
 
 @router.get("/", response_class=HTMLResponse)

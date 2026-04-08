@@ -270,7 +270,10 @@ def create_app() -> FastAPI:
         env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR / "web")), autoescape=True)
         tpl = env.get_template("landing.html")
         authenticated = is_authenticated(request)
-        return HR(tpl.render(authenticated=authenticated))
+        return HR(tpl.render(
+            authenticated=authenticated,
+            site_domain=site_domain,
+        ))
 
     # Health checks
     @app.get("/health")

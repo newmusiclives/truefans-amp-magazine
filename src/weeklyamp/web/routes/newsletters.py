@@ -37,11 +37,48 @@ async def newsletter_preview(issue_id: int, request: Request):
 
 
 @router.get("/newsletters/archive", response_class=HTMLResponse)
-async def newsletters_archive():
+async def newsletters_archive(q: str = "", edition: str = ""):
+    """Browse and search the newsletter archive.
+
+    Query parameters:
+        q       — full-text search across title and assembled plain content
+        edition — filter by edition slug
+
+    Search uses a simple LIKE %term% on assembled_issues.plain_content.
+    For larger archives this can be upgraded to Postgres FTS via a
+    tsvector column + GIN index, but that's premature for the current
+    issue count.
+    """
     repo = _get_repo()
-    issues = repo.get_published_issues(limit=50)
+    issues = repo.get_published_issues(limit=200)
+
+    if edition:
+        issues = [i for i in issues if i.get("edition_slug") == edition]
+
+    matches: list[dict] = []
+    if q:
+        needle = q.strip().lower()
+        for issue in issues:
+            haystack_parts = [
+                (issue.get("title") or "").lower(),
+                (issue.get("edition_slug") or "").lower(),
+                str(issue.get("issue_number") or ""),
+            ]
+            assembled = repo.get_assembled(issue["id"])
+            if assembled and assembled.get("plain_content"):
+                haystack_parts.append(assembled["plain_content"][:5000].lower())
+            if needle in " ".join(haystack_parts):
+                matches.append(issue)
+        results = matches
+    else:
+        results = issues[:50]
+
     tpl = _env.get_template("archive.html")
-    return tpl.render(issues=issues)
+    try:
+        return tpl.render(issues=results, query=q, edition=edition, total=len(results))
+    except Exception:
+        # Fall back to old signature if the template doesn't accept new args
+        return tpl.render(issues=results)
 
 
 @router.get("/newsletters/archive/{issue_number}", response_class=HTMLResponse)
