@@ -4013,7 +4013,25 @@ class Repository:
 
     # ---- Licensing ----
 
-    def create_licensee(self, company_name: str, contact_name: str, email: str, password_hash: str, city_market_slug: str = "", edition_slugs: str = "", license_type: str = "monthly", license_fee_cents: int = 0, revenue_share_pct: float = 20.0) -> int:
+    class TerritoryConflictError(Exception):
+        """Raised when a new licensee would overlap an existing exclusive territory."""
+
+    def create_licensee(self, company_name: str, contact_name: str, email: str, password_hash: str, city_market_slug: str = "", edition_slugs: str = "", license_type: str = "monthly", license_fee_cents: int = 0, revenue_share_pct: float = 20.0, allow_territory_overlap: bool = False) -> int:
+        # Territory exclusivity — refuse to create a new licensee whose
+        # city_market_slug overlaps an existing active or pending licensee
+        # for any of the same editions. Pass allow_territory_overlap=True
+        # to override (admin escape hatch for special cases).
+        if city_market_slug and not allow_territory_overlap:
+            existing = self._find_overlapping_licensee(
+                city_market_slug=city_market_slug,
+                edition_slugs=edition_slugs,
+            )
+            if existing:
+                raise Repository.TerritoryConflictError(
+                    f"Territory '{city_market_slug}' for editions "
+                    f"'{edition_slugs}' overlaps existing licensee "
+                    f"#{existing['id']} ({existing.get('company_name')})"
+                )
         conn = self._conn()
         cur = conn.execute(
             """INSERT INTO licensees (company_name, contact_name, email, password_hash, city_market_slug, edition_slugs, license_type, license_fee_cents, revenue_share_pct)
@@ -4024,6 +4042,41 @@ class Repository:
         row_id = cur.lastrowid
         conn.close()
         return row_id
+
+    def _find_overlapping_licensee(
+        self, city_market_slug: str, edition_slugs: str
+    ) -> Optional[dict]:
+        """Return the first existing active/pending licensee whose
+        city_market_slug matches AND whose edition_slugs share at least
+        one edition with the given list. None if no overlap.
+        """
+        if not city_market_slug:
+            return None
+        new_editions = {
+            e.strip() for e in (edition_slugs or "").split(",") if e.strip()
+        }
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM licensees "
+            "WHERE city_market_slug = ? "
+            "AND status IN ('active','pending','trialing','past_due')",
+            (city_market_slug,),
+        ).fetchall()
+        conn.close()
+        for r in rows:
+            d = dict(r)
+            existing_eds = {
+                e.strip()
+                for e in (d.get("edition_slugs") or "").split(",")
+                if e.strip()
+            }
+            if not new_editions:
+                # No editions specified on the new licensee — any existing
+                # licensee in the same city is treated as a conflict.
+                return d
+            if existing_eds & new_editions:
+                return d
+        return None
 
     def get_licensees(self, status: str = "") -> list[dict]:
         conn = self._conn()
