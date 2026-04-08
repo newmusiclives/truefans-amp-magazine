@@ -4435,6 +4435,45 @@ class Repository:
         conn.commit()
         conn.close()
 
+    # ---- Cross-promo partners (PromotionAgent persistence) ----
+
+    def create_cross_promo_partner(self, partner_name: str, partner_type: str = "newsletter", audience_size: str = "", audience_overlap: str = "", pitch_idea: str = "", contact_url: str = "", edition_slug: str = "", source: str = "manual", notes: str = "") -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO cross_promo_partners (partner_name, partner_type, audience_size, audience_overlap, pitch_idea, contact_url, edition_slug, source, notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (partner_name, partner_type, audience_size, audience_overlap, pitch_idea, contact_url, edition_slug, source, notes),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_cross_promo_partners(self, edition_slug: str = "", status: str = "", limit: int = 100) -> list[dict]:
+        conn = self._conn()
+        sql = "SELECT * FROM cross_promo_partners WHERE 1=1"
+        params: list = []
+        if edition_slug:
+            sql += " AND edition_slug = ?"
+            params.append(edition_slug)
+        if status:
+            sql += " AND status = ?"
+            params.append(status)
+        sql += " ORDER BY updated_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(sql, params).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def update_cross_promo_partner_status(self, partner_id: int, status: str) -> None:
+        conn = self._conn()
+        conn.execute(
+            "UPDATE cross_promo_partners SET status = ?, updated_at = CURRENT_TIMESTAMP, last_contacted_at = CURRENT_TIMESTAMP WHERE id = ?",
+            (status, partner_id),
+        )
+        conn.commit()
+        conn.close()
+
     def log_outreach(self, campaign_id: int = 0, channel: str = "email", recipient_email: str = "", recipient_phone: str = "", recipient_name: str = "", recipient_type: str = "subscriber", status: str = "sent") -> int:
         conn = self._conn()
         cur = conn.execute(

@@ -1665,6 +1665,32 @@ CREATE TABLE IF NOT EXISTS industry_reports (
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (42);
 """,
+    43: """
+-- v43: Cross-promotion partners table for PromotionAgent persistence.
+-- Each row is a candidate cross-promo partner identified by an AI
+-- Promotion lead. Edition-scoped so the per-edition Promotion staff
+-- (Jess/Cody/Ryan) own their own pipelines.
+CREATE TABLE IF NOT EXISTS cross_promo_partners (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    partner_name TEXT NOT NULL,
+    partner_type TEXT DEFAULT 'newsletter' CHECK (partner_type IN ('newsletter','podcast','community','social','other')),
+    audience_size TEXT DEFAULT '',
+    audience_overlap TEXT DEFAULT '',
+    pitch_idea TEXT DEFAULT '',
+    contact_url TEXT DEFAULT '',
+    edition_slug TEXT DEFAULT '',
+    status TEXT DEFAULT 'identified' CHECK (status IN ('identified','contacted','negotiating','live','declined','expired')),
+    source TEXT DEFAULT 'manual',
+    last_contacted_at TIMESTAMP,
+    notes TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_cross_promo_status ON cross_promo_partners(status);
+CREATE INDEX IF NOT EXISTS idx_cross_promo_edition ON cross_promo_partners(edition_slug);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (43);
+""",
 }
 
 

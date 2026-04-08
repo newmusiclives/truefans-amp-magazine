@@ -1,4 +1,25 @@
-"""Marketing automation agent — AI CMO for subscriber growth and sponsor sales."""
+"""Marketing automation agent — Chief Marketing Officer that orchestrates
+the per-edition Sales and Promotion specialists.
+
+This agent does not directly draft prospects, partners, or outreach.
+Those tasks live on `SalesAgent` and `PromotionAgent`, which exist as
+named per-edition staff (Kyle/Dana/Talia for Sales, Jess/Cody/Ryan for
+Promotion) seeded into the database. MarketingAgent fans tasks out to
+those specialists — one task per agent row, the same pattern the
+orchestrator uses for Writers.
+
+Marketing keeps the cross-functional tasks that don't belong to a
+single edition specialist:
+  - draft_social_batch        — promotes published issues across all editions
+  - identify_at_risk          — churn detection across all subscribers
+  - draft_winback_batch       — re-engagement copy
+  - weekly_marketing_report   — portfolio-level performance summary
+
+The fan-out tasks (`identify_prospects`, `draft_outreach_batch`)
+return per-edition results aggregated into a single response so the
+caller can see what each specialist produced without needing to know
+the team structure.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +28,8 @@ import logging
 from typing import Optional
 
 from weeklyamp.agents.base import AgentBase
+from weeklyamp.agents.promotion import PromotionAgent
+from weeklyamp.agents.sales import SalesAgent
 from weeklyamp.content.generator import generate_draft
 
 logger = logging.getLogger(__name__)
@@ -18,8 +41,8 @@ class MarketingAgent(AgentBase):
     default_persona = "Strategic marketing leader who orchestrates subscriber growth and sponsor sales."
     default_system_prompt = (
         "You are the CMO of TrueFans SIGNAL. "
-        "You plan and execute marketing campaigns for subscriber growth "
-        "and sponsor sales across email, SMS, voice, and AI channels."
+        "You coordinate the Sales and Promotion leads across all editions, "
+        "set portfolio-level priorities, and report on results."
     )
 
     def _run(self, task_id: int) -> Optional[dict]:
@@ -33,6 +56,7 @@ class MarketingAgent(AgentBase):
         handlers = {
             "identify_prospects": self.identify_prospects,
             "draft_outreach_batch": self.draft_outreach_batch,
+            "identify_partners": self.identify_partners,
             "generate_growth_tactics": self.generate_growth_tactics,
             "draft_social_batch": self.draft_social_batch,
             "identify_at_risk": self.identify_at_risk,
@@ -45,61 +69,58 @@ class MarketingAgent(AgentBase):
             return handler(task_id)
         return {"error": f"Unknown task type: {task_type}"}
 
+    # ---- Coordinator: fan out to per-edition specialists ----
+
     def identify_prospects(self, task_id: int) -> dict:
-        """AI-identify new sponsor prospects based on edition audiences."""
-        subscriber_count = self.repo.get_subscriber_count()
-        editions = self.repo.get_editions()
-        edition_names = ", ".join(e["name"] for e in editions)
-
-        prompt = (
-            f"Identify 5 companies that would be ideal sponsors for TrueFans SIGNAL.\n\n"
-            f"We have {subscriber_count} subscribers across these editions: {edition_names}.\n"
-            f"Our audience: music fans, independent artists, and industry professionals.\n\n"
-            f"For each company provide:\n"
-            f"1. Company name\n"
-            f"2. Why they'd sponsor (audience alignment)\n"
-            f"3. Estimated budget range\n"
-            f"4. Best edition(s) to target\n"
-            f"5. Suggested pitch angle\n\n"
-            f"Focus on companies that actively advertise in music/entertainment/creator spaces."
-        )
-
-        result, model = generate_draft(prompt, self.config, max_tokens_override=1000)
-        self.log_output(task_id, "prospect_list", result)
-        return {"prospects": result, "count": 5}
+        """Fan out prospect identification to every Sales agent on the
+        roster. Each Sales lead identifies prospects scoped to their
+        own edition and persists them to sponsor_prospects.
+        """
+        return self._fanout_sales("identify_prospects", task_id)
 
     def draft_outreach_batch(self, task_id: int) -> dict:
-        """Draft personalized outreach emails for pending prospects."""
-        prospects = self.repo.get_sponsor_prospects(status="identified")
-        subscriber_count = self.repo.get_subscriber_count()
-        drafted = 0
+        """Fan out outreach drafting to every Sales agent. Each lead
+        drafts emails for the prospects their edition owns.
+        """
+        return self._fanout_sales("draft_outreach_batch", task_id)
 
-        for prospect in prospects[:5]:  # Batch of 5
-            prompt = (
-                f"Write a personalized sponsorship outreach email for TrueFans SIGNAL.\n\n"
-                f"Prospect: {prospect['company_name']}\n"
-                f"Contact: {prospect.get('contact_name', 'Marketing Team')}\n"
-                f"Website: {prospect.get('website', 'N/A')}\n"
-                f"Category: {prospect.get('category', 'general')}\n"
-                f"Target editions: {prospect.get('target_editions', 'all')}\n\n"
-                f"Our stats: {subscriber_count} subscribers, 3 editions (Fan/Artist/Industry), "
-                f"3x weekly publication.\n\n"
-                f"Write a warm, professional 150-word email. Sign as Grant Sullivan, VP of Sales."
-            )
+    def identify_partners(self, task_id: int) -> dict:
+        """Fan out cross-promo partner identification to every
+        Promotion agent. Each lead identifies partners for their edition.
+        """
+        return self._fanout_promotion("identify_partners", task_id)
 
-            email, model = generate_draft(prompt, self.config, max_tokens_override=500)
-            if email:
-                self.repo.log_outreach(
-                    campaign_id=0, channel="email",
-                    recipient_email=prospect.get("contact_email", ""),
-                    recipient_name=prospect.get("contact_name", ""),
-                    recipient_type="sponsor_prospect", status="queued",
-                )
-                self.repo.update_prospect_status(prospect["id"], "contacted")
-                drafted += 1
+    def _fanout_sales(self, task_type: str, parent_task_id: int) -> dict:
+        rows = self.repo.get_agents_by_type("sales")
+        results = []
+        for row in rows:
+            agent = SalesAgent(self.repo, self.config, agent_id=row["id"])
+            sub_task = agent.assign_task(task_type)
+            try:
+                result = agent.execute(sub_task)
+            except Exception as e:  # specialist failure must not abort the fan-out
+                logger.exception("Sales fanout failed for agent %s", row.get("name"))
+                result = {"error": str(e)}
+            results.append({"agent": row.get("name"), "edition": _edition_of(row), "result": result})
 
-        self.log_output(task_id, "outreach_batch", f"Drafted {drafted} outreach emails")
-        return {"drafted": drafted}
+        self.log_output(parent_task_id, f"fanout_sales_{task_type}", json.dumps({"count": len(results)}))
+        return {"task": task_type, "fanned_out_to": len(results), "results": results}
+
+    def _fanout_promotion(self, task_type: str, parent_task_id: int) -> dict:
+        rows = self.repo.get_agents_by_type("promotion")
+        results = []
+        for row in rows:
+            agent = PromotionAgent(self.repo, self.config, agent_id=row["id"])
+            sub_task = agent.assign_task(task_type)
+            try:
+                result = agent.execute(sub_task)
+            except Exception as e:
+                logger.exception("Promotion fanout failed for agent %s", row.get("name"))
+                result = {"error": str(e)}
+            results.append({"agent": row.get("name"), "edition": _edition_of(row), "result": result})
+
+        self.log_output(parent_task_id, f"fanout_promotion_{task_type}", json.dumps({"count": len(results)}))
+        return {"task": task_type, "fanned_out_to": len(results), "results": results}
 
     def generate_growth_tactics(self, task_id: int) -> dict:
         """Generate subscriber growth tactics based on current metrics."""
@@ -213,3 +234,12 @@ class MarketingAgent(AgentBase):
         report, model = generate_draft(prompt, self.config, max_tokens_override=600)
         self.log_output(task_id, "weekly_report", report)
         return {"report": report}
+
+
+def _edition_of(agent_row: dict) -> str:
+    """Extract the primary edition slug from an agent row's config_json."""
+    try:
+        cfg = json.loads(agent_row.get("config_json") or "{}")
+    except (ValueError, TypeError):
+        return ""
+    return cfg.get("edition", "") or ""
