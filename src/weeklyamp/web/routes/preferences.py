@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import logging
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from weeklyamp.web.deps import get_config, get_repo, render
 
@@ -149,3 +150,78 @@ async def subscriber_dashboard(token: str, request: Request):
     return HTMLResponse(render("subscriber_dashboard.html",
         subscriber=sub, editions=editions, milestones=milestones,
         referral=referral_code, config=config, token=token))
+
+
+@router.get("/my-dashboard/{token}/export")
+async def subscriber_data_export(token: str, request: Request):
+    """GDPR Article 20 — Right to data portability.
+
+    Returns a JSON dump of every record we hold about the subscriber,
+    keyed off the unsubscribe_token (which serves as a per-subscriber
+    bearer secret). Includes profile, preferences, edition subscriptions,
+    referral data, milestones, and tracking events.
+    """
+    repo = get_repo()
+    conn = repo._conn()
+    sub_row = conn.execute(
+        "SELECT * FROM subscribers WHERE unsubscribe_token = ?", (token,)
+    ).fetchone()
+    if not sub_row:
+        conn.close()
+        return JSONResponse({"error": "invalid token"}, status_code=404)
+    sub = dict(sub_row)
+    sub_id = sub["id"]
+
+    def _query(sql: str, params=()):
+        try:
+            rows = conn.execute(sql, params).fetchall()
+            return [dict(r) for r in rows]
+        except Exception as exc:
+            logger.debug("data export query failed: %s — %s", sql[:60], exc)
+            return []
+
+    bundle = {
+        "export_format_version": 1,
+        "exported_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+        "subscriber": sub,
+        "editions": _query(
+            "SELECT ne.slug, ne.name, se.send_days FROM subscriber_editions se "
+            "JOIN newsletter_editions ne ON ne.id = se.edition_id "
+            "WHERE se.subscriber_id = ?",
+            (sub_id,),
+        ),
+        "preferences": _query(
+            "SELECT * FROM subscriber_preferences WHERE subscriber_id = ?",
+            (sub_id,),
+        ),
+        "genres": _query(
+            "SELECT genre FROM subscriber_genres WHERE subscriber_id = ?",
+            (sub_id,),
+        ),
+        "milestones": _query(
+            "SELECT * FROM newsletter_milestones WHERE subscriber_id = ?",
+            (sub_id,),
+        ),
+        "tracking_events": _query(
+            "SELECT event_type, issue_id, occurred_at FROM email_tracking_events "
+            "WHERE subscriber_id = ? ORDER BY occurred_at DESC LIMIT 1000",
+            (sub_id,),
+        ),
+        "referral_log": _query(
+            "SELECT * FROM referral_log WHERE referrer_subscriber_id = ?",
+            (sub_id,),
+        ),
+        "audit_note": (
+            "This export was generated under GDPR Article 20 (right to data "
+            "portability) and CCPA right-to-know. To request deletion, "
+            "use the unsubscribe link or contact privacy@truefansignal.com."
+        ),
+    }
+    conn.close()
+
+    headers = {
+        "Content-Disposition": (
+            f'attachment; filename="truefansignal-data-{sub_id}.json"'
+        ),
+    }
+    return JSONResponse(bundle, headers=headers)

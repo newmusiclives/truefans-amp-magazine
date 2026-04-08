@@ -72,44 +72,163 @@ async def newsletter_issue(issue_number: int):
         audio_url=audio_url)
 
 
+def _build_rss(
+    issues: list[dict],
+    repo,
+    *,
+    title: str,
+    description: str,
+    site_domain: str,
+    self_url: str,
+) -> str:
+    """Render an RSS 2.0 feed from a list of issue dicts."""
+    items = []
+    for issue in issues:
+        assembled = repo.get_assembled(issue["id"])
+        pub_date = issue.get("publish_date", issue.get("created_at", ""))
+        plain = (assembled or {}).get("plain_content") or ""
+        desc = plain[:500] + "..." if plain else f"Issue #{issue['issue_number']}"
+        item_title = f"{title} #{issue['issue_number']}"
+        if issue.get("title"):
+            item_title += f" — {issue['title']}"
+        permalink = f"{site_domain}/newsletters/archive/{issue['issue_number']}"
+        items.append(
+            f"""    <item>
+      <title>{item_title}</title>
+      <link>{permalink}</link>
+      <guid>{permalink}</guid>
+      <pubDate>{pub_date}</pubDate>
+      <description><![CDATA[{desc}]]></description>
+    </item>"""
+        )
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{title}</title>
+    <link>{site_domain}</link>
+    <description>{description}</description>
+    <language>en-us</language>
+    <atom:link href="{self_url}" rel="self" type="application/rss+xml"/>
+{chr(10).join(items)}
+  </channel>
+</rss>"""
+
+
+def _build_json_feed(
+    issues: list[dict],
+    repo,
+    *,
+    title: str,
+    description: str,
+    site_domain: str,
+    self_url: str,
+) -> dict:
+    """Render a JSON Feed 1.1 (https://jsonfeed.org/version/1.1) document."""
+    items = []
+    for issue in issues:
+        assembled = repo.get_assembled(issue["id"])
+        plain = (assembled or {}).get("plain_content") or ""
+        permalink = f"{site_domain}/newsletters/archive/{issue['issue_number']}"
+        items.append({
+            "id": permalink,
+            "url": permalink,
+            "title": (
+                f"{title} #{issue['issue_number']}"
+                + (f" — {issue['title']}" if issue.get("title") else "")
+            ),
+            "content_text": plain,
+            "date_published": issue.get("publish_date") or issue.get("created_at") or "",
+        })
+    return {
+        "version": "https://jsonfeed.org/version/1.1",
+        "title": title,
+        "home_page_url": site_domain,
+        "feed_url": self_url,
+        "description": description,
+        "items": items,
+    }
+
+
 @router.get("/feed.xml")
 async def rss_feed():
     from fastapi.responses import Response
     cfg = load_config()
     site_domain = cfg.site_domain.rstrip("/")
-    nl_name = cfg.newsletter.name
-    nl_tagline = cfg.newsletter.tagline
-
     repo = _get_repo()
     issues = repo.get_published_issues(limit=20)
+    xml = _build_rss(
+        issues, repo,
+        title=cfg.newsletter.name,
+        description=cfg.newsletter.tagline,
+        site_domain=site_domain,
+        self_url=f"{site_domain}/feed.xml",
+    )
+    return Response(content=xml, media_type="application/rss+xml")
 
-    items = []
-    for issue in issues:
-        assembled = repo.get_assembled(issue["id"])
-        pub_date = issue.get("publish_date", issue.get("created_at", ""))
-        description = assembled["plain_content"][:500] + "..." if assembled and assembled.get("plain_content") else f"Issue #{issue['issue_number']}"
-        items.append(
-            f"""    <item>
-      <title>{nl_name} #{issue['issue_number']}{(' — ' + issue['title']) if issue.get('title') else ''}</title>
-      <link>{site_domain}/newsletters/archive/{issue['issue_number']}</link>
-      <guid>{site_domain}/newsletters/archive/{issue['issue_number']}</guid>
-      <pubDate>{pub_date}</pubDate>
-      <description><![CDATA[{description}]]></description>
-    </item>"""
-        )
 
-    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>{nl_name}</title>
-    <link>{site_domain}</link>
-    <description>{nl_tagline}</description>
-    <language>en-us</language>
-    <atom:link href="{site_domain}/feed.xml" rel="self" type="application/rss+xml"/>
-{chr(10).join(items)}
-  </channel>
-</rss>"""
-    return Response(content=xml, media_type="application/xml")
+@router.get("/feed.json")
+async def json_feed_global():
+    from fastapi.responses import JSONResponse
+    cfg = load_config()
+    site_domain = cfg.site_domain.rstrip("/")
+    repo = _get_repo()
+    issues = repo.get_published_issues(limit=20)
+    feed = _build_json_feed(
+        issues, repo,
+        title=cfg.newsletter.name,
+        description=cfg.newsletter.tagline,
+        site_domain=site_domain,
+        self_url=f"{site_domain}/feed.json",
+    )
+    return JSONResponse(feed, media_type="application/feed+json")
+
+
+@router.get("/feed/{edition_slug}.xml")
+async def rss_feed_per_edition(edition_slug: str):
+    from fastapi.responses import Response
+    cfg = load_config()
+    site_domain = cfg.site_domain.rstrip("/")
+    repo = _get_repo()
+    edition = next(
+        (e for e in repo.get_editions() if e.get("slug") == edition_slug),
+        None,
+    )
+    if not edition:
+        return Response(content="Not found", status_code=404)
+    all_issues = repo.get_published_issues(limit=100)
+    issues = [i for i in all_issues if i.get("edition_slug") == edition_slug][:20]
+    xml = _build_rss(
+        issues, repo,
+        title=f"{cfg.newsletter.name} — {edition.get('name', edition_slug)}",
+        description=edition.get("tagline", "") or cfg.newsletter.tagline,
+        site_domain=site_domain,
+        self_url=f"{site_domain}/feed/{edition_slug}.xml",
+    )
+    return Response(content=xml, media_type="application/rss+xml")
+
+
+@router.get("/feed/{edition_slug}.json")
+async def json_feed_per_edition(edition_slug: str):
+    from fastapi.responses import JSONResponse, Response
+    cfg = load_config()
+    site_domain = cfg.site_domain.rstrip("/")
+    repo = _get_repo()
+    edition = next(
+        (e for e in repo.get_editions() if e.get("slug") == edition_slug),
+        None,
+    )
+    if not edition:
+        return Response(content="Not found", status_code=404)
+    all_issues = repo.get_published_issues(limit=100)
+    issues = [i for i in all_issues if i.get("edition_slug") == edition_slug][:20]
+    feed = _build_json_feed(
+        issues, repo,
+        title=f"{cfg.newsletter.name} — {edition.get('name', edition_slug)}",
+        description=edition.get("tagline", "") or cfg.newsletter.tagline,
+        site_domain=site_domain,
+        self_url=f"{site_domain}/feed/{edition_slug}.json",
+    )
+    return JSONResponse(feed, media_type="application/feed+json")
 
 
 @router.get("/newsletters", response_class=HTMLResponse)
