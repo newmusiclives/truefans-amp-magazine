@@ -99,20 +99,33 @@
             border-radius: 14px; padding: 20px; cursor: pointer; transition: all 0.2s;
         }
         .edition-card:hover { border-color: rgba(255,255,255,0.15); }
-        .edition-card.checked { border-color: var(--card-color); background: rgba(255,255,255,0.02); }
+        .edition-card.checked {
+            border-color: var(--card-color);
+            background: linear-gradient(135deg, color-mix(in srgb, var(--card-color) 14%, transparent), color-mix(in srgb, var(--card-color) 4%, transparent));
+            box-shadow: 0 0 0 1px var(--card-color), 0 8px 28px -10px var(--card-color);
+        }
         .edition-card input[type="checkbox"] {
             position: absolute; opacity: 0; width: 0; height: 0;
         }
         .edition-check {
-            flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+            flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px;
             border: 2px solid var(--border); display: flex; align-items: center;
             justify-content: center; transition: all 0.2s; margin-top: 2px;
         }
         .edition-card.checked .edition-check {
             background: var(--card-color); border-color: var(--card-color);
+            transform: scale(1.05);
         }
         .edition-check svg { opacity: 0; transition: opacity 0.15s; }
         .edition-card.checked .edition-check svg { opacity: 1; }
+        .selected-badge {
+            display: none; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 100px;
+            background: var(--card-color); color: #fff;
+            font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+            text-transform: uppercase; margin-top: 8px;
+        }
+        .edition-card.checked .selected-badge { display: inline-flex; }
         .edition-info { flex: 1; }
         .edition-info h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
         .edition-info .tagline { font-size: 14px; color: var(--text-dim); }
@@ -121,28 +134,26 @@
             display: flex; align-items: center; justify-content: center; font-size: 20px;
         }
 
-        /* Day picker pills */
-        .day-picker {
-            display: none; gap: 8px; margin-top: 12px; padding-top: 12px;
+        /* Frequency picker */
+        .freq-picker {
+            display: none; gap: 8px; margin-top: 14px; padding-top: 14px;
             border-top: 1px solid var(--border); flex-wrap: wrap;
         }
-        .edition-card.checked .day-picker { display: flex; }
-        .day-picker-label {
+        .edition-card.checked .freq-picker { display: flex; }
+        .freq-picker-label {
             font-size: 12px; font-weight: 600; color: var(--text-dim);
-            width: 100%; margin-bottom: -4px;
+            width: 100%; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.4px;
         }
-        .day-pill {
-            position: relative; cursor: pointer;
-        }
-        .day-pill input {
-            position: absolute; opacity: 0; width: 0; height: 0;
-        }
-        .day-pill-label {
-            display: inline-block; padding: 6px 16px; border-radius: 100px;
+        .freq-pill { position: relative; cursor: pointer; }
+        .freq-pill input { position: absolute; opacity: 0; width: 0; height: 0; }
+        .freq-pill-label {
+            display: inline-block; padding: 8px 14px; border-radius: 100px;
             font-size: 13px; font-weight: 600; border: 1.5px solid var(--border);
             color: var(--text-dim); transition: all 0.15s; user-select: none;
+            background: rgba(0,0,0,0.2);
         }
-        .day-pill input:checked + .day-pill-label {
+        .freq-pill:hover .freq-pill-label { color: var(--text); border-color: rgba(255,255,255,0.2); }
+        .freq-pill input:checked + .freq-pill-label {
             border-color: var(--card-color);
             background: var(--card-color);
             color: #fff;
@@ -187,7 +198,7 @@
 
     <div class="subscribe-page">
         <h1>Subscribe to TrueFans SIGNAL</h1>
-        <p class="subtitle">Choose the editions that match your interests. Free, delivered three times a week.</p>
+        <p class="subtitle">Choose the editions that match your interests, then pick how often you want them. Always free.</p>
 
         {% if error %}
         <div class="alert-error">{{ error }}</div>
@@ -214,12 +225,16 @@
                     <div class="edition-info">
                         <h3 style="color: {{ ed.color }}">{{ ed.name }}</h3>
                         <span class="tagline">{{ ed.tagline }}</span>
-                        <div class="day-picker">
-                            <span class="day-picker-label">Deliver on</span>
-                            {% for day, label in [('monday','Mon'), ('wednesday','Wed'), ('saturday','Sat')] %}
-                            <label class="day-pill" onclick="event.stopPropagation()">
-                                <input type="checkbox" name="days_{{ ed.slug }}" value="{{ day }}" checked>
-                                <span class="day-pill-label">{{ label }}</span>
+                        <span class="selected-badge">
+                            <svg width="10" height="10" viewBox="0 0 14 14" fill="none"><path d="M2 7l3.5 3.5L12 4" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Selected
+                        </span>
+                        <div class="freq-picker">
+                            <span class="freq-picker-label">How often?</span>
+                            {% for freq, label in [(3, '3× / week'), (2, '2× / week'), (1, '1× / week')] %}
+                            <label class="freq-pill" onclick="event.stopPropagation()">
+                                <input type="radio" name="frequency_{{ ed.slug }}" value="{{ freq }}" {% if freq == 3 %}checked{% endif %}>
+                                <span class="freq-pill-label">{{ label }}</span>
                             </label>
                             {% endfor %}
                         </div>
@@ -238,20 +253,8 @@
     <script>
     document.querySelectorAll('.edition-card').forEach(card => {
         const cb = card.querySelector('input[name="editions"]');
-        const dayBoxes = card.querySelectorAll('.day-pill input');
-
         cb.addEventListener('change', () => {
             card.classList.toggle('checked', cb.checked);
-            // When edition toggled on, check all days; when off, uncheck all
-            dayBoxes.forEach(d => d.checked = cb.checked);
-        });
-
-        // Ensure at least 1 day stays checked per selected edition
-        dayBoxes.forEach(d => {
-            d.addEventListener('change', () => {
-                const anyChecked = Array.from(dayBoxes).some(x => x.checked);
-                if (!anyChecked) d.checked = true; // revert — need at least one
-            });
         });
     });
     </script>

@@ -105,15 +105,26 @@ async def subscribe_process(request: Request):
                        email=email, first_name=first_name),
         )
 
-    # Parse per-edition day preferences
+    # Parse per-edition frequency (3×/2×/1× per week) and map to delivery days.
+    # 3× → Mon/Wed/Sat, 2× → Mon/Sat, 1× → Sat. Backwards-compat: also accept
+    # the legacy days_{slug} multi-checkbox if a client posts it.
     allowed_days = {"monday", "wednesday", "saturday"}
+    freq_to_days = {
+        3: ["monday", "wednesday", "saturday"],
+        2: ["monday", "saturday"],
+        1: ["saturday"],
+    }
     edition_days: dict[str, list[str]] = {}
     for slug in selected_slugs:
-        raw = form.getlist(f"days_{slug}")
-        days = [d for d in raw if d in allowed_days]
-        if not days:
-            days = sorted(allowed_days)  # default: all 3 days
-        edition_days[slug] = days
+        legacy = [d for d in form.getlist(f"days_{slug}") if d in allowed_days]
+        if legacy:
+            edition_days[slug] = legacy
+            continue
+        try:
+            freq = int(form.get(f"frequency_{slug}", "3"))
+        except (TypeError, ValueError):
+            freq = 3
+        edition_days[slug] = freq_to_days.get(freq, freq_to_days[3])
 
     # Check for referral code from query params or form
     ref_code = form.get("ref", "") or ""
