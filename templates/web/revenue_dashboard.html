@@ -14,38 +14,77 @@
   cumulative, not monthly. Net = MRR − estimated monthly cost. Both
   sides sourced from the same cost_model so the two dashboards agree.
 #}
-<div class="card" style="margin-bottom:2rem;padding:1.5rem;border-left:4px solid {% if net_monthly_dollars >= 0 %}#2d8a2d{% else %}#b00{% endif %};">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
-        <div>
-            <h3 style="margin:0 0 .25rem">Monthly P&amp;L</h3>
-            <p style="margin:0;font-size:.85em;color:var(--text-dim);">Tier MRR minus estimated monthly production + delivery cost.</p>
+{% set net_color = '#2d8a2d' if net_monthly_dollars >= 0 else '#b00' %}
+<div class="card" style="margin-bottom:2rem;padding:0;overflow:hidden;border-left:4px solid {{ net_color }};">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;background:rgba(255,255,255,0.02);">
+        <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--border,rgba(255,255,255,0.08));">
+            <div style="font-size:.72em;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Monthly revenue</div>
+            <div style="font-size:2rem;font-weight:700;color:#5cb85c;margin-top:.35rem;line-height:1;">${{ "%.0f"|format(monthly_revenue_dollars) }}</div>
+            <div style="font-size:.8em;color:var(--text-dim);margin-top:.4rem;">${{ "%.0f"|format(annualized_mrr) }} ARR · {{ summary.tier.active_subs }} paid subs</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,auto);gap:1.5rem;text-align:right;">
-            <div>
-                <div style="font-size:.8em;color:var(--text-dim);">MRR (monthly)</div>
-                <div style="font-size:1.4rem;font-weight:700;color:#5cb85c;">${{ "%.2f"|format(monthly_revenue_dollars) }}</div>
-            </div>
-            <div>
-                <div style="font-size:.8em;color:var(--text-dim);">Est. monthly cost</div>
-                <div style="font-size:1.4rem;font-weight:700;color:#f0ad4e;">−${{ "%.2f"|format(costs.total_monthly) }}</div>
-            </div>
-            <div>
-                <div style="font-size:.8em;color:var(--text-dim);">Net margin</div>
-                <div style="font-size:1.4rem;font-weight:700;color:{% if net_monthly_dollars >= 0 %}#2d8a2d{% else %}#b00{% endif %};">${{ "%.2f"|format(net_monthly_dollars) }}</div>
+        <div style="padding:1.25rem 1.5rem;border-right:1px solid var(--border,rgba(255,255,255,0.08));">
+            <div style="font-size:.72em;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Monthly cost</div>
+            <div style="font-size:2rem;font-weight:700;color:#f0ad4e;margin-top:.35rem;line-height:1;">${{ "%.0f"|format(costs.total_monthly) }}</div>
+            <div style="font-size:.8em;color:var(--text-dim);margin-top:.4rem;">{{ costs.issues_per_month }} issues/mo · ${{ "%.2f"|format(cost_per_issue) }} per issue</div>
+        </div>
+        <div style="padding:1.25rem 1.5rem;background:rgba({% if net_monthly_dollars >= 0 %}45,138,45{% else %}187,0,0{% endif %},0.08);">
+            <div style="font-size:.72em;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Net margin</div>
+            <div style="font-size:2rem;font-weight:700;color:{{ net_color }};margin-top:.35rem;line-height:1;">{% if net_monthly_dollars < 0 %}−{% endif %}${{ "%.0f"|format(net_monthly_dollars|abs) }}</div>
+            <div style="font-size:.8em;color:var(--text-dim);margin-top:.4rem;">
+                {% if margin_pct is not none %}{{ margin_pct }}% margin{% else %}No MRR yet{% endif %}
+                {% if net_monthly_dollars < 0 %}· {{ summary.tier.active_subs }} subs to break-even{% endif %}
             </div>
         </div>
     </div>
-    <details style="margin-top:1rem;font-size:.85em;color:var(--text-dim);">
-        <summary style="cursor:pointer;">Cost breakdown</summary>
-        <ul style="margin:.5rem 0 0 1rem;padding:0;line-height:1.7;">
-            <li>LLM generation: ${{ "%.2f"|format(costs.llm_monthly) }} ({{ costs.issues_per_month }} issues/mo)</li>
-            <li>Infra (Railway + Postgres): ${{ "%.2f"|format(costs.infra_monthly) }}</li>
-            <li>Email delivery: ${{ "%.2f"|format(costs.email_monthly) }}</li>
-        </ul>
-        <p style="margin:.5rem 0 0;font-size:.9em;">
-            Sponsor and affiliate revenue are cumulative (lifetime) and not yet annualized here — see the cards below. Tune cost inputs via <code>WEEKLYAMP_COST_*</code> env vars.
-        </p>
-    </details>
+
+    <div style="padding:1rem 1.5rem;border-top:1px solid var(--border,rgba(255,255,255,0.08));">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem;">
+            <h3 style="margin:0;font-size:1rem;">Monthly P&amp;L</h3>
+            <div style="font-size:.75em;color:var(--text-dim);">Tier MRR − estimated production + delivery cost. <a href="/admin/cost-dashboard" style="color:var(--text-dim);">Cost model →</a></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;">
+            <div style="padding:.6rem .75rem;background:rgba(255,255,255,0.03);border-radius:6px;">
+                <div style="font-size:.72em;color:var(--text-dim);">ARPU (monthly)</div>
+                <div style="font-size:1.05rem;font-weight:600;">${{ "%.2f"|format(arpu_monthly) }}</div>
+            </div>
+            <div style="padding:.6rem .75rem;background:rgba(255,255,255,0.03);border-radius:6px;">
+                <div style="font-size:.72em;color:var(--text-dim);">Cost / subscriber</div>
+                <div style="font-size:1.05rem;font-weight:600;">${{ "%.3f"|format(cost_per_sub) }}</div>
+            </div>
+            <div style="padding:.6rem .75rem;background:rgba(255,255,255,0.03);border-radius:6px;">
+                <div style="font-size:.72em;color:var(--text-dim);">Subscriber reach</div>
+                <div style="font-size:1.05rem;font-weight:600;">{{ "{:,}".format(costs.total_subscribers_reach) }}</div>
+            </div>
+            <div style="padding:.6rem .75rem;background:rgba(255,255,255,0.03);border-radius:6px;">
+                <div style="font-size:.72em;color:var(--text-dim);">Lifetime revenue</div>
+                <div style="font-size:1.05rem;font-weight:600;">${{ "%.0f"|format(lifetime_revenue_dollars) }}</div>
+            </div>
+        </div>
+
+        <details style="margin-top:.9rem;font-size:.85em;color:var(--text-dim);">
+            <summary style="cursor:pointer;">Cost breakdown</summary>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin-top:.6rem;">
+                <div>
+                    <div style="font-size:.75em;">LLM generation</div>
+                    <div style="color:var(--text,#f0f0f5);font-weight:600;">${{ "%.2f"|format(costs.llm_monthly) }}</div>
+                    <div style="font-size:.75em;">{{ costs.issues_per_month }} issues/mo</div>
+                </div>
+                <div>
+                    <div style="font-size:.75em;">Infra (Railway + Postgres)</div>
+                    <div style="color:var(--text,#f0f0f5);font-weight:600;">${{ "%.2f"|format(costs.infra_monthly) }}</div>
+                    <div style="font-size:.75em;">flat monthly</div>
+                </div>
+                <div>
+                    <div style="font-size:.75em;">Email delivery</div>
+                    <div style="color:var(--text,#f0f0f5);font-weight:600;">${{ "%.2f"|format(costs.email_monthly) }}</div>
+                    <div style="font-size:.75em;">$0.80 / 1k sends</div>
+                </div>
+            </div>
+            <p style="margin:.75rem 0 0;font-size:.9em;">
+                Sponsor and affiliate revenue are cumulative (lifetime) — shown in the cards below. Tune cost inputs via <code>WEEKLYAMP_COST_*</code> env vars.
+            </p>
+        </details>
+    </div>
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:2rem">

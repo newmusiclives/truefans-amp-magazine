@@ -624,3 +624,159 @@ sources:
     type: "rss"
     url: "https://flypaper.soundfly.com/feed/"
     target_sections: "coaching,production_notes,songcraft,creative_fuel"
+
+  # ── Expansion: Fan Discovery & Culture ──
+  - name: "Rolling Stone Music"
+    type: "rss"
+    url: "https://www.rollingstone.com/music/feed/"
+    target_sections: "backstage_pass,artist_spotlight,fan_mail"
+
+  - name: "Vulture Music"
+    type: "rss"
+    url: "https://www.vulture.com/rss/music/index.xml"
+    target_sections: "fan_mail,backstage_pass,recommends"
+
+  - name: "Paste Music"
+    type: "rss"
+    url: "https://www.pastemagazine.com/feeds/music"
+    target_sections: "recommends,fan_mail,artist_spotlight"
+
+  - name: "Loudwire"
+    type: "rss"
+    url: "https://loudwire.com/feed/"
+    target_sections: "fan_mail,backstage_pass,community_wins"
+
+  - name: "Consequence Heavy"
+    type: "rss"
+    url: "https://consequence.net/category/heavy-consequence/feed/"
+    target_sections: "fan_mail,backstage_pass,community_wins"
+
+  - name: "Decibel Magazine"
+    type: "rss"
+    url: "https://www.decibelmagazine.com/feed/"
+    target_sections: "fan_mail,backstage_pass,vinyl_vault"
+
+  - name: "KEXP Blog"
+    type: "rss"
+    url: "https://www.kexp.org/read/feed/"
+    target_sections: "recommends,fan_mail,artist_spotlight"
+
+  - name: "NPR All Songs Considered"
+    type: "rss"
+    url: "https://feeds.npr.org/510019/podcast.xml"
+    target_sections: "recommends,fan_mail,artist_spotlight"
+
+  - name: "The Current (MPR)"
+    type: "scrape"
+    url: "https://www.thecurrent.org/feature"
+    target_sections: "recommends,fan_mail,stage_ready"
+
+  - name: "Bandcamp Daily"
+    type: "rss"
+    url: "https://daily.bandcamp.com/feed"
+    target_sections: "recommends,artist_spotlight,vinyl_vault"
+
+  # ── Expansion: Vinyl & Lyrics Culture ──
+  - name: "The Vinyl Factory"
+    type: "rss"
+    url: "https://thevinylfactory.com/feed/"
+    target_sections: "vinyl_vault,artist_spotlight,fan_mail"
+
+  - name: "Discogs Blog"
+    type: "rss"
+    url: "https://blog.discogs.com/en/feed/"
+    target_sections: "vinyl_vault,fan_mail,community_wins"
+
+  - name: "SongMeanings Blog"
+    type: "scrape"
+    url: "https://www.songmeanings.com/blog/"
+    target_sections: "lyrics_unpacked,mondegreen,greatest_songwriters"
+
+  - name: "LyricsTranslate Blog"
+    type: "scrape"
+    url: "https://lyricstranslate.com/en/news"
+    target_sections: "lyrics_unpacked,mondegreen,creative_fuel"
+
+  # ── Expansion: Producer & Tech Blogs ──
+  - name: "Loop (Ableton)"
+    type: "scrape"
+    url: "https://www.ableton.com/en/blog/"
+    target_sections: "production_notes,gear_garage,ai_music_lab"
+
+  - name: "Splice Blog"
+    type: "rss"
+    url: "https://splice.com/blog/feed/"
+    target_sections: "production_notes,tech_talk,ai_music_lab"
+
+  # ── Expansion: Marketing & DIY Artist Growth ──
+  - name: "Music Gateway Blog"
+    type: "rss"
+    url: "https://www.musicgateway.com/blog/feed"
+    target_sections: "diy_marketing,brand_building,social_playbook"
+
+  - name: "Groover Blog"
+    type: "scrape"
+    url: "https://blog.groover.co/en/"
+    target_sections: "diy_marketing,brand_building,social_playbook"
+
+  - name: "Burstimo Blog"
+    type: "scrape"
+    url: "https://burstimo.com/blog/"
+    target_sections: "social_playbook,brand_building,diy_marketing"
+
+  - name: "SubmitHub Blog"
+    type: "scrape"
+    url: "https://blog.submithub.com/"
+    target_sections: "social_playbook,brand_building,diy_marketing"
+
+  - name: "The Unsigned Guide Blog"
+    type: "scrape"
+    url: "https://www.theunsignedguide.com/blog"
+    target_sections: "coaching,diy_marketing,brand_building"
+
+  - name: "Unchained Music"
+    type: "scrape"
+    url: "https://unchainedmusic.io/blog"
+    target_sections: "money_moves,diy_marketing,brand_building"
+
+  # ── Expansion: Industry Analytics & Policy ──
+  - name: "Soundcharts Blog"
+    type: "scrape"
+    url: "https://soundcharts.com/blog"
+    target_sections: "streaming_dashboard,money_moves,industry_pulse"
+
+  - name: "MIDiA Research Blog"
+    type: "scrape"
+    url: "https://midiaresearch.com/blog"
+    target_sections: "industry_pulse,streaming_dashboard,deal_or_no_deal"
+
+  - name: "Music x Tech x Future"
+    type: "scrape"
+    url: "https://musicxtechxfuture.com/"
+    target_sections: "tech_talk,industry_pulse,streaming_dashboard"
+
+  - name: "Trichordist"
+    type: "rss"
+    url: "https://thetrichordist.com/feed/"
+    target_sections: "rights_and_royalties,money_moves,industry_pulse"
+
+  - name: "Music Business Academy"
+    type: "scrape"
+    url: "https://musicbusinessacademy.co/blog"
+    target_sections: "money_moves,coaching,rights_and_royalties"
+
+  - name: "Forbes Music"
+    type: "scrape"
+    url: "https://www.forbes.com/music/"
+    target_sections: "industry_pulse,deal_or_no_deal,backstage_pass"
+
+  - name: "Billboard Pro"
+    type: "scrape"
+    url: "https://www.billboard.com/pro/"
+    target_sections: "industry_pulse,streaming_dashboard,deal_or_no_deal"
+
+  # ── Expansion: Community & Cause ──
+  - name: "Musicians On Call"
+    type: "scrape"
+    url: "https://www.musiciansoncall.org/news/"
+    target_sections: "community_wins,fan_mail,guest_column"

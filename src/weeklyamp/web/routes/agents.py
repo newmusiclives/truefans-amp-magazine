@@ -32,15 +32,62 @@ EDITION_ICONS = {
 }
 
 
+# Leadership display ordering: EIC → cross-portfolio heads → edition
+# growth → edition marketing → edition sales → expansion leads.
+_LEADERSHIP_RANK = {
+    "editor_in_chief": 0,
+    "head_of_growth": 1,
+    "cmo": 2,
+    "vp_sales": 3,
+    "growth_lead": 4,
+    "marketing_lead": 5,
+    "sales_lead": 6,
+    "expansion_lead": 7,
+}
+_EDITION_RANK = {"fan": 0, "artist": 1, "industry": 2, "": 3}
+
+
+def _leadership_role(atype: str, cfg: dict, editions_count: int) -> str:
+    """Derive a display role key for leadership sorting/labeling.
+
+    The role collapses the (agent_type + config_json) combination into a
+    single label the template can render as a badge ("Growth Lead",
+    "Cities Expansion", etc.). A config-level `role` wins; otherwise we
+    infer from agent_type and whether the agent is edition-scoped.
+    """
+    explicit = cfg.get("role")
+    if explicit:
+        return explicit
+    if cfg.get("expansion"):
+        return "expansion_lead"
+    if atype == "editor_in_chief":
+        return "editor_in_chief"
+    if atype == "growth":
+        return "growth_lead" if cfg.get("edition") else "head_of_growth"
+    if atype == "marketing":
+        return "marketing_lead" if cfg.get("edition") else "cmo"
+    if atype == "sales":
+        return "vp_sales" if editions_count > 1 else "sales_lead"
+    return atype
+
+
 def _enrich_staff(staff: list[dict]) -> dict:
-    """Organize staff into structured groups by role and edition."""
-    leadership = []  # editor_in_chief + growth + VP sales
+    """Organize staff into structured groups by role and edition.
+
+    Leadership captures every management-level role: Editor-in-Chief,
+    cross-portfolio heads (Growth, Marketing, Sales VP), per-edition
+    Growth/Marketing/Sales leads, and Expansion leads (Cities, Genre).
+    Edition teams still surface their Sales lead so readers see a
+    complete roster per newsletter — sales intentionally appears in
+    both places.
+    """
+    leadership = []
     edition_teams = {
         "fan": {"editor": None, "researchers": [], "writers": [], "sales": None, "promotion": None},
         "artist": {"editor": None, "researchers": [], "writers": [], "sales": None, "promotion": None},
         "industry": {"editor": None, "researchers": [], "writers": [], "sales": None, "promotion": None},
     }
-    cross_newsletter = []  # PS and other cross-edition staff
+    cross_newsletter = []
 
     for agent in staff:
         enriched = dict(agent)
@@ -52,28 +99,35 @@ def _enrich_staff(staff: list[dict]) -> dict:
         enriched["sections"] = cfg.get("sections", [])
         enriched["edition"] = cfg.get("edition", "")
         enriched["editions"] = cfg.get("editions", [])
+        enriched["expansion"] = cfg.get("expansion", "")
 
         atype = agent.get("agent_type", "")
+        role = _leadership_role(atype, cfg, len(enriched["editions"]))
+        enriched["leadership_role"] = role
 
-        if atype == "editor_in_chief":
+        is_leader = atype in ("editor_in_chief", "growth", "marketing", "sales")
+        if is_leader:
             leadership.append(enriched)
-        elif atype == "growth":
-            leadership.append(enriched)
-        elif atype == "marketing":
-            leadership.append(enriched)
-        elif atype == "sales" and len(enriched.get("editions", [])) > 1:
-            leadership.append(enriched)
-        elif atype in ("editor", "researcher", "writer", "sales", "promotion") and enriched["edition"] in edition_teams:
+
+        # Edition-team placement (sales lands here AND in leadership).
+        if atype in ("editor", "researcher", "writer", "sales", "promotion") and enriched["edition"] in edition_teams:
             if atype == "writer":
                 edition_teams[enriched["edition"]]["writers"].append(enriched)
             elif atype == "researcher":
                 edition_teams[enriched["edition"]]["researchers"].append(enriched)
             else:
                 edition_teams[enriched["edition"]][atype] = enriched
-        elif enriched.get("editions"):
+        elif not is_leader:
+            # Publisher sign-off (Paul) and any other cross-edition role
+            # that isn't a leadership function.
             cross_newsletter.append(enriched)
-        else:
-            cross_newsletter.append(enriched)
+
+    leadership.sort(key=lambda a: (
+        _LEADERSHIP_RANK.get(a.get("leadership_role", ""), 99),
+        _EDITION_RANK.get(a.get("edition") or "", 3),
+        a.get("expansion") or "",
+        a.get("name") or "",
+    ))
 
     editions = []
     for slug in ("fan", "artist", "industry"):

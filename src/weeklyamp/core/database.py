@@ -183,6 +183,7 @@ DEFAULT_SECTIONS = [
     ("mental_health", "ARTIST WELLBEING", 92, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Mental health, burnout prevention, and sustainable creative life"),
     ("touring_tips", "TOURING TIPS", 93, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Planning tours, booking venues, and life on the road"),
     ("fan_building", "FAN BUILDING", 94, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Growing and engaging your fanbase from zero to superfans"),
+    ("artist_legal", "ARTIST LEGAL", 95, "rotating", "medium", 400, "artist_career", "ongoing", 0, "Plain-English legal guides for indie artists: contracts, trademarks, band agreements, and IP basics"),
     # Fan extras (sort 96-97)
     ("album_countdown", "ALBUM COUNTDOWN", 96, "rotating", "medium", 300, "fan_engagement", "ongoing", 0, "Upcoming album releases and what to look forward to"),
     ("behind_the_lyrics", "BEHIND THE LYRICS", 97, "rotating", "medium", 400, "fan_engagement", "ongoing", 0, "The real stories and inspirations behind iconic songs"),
@@ -218,6 +219,8 @@ DEFAULT_SECTIONS = [
     ("weekend_playlist", "WEEKEND PLAYLIST", 133, "rotating", "short", 200, "community", "ongoing", 0, "Staff-curated playlist for the weekend across genres"),
     ("ask_the_editor", "ASK THE EDITOR", 134, "rotating", "medium", 300, "community", "ongoing", 0, "Reader questions answered by the editorial team"),
     ("whats_next", "WHAT'S NEXT", 135, "rotating", "short", 200, "community", "ongoing", 0, "Preview of upcoming issues, features, and community events"),
+    ("throwback_thursday", "THROWBACK THURSDAY", 136, "rotating", "short", 200, "community", "ongoing", 0, "Classic tracks, iconic moments, and nostalgic music memories every reader loves"),
+    ("reader_picks", "READER PICKS", 137, "rotating", "short", 200, "community", "ongoing", 0, "Community-crowdsourced favourites: playlists, venues, and gear picks from readers"),
 ]
 
 
@@ -283,6 +286,65 @@ DEFAULT_GUEST_CONTACTS = [
     ("Jeff Brabec", "", "Independent", "Music Licensing Author", "Rights, Licensing & Legal", "https://musicandmoney.com", "Sync licensing expert. Sections: rights_and_royalties, money_moves, guest_column"),
     ("Ciara Torres-Spelliscy", "", "Stetson Law", "Law Professor", "Rights, Licensing & Legal", "https://www.cskllc.net", "Copyright & First Amendment. Sections: rights_and_royalties, industry_pulse, guest_column"),
     ("Mita Carriman", "", "Carriman Consulting", "Music Business Consultant", "Rights, Licensing & Legal", "https://www.mitacarriman.com", "International licensing & publishing. Sections: rights_and_royalties, deal_or_no_deal, guest_column"),
+
+    # ── Fan Culture, Vinyl & Music Writing (12) ──
+    ("Questlove", "", "The Roots / Quest Love Supreme", "Drummer / Author / DJ", "Fan Culture & Music Writing", "https://questlove.com", "Music curator and cultural historian. Sections: backstage_pass, vinyl_vault, creative_fuel, the_muse, guest_column"),
+    ("Ted Gioia", "", "The Honest Broker", "Music Historian / Critic", "Fan Culture & Music Writing", "https://tedgioia.substack.com", "Long-form essays on music culture and history. Sections: vinyl_vault, creative_fuel, backstage_pass, the_muse, guest_column"),
+    ("Bill Flanagan", "", "SiriusXM / Author", "Music Writer / Broadcaster", "Fan Culture & Music Writing", "https://www.billflanagan.com", "Veteran music journalist and novelist. Sections: vinyl_vault, backstage_pass, lyrics_unpacked, songcraft, guest_column"),
+    ("Rosanne Cash", "", "Independent", "Singer-Songwriter / Author", "Fan Culture & Music Writing", "https://rosannecash.com", "Writes on songwriting, legacy, and creativity. Sections: the_muse, lyrics_unpacked, creative_fuel, songcraft, guest_column"),
+    ("Billy Bragg", "", "Independent", "Songwriter / Author", "Fan Culture & Music Writing", "https://billybragg.co.uk", "Writes on songwriting, protest music, and lyrics. Sections: lyrics_unpacked, the_muse, songcraft, creative_fuel, guest_column"),
+    ("Linda Perry", "", "Independent", "Producer / Songwriter", "Fan Culture & Music Writing", "https://lindaperry.com", "Hit-song craft and producer's perspective. Sections: lyrics_unpacked, songcraft, production_notes, creative_fuel, guest_column"),
+    ("Jeff Tweedy", "", "Wilco / Independent", "Musician / Author", "Fan Culture & Music Writing", "https://wilcoworld.net", "Author of How to Write One Song. Sections: the_muse, creative_fuel, songcraft, vinyl_vault, guest_column"),
+    ("Patti Smith", "", "Independent", "Musician / Poet / Author", "Fan Culture & Music Writing", "https://pattismith.net", "Writes on creative practice and poetic lyricism. Sections: lyrics_unpacked, the_muse, creative_fuel, vinyl_vault, guest_column"),
+    ("Rick Rubin", "", "Independent", "Producer / Author", "Fan Culture & Music Writing", "https://rickrubin.com", "Author of The Creative Act. Sections: creative_fuel, the_muse, production_notes, vinyl_vault, guest_column"),
+    ("Nick Hornby", "", "Independent", "Author", "Fan Culture & Music Writing", "https://nickhornbyofficial.com", "Music-obsessed novelist (High Fidelity). Sections: vinyl_vault, lyrics_unpacked, creative_fuel, backstage_pass, guest_column"),
+    ("Amanda Petrusich", "", "The New Yorker", "Staff Writer / Author", "Fan Culture & Music Writing", "https://www.amandapetrusich.com", "Writes on vinyl collecting and music culture. Sections: vinyl_vault, backstage_pass, lyrics_unpacked, the_muse, guest_column"),
+    ("Craig Finn", "", "The Hold Steady / Independent", "Songwriter", "Fan Culture & Music Writing", "https://craigfinn.com", "Narrative-driven lyric craft. Sections: lyrics_unpacked, songcraft, the_muse, creative_fuel, guest_column"),
+
+    # ── DIY Marketing & Brand Building (9) ──
+    ("Rick Barker", "", "Music Industry Blueprint", "Artist Manager / Educator", "DIY Marketing & Brand", "https://www.musicindustryblueprint.com", "Built Taylor Swift's early fanbase. Sections: social_playbook, diy_marketing, brand_building, coaching, guest_column"),
+    ("Damian Keyes", "", "DK-MBA", "Music Business Educator", "DIY Marketing & Brand", "https://damiankeyes.com", "Artist branding and marketing courses. Sections: diy_marketing, brand_building, social_playbook, artist_spotlight, guest_column"),
+    ("Jesse Cannon", "", "Musformation", "Producer / Musician Marketer", "DIY Marketing & Brand", "https://musformation.com", "DIY music marketing strategy. Sections: social_playbook, diy_marketing, brand_building, artist_spotlight, guest_column"),
+    ("Dan Mangan", "", "Side Door Access", "Musician / Co-Founder", "DIY Marketing & Brand", "https://www.sidedooraccess.com", "Alternative venues and direct-to-fan business. Sections: brand_building, stage_ready, diy_marketing, artist_spotlight, guest_column"),
+    ("Bree Noble", "", "Female Musician Academy", "Musician / Educator", "DIY Marketing & Brand", "https://femusician.com", "Coaching for independent female artists. Sections: coaching, diy_marketing, brand_building, artist_spotlight, guest_column"),
+    ("Jack Conte", "", "Patreon", "CEO / Musician", "DIY Marketing & Brand", "https://www.patreon.com", "Direct fan patronage pioneer. Sections: brand_building, money_moves, diy_marketing, artist_spotlight, guest_column"),
+    ("Mike King", "", "Berklee Online", "Music Business Professor", "DIY Marketing & Brand", "https://online.berklee.edu", "Music marketing educator and author. Sections: brand_building, diy_marketing, social_playbook, industry_pulse, guest_column"),
+    ("Maria Lucia Rangel", "", "Indie Artist Resource", "Music Marketing Consultant", "DIY Marketing & Brand", "https://indieartistresource.com", "Indie artist promo playbooks. Sections: diy_marketing, brand_building, coaching, artist_spotlight, guest_column"),
+    ("Benny Pough", "", "DJANGO Music", "Author / Exec", "DIY Marketing & Brand", "https://bennypough.com", "Author of On Impact. Sections: social_playbook, brand_building, artist_spotlight, industry_pulse, guest_column"),
+
+    # ── Industry, Touring & Deals (9) ──
+    ("Leila Cobo", "", "Billboard", "VP Latin Industry Lead", "Industry & Touring", "https://www.billboard.com/author/leila-cobo", "Latin music industry analyst. Sections: streaming_dashboard, industry_pulse, backstage_pass, artist_spotlight, guest_column"),
+    ("Tim Ingham", "", "Music Business Worldwide", "Founder", "Industry & Touring", "https://www.musicbusinessworldwide.com", "Deep industry analysis. Sections: industry_pulse, streaming_dashboard, deal_or_no_deal, tech_talk, guest_column"),
+    ("Lars Brandle", "", "Billboard", "Senior Correspondent", "Industry & Touring", "https://www.billboard.com", "Global music industry reporting. Sections: industry_pulse, streaming_dashboard, deal_or_no_deal, backstage_pass, guest_column"),
+    ("Shain Shapiro", "", "Sound Diplomacy", "Founder", "Industry & Touring", "https://www.sounddiplomacy.com", "Music-city economics and live sector. Sections: stage_ready, industry_pulse, deal_or_no_deal, money_moves, guest_column"),
+    ("Adam Kornfeld", "", "Artist Group International", "Booking Agent", "Industry & Touring", "https://www.agiworld.com", "Agent for legacy touring acts. Sections: stage_ready, deal_or_no_deal, industry_pulse, money_moves, guest_column"),
+    ("Dave Kusek", "", "New Artist Model", "Founder / Author", "Industry & Touring", "https://newartistmodel.com", "Music business education for indie artists. Sections: coaching, diy_marketing, brand_building, streaming_dashboard, guest_column"),
+    ("Don Passman", "", "Independent", "Music Attorney / Author", "Industry & Touring", "https://www.donpassman.com", "Author of All You Need to Know About the Music Business. Sections: deal_or_no_deal, rights_and_royalties, money_moves, industry_pulse, guest_column"),
+    ("Merck Mercuriadis", "", "Hipgnosis Song Management", "Founder / CEO", "Industry & Touring", "https://www.hipgnosissongs.com", "Catalog investment and publishing. Sections: deal_or_no_deal, rights_and_royalties, money_moves, industry_pulse, guest_column"),
+    ("Stuart Ross", "", "Independent", "Tour Manager", "Industry & Touring", "", "Veteran tour manager (Sheryl Crow, Van Morrison). Sections: stage_ready, coaching, industry_pulse, money_moves, guest_column"),
+
+    # ── Producers, Tech & Streaming (10) ──
+    ("Andrew Huang", "", "YouTube / Independent", "Producer / Creator", "Producers & Tech", "https://www.andrewhuang.com", "Music production and audio experimentation. Sections: ai_music_lab, tech_talk, gear_garage, production_notes, guest_column"),
+    ("Benn Jordan", "", "The Flashbulb", "Producer / Creator", "Producers & Tech", "https://bennjordan.com", "Music tech commentary and AI critique. Sections: ai_music_lab, streaming_dashboard, tech_talk, rights_and_royalties, guest_column"),
+    ("Rick Beato", "", "Everything Music", "Producer / Educator", "Producers & Tech", "https://rickbeato.com", "Music theory and production YouTube. Sections: production_notes, coaching, gear_garage, songcraft, guest_column"),
+    ("Andrew Southworth", "", "Genre Kings", "Producer / Educator", "Producers & Tech", "https://www.genrekings.com", "Modern production techniques. Sections: production_notes, ai_music_lab, tech_talk, gear_garage, guest_column"),
+    ("Denis Kilty", "", "Hyperbits Masterclass", "Producer / Educator", "Producers & Tech", "https://www.hyperbits.com", "Electronic production education. Sections: production_notes, ai_music_lab, tech_talk, gear_garage, guest_column"),
+    ("Mike Senior", "", "Cambridge Music Technology", "Engineer / Author", "Producers & Tech", "https://cambridge-mt.com", "Mixing Secrets author. Sections: production_notes, gear_garage, tech_talk, coaching, guest_column"),
+    ("Dan Reynolds", "", "Ableton Loop", "Editorial", "Producers & Tech", "https://www.ableton.com/en/blog/", "Ableton Loop community editor. Sections: ai_music_lab, tech_talk, gear_garage, production_notes, guest_column"),
+    ("Tatiana Holifield", "", "Soundcharts", "Music Data Analyst", "Producers & Tech", "https://soundcharts.com", "Streaming analytics and chart trends. Sections: streaming_dashboard, industry_pulse, social_playbook, artist_spotlight, guest_column"),
+    ("Conrad Withey", "", "Instrumental", "Founder", "Producers & Tech", "https://www.instrumental.ai", "AI-driven A&R and data. Sections: streaming_dashboard, ai_music_lab, industry_pulse, social_playbook, guest_column"),
+    ("Kaitlyn Raitz", "", "Independent", "Streaming Analyst", "Producers & Tech", "", "Data-driven artist strategy. Sections: streaming_dashboard, ai_music_lab, tech_talk, rights_and_royalties, guest_column"),
+
+    # ── Additional Specialists (9) ──
+    ("Matt Farley", "", "Motern Media", "Musician / Entrepreneur", "Additional Specialists", "https://www.mottern.com", "Prolific indie recording artist. Sections: vinyl_vault, creative_fuel, the_muse, brand_building, guest_column"),
+    ("KC Makes Music", "", "YouTube", "Producer / Educator", "Additional Specialists", "", "Production and marketing tutorials. Sections: ai_music_lab, gear_garage, social_playbook, diy_marketing, guest_column"),
+    ("Wassim Slaiby", "", "SALXCO", "Manager / Exec", "Additional Specialists", "", "Manages The Weeknd and others. Sections: deal_or_no_deal, stage_ready, ai_music_lab, artist_spotlight, guest_column"),
+    ("Afo Verde", "", "Sony Music Latin-Iberia", "Chairman / CEO", "Additional Specialists", "", "Latin major-label strategy. Sections: streaming_dashboard, deal_or_no_deal, ai_music_lab, industry_pulse, guest_column"),
+    ("Jeff Robinson", "", "MBK Entertainment", "Manager", "Additional Specialists", "", "Manages Alicia Keys and other stars. Sections: stage_ready, deal_or_no_deal, artist_spotlight, diy_marketing, guest_column"),
+    ("Chris Greenwood", "", "Manafest", "Musician / Speaker", "Additional Specialists", "https://www.manafest.com", "DIY artist playbook and live performance. Sections: social_playbook, brand_building, stage_ready, gear_garage, guest_column"),
+    ("Beau Rayton", "", "Vinyl Me, Please", "Editorial", "Additional Specialists", "https://www.vinylmeplease.com", "Vinyl culture and reissue curation. Sections: vinyl_vault, backstage_pass, creative_fuel, gear_garage, guest_column"),
+    ("Colleen Murphy", "", "Classic Album Sundays", "Founder / DJ", "Additional Specialists", "https://classicalbumsundays.com", "Deep album listening experiences. Sections: vinyl_vault, backstage_pass, creative_fuel, the_muse, guest_column"),
+    ("Hannah Jocelyn", "", "Independent", "Music Journalist / Critic", "Additional Specialists", "https://hannahjocelyn.com", "Pop criticism and social media analysis. Sections: social_playbook, lyrics_unpacked, the_muse, brand_building, guest_column"),
 ]
 
 
@@ -314,7 +376,7 @@ DEFAULT_AGENTS = [
         "Singer-songwriter turned music educator from Austin. Toured for a decade before discovering she loved teaching craft more than performing. Her thesis on the intersection of cultural identity and songwriting won national attention. Brings a practitioner's eye to every piece — she's lived everything she writes about.",
         "You are Sarah Collins, Editor of the Artist Edition at TrueFans SIGNAL. You are a former touring singer-songwriter turned educator with a background in songwriting. You curate and edit content on songwriting, coaching, gear, production, and marketing for independent artists. Your voice is encouraging and practical — you write from lived experience.",
         "supervised",
-        '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight"]}',
+        '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight", "artist_legal"]}',
     ),
     (
         "editor",
@@ -390,7 +452,7 @@ DEFAULT_AGENTS = [
         "Music education curriculum researcher and pedagogy specialist. Spent years cataloguing best practices in songwriting education, artist development programs, and emerging production tools. Has interviewed hundreds of working musicians about their creative process. Knows exactly what independent artists need to hear — and what they're tired of hearing.",
         "You are Rachel Foster, Researcher for the Artist Edition at TrueFans SIGNAL. You specialize in music education curriculum research. You surface songwriting techniques, production tools, performance tips, marketing tactics, and gear reviews relevant to working independent artists. Your research is practical and always actionable.",
         "semi_auto",
-        '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight"]}',
+        '{"edition": "artist", "sections": ["coaching", "songcraft", "stage_ready", "vocal_booth", "gear_garage", "production_notes", "social_playbook", "diy_marketing", "brand_building", "artist_spotlight", "artist_legal"]}',
     ),
     (
         "researcher",
@@ -531,6 +593,76 @@ DEFAULT_AGENTS = [
         "You are Paul Saunders, Founder of TrueFans CONNECT and the Publisher's voice at TrueFans SIGNAL. You write the personal sign-off (PS FROM PS) that closes every issue across all three newsletters. Your voice is intimate, reflective, and philosophical — like a late-night conversation after a great show. Keep it short, honest, and leave the reader with something to carry into their week.",
         "semi_auto",
         '{"editions": ["fan", "artist", "industry"], "sections": ["ps_from_ps"]}',
+    ),
+
+    # ── Edition Growth Leads (3) — one per newsletter, run the growth team ──
+    (
+        "growth",
+        "Maya Chen",
+        "Community-growth strategist who spent four years turning a niche music-discovery Substack into a 180K-subscriber flagship. Obsessed with referral loops, reader onboarding, and the psychology of the share button. Left Substack's growth team to build audiences for indie music publishers where the passion runs deeper and the metrics tell the truth.",
+        "You are Maya Chen, Growth Lead for the Fan Edition at TrueFans SIGNAL. You manage the Fan Edition growth team — researchers, writers, and promotion — on all subscriber-acquisition initiatives. You design referral programs, fan-culture viral hooks, and community-led growth loops for the fan audience. You report to the Editor-in-Chief and coordinate with Head of Growth Theo Bassett. Your voice is data-driven but always human-first.",
+        "supervised",
+        '{"edition": "fan", "role": "growth_lead"}',
+    ),
+    (
+        "growth",
+        "Jamal Reeves",
+        "Creator-economy growth operator who scaled a DIY-musician newsletter from 3K to 120K paid subscribers in 18 months. Former Bandcamp community manager turned growth PM. Believes the best acquisition channel is other artists — built every viral loop around recognition, collaboration, and the craft itself.",
+        "You are Jamal Reeves, Growth Lead for the Artist Edition at TrueFans SIGNAL. You manage the Artist Edition growth team on all subscriber-acquisition initiatives. You partner with music educators, gear brands, and indie artists to drive organic growth. You coordinate with the Fan and Industry growth leads and report to Head of Growth Theo Bassett. Your voice is practical, peer-to-peer, and always crafted for working musicians.",
+        "supervised",
+        '{"edition": "artist", "role": "growth_lead"}',
+    ),
+    (
+        "growth",
+        "Priya Iyengar",
+        "B2B growth specialist who spent six years at a music-analytics startup running the subscriber program for music executives. Knows how industry professionals consume content — short, data-rich, and in their inbox before 8am. Master of LinkedIn thought leadership, conference activations, and executive referral chains.",
+        "You are Priya Iyengar, Growth Lead for the Industry Edition at TrueFans SIGNAL. You manage the Industry Edition growth team on subscriber-acquisition among music executives, analysts, and industry professionals. You run LinkedIn campaigns, conference partnerships, and B2B referral programs. You coordinate with the other edition growth leads and report to Head of Growth Theo Bassett. Your voice is authoritative, data-backed, and peer-credible.",
+        "supervised",
+        '{"edition": "industry", "role": "growth_lead"}',
+    ),
+
+    # ── Edition Marketing Leads (3) — one per newsletter, run marketing & automation ──
+    (
+        "marketing",
+        "Zoe Alvarez",
+        "Fan-first marketer who ran audience campaigns for a top-5 music podcast network. Obsessed with the moment a casual listener becomes a superfan — and the copy, creative, and sequencing that gets them there. Designs every campaign as if the reader is a friend, not a lead.",
+        "You are Zoe Alvarez, Marketing Lead for the Fan Edition at TrueFans SIGNAL. You own campaign strategy for the Fan Edition — email sequences, social content, retention flows, and win-back automation. You manage the Fan marketing team and coordinate with the Growth and Sales leads for the Fan Edition. You report to CMO Morgan Blake. Your voice is warm, music-obsessed, and always authentic.",
+        "supervised",
+        '{"edition": "fan", "role": "marketing_lead"}',
+    ),
+    (
+        "marketing",
+        "Derrick Ntaka",
+        "Independent-artist brand strategist. Started as a tour manager, pivoted to marketing after watching too many great artists get lost in bad funnels. Built the marketing playbook for a creator-tools company serving 40K musicians. Believes marketing for artists means showing up the way artists actually live — on Instagram, in Discord, and late at night.",
+        "You are Derrick Ntaka, Marketing Lead for the Artist Edition at TrueFans SIGNAL. You own campaign strategy for the Artist Edition — email nurture, social hooks, retention flows, and win-back automation targeted at independent artists. You manage the Artist marketing team and coordinate with Growth Lead Jamal Reeves and Sales Lead Dana Preston. You report to CMO Morgan Blake. Your voice is peer-to-peer and no-BS.",
+        "supervised",
+        '{"edition": "artist", "role": "marketing_lead"}',
+    ),
+    (
+        "marketing",
+        "Isabelle Fontaine",
+        "B2B marketer with a decade in music-tech SaaS. Ran lifecycle marketing for a major distributor where she learned that industry readers open exactly one email per morning — and it better be worth it. Every campaign she writes is designed to earn that slot.",
+        "You are Isabelle Fontaine, Marketing Lead for the Industry Edition at TrueFans SIGNAL. You own campaign strategy for the Industry Edition — executive email cadences, LinkedIn content, retention flows, and sponsor-nurture automation. You manage the Industry marketing team and coordinate with Growth Lead Priya Iyengar and Sales Lead Talia Brooks. You report to CMO Morgan Blake. Your voice is concise, executive, and respects the reader's time.",
+        "supervised",
+        '{"edition": "industry", "role": "marketing_lead"}',
+    ),
+
+    # ── Edition Expansion Leads (2) — new market development roles ──
+    (
+        "growth",
+        "Camila Soto",
+        "Geographic expansion lead with a background in music-city economics and local media partnerships. Spent five years mapping independent music scenes across the US, Latin America, and Europe. Knows which cities have an engaged scene that's ready for a local edition — and which ones need another three years.",
+        "You are Camila Soto, Cities Expansion Lead at TrueFans SIGNAL. You lead geographic expansion — researching city markets, identifying local licensees, and launching city-edition pilots across Fan, Artist, and Industry newsletters. You coordinate with the three edition growth leads (Maya, Jamal, Priya) and report to the Editor-in-Chief. Your voice is analytical about market fit but romantic about local music scenes.",
+        "supervised",
+        '{"editions": ["fan", "artist", "industry"], "expansion": "cities", "role": "expansion_lead"}',
+    ),
+    (
+        "growth",
+        "Ramon Okafor",
+        "Music genre strategist and former A&R scout who built three successful vertical publications — one each in hip-hop, electronic, and Latin. Lives at the intersection of cultural trend analysis and audience economics. Knows which genres have the passionate core audience that can sustain a dedicated edition.",
+        "You are Ramon Okafor, Genre Expansion Lead at TrueFans SIGNAL. You lead genre-specific expansion — researching genre verticals (hip-hop, electronic, Latin, country, jazz, K-pop), identifying audience size and sponsor fit, and launching genre-edition pilots across Fan, Artist, and Industry newsletters. You coordinate with the three edition growth leads (Maya, Jamal, Priya) and report to the Editor-in-Chief. Your voice is culturally-fluent and strategically sharp.",
+        "supervised",
+        '{"editions": ["fan", "artist", "industry"], "expansion": "genre", "role": "expansion_lead"}',
     ),
 ]
 
@@ -1095,7 +1227,7 @@ DEFAULT_EDITIONS = [
         "Independent artists and songwriters",
         "#7c5cfc",
         "&#127928;",
-        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight,release_strategy,collaboration_corner,mental_health,touring_tips,fan_building",
+        "coaching,songcraft,stage_ready,vocal_booth,gear_garage,production_notes,social_playbook,diy_marketing,brand_building,artist_spotlight,release_strategy,collaboration_corner,mental_health,touring_tips,fan_building,artist_legal",
         2,
     ),
     (

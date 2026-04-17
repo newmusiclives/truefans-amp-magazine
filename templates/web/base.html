@@ -270,6 +270,21 @@
                 </div>
             </nav>
         </aside>
+        <script>
+        // Restore sidebar scroll position *before first paint* — running
+        // this inline right after the <aside> means the browser has the
+        // scrollTop value set before it computes the initial scroll,
+        // so users don't see the sidebar flash to the top on every
+        // navigation. The end-of-body script registers the scroll/click
+        // handlers that keep the stored value fresh.
+        (function() {
+            try {
+                var s = document.getElementById('sidebar');
+                var saved = sessionStorage.getItem('sidebarScrollTop');
+                if (s && saved !== null) s.scrollTop = parseInt(saved, 10) || 0;
+            } catch (e) { /* storage blocked — fail silent */ }
+        })();
+        </script>
 
         <main class="main">
             {% block pipeline %}{% endblock %}
@@ -298,19 +313,15 @@
             a.addEventListener('click', close);
         });
 
-        // Preserve sidebar scroll position across navigations.
-        // Without this, the sidebar scrolls back to the top on every
-        // page load — annoying when clicking a nav item deep in the list.
+        // Capture sidebar scroll position so the inline pre-paint
+        // restore script (just after <aside>) has a fresh value on the
+        // next navigation.
         var SCROLL_KEY = 'sidebarScrollTop';
-        try {
-            var saved = sessionStorage.getItem(SCROLL_KEY);
-            if (saved !== null) sidebar.scrollTop = parseInt(saved, 10) || 0;
-        } catch (e) { /* storage can be blocked — fail silent */ }
         sidebar.addEventListener('scroll', function() {
             try { sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop); } catch (e) {}
         });
-        // Also capture position the moment a nav link is clicked, in
-        // case the scroll event hasn't fired yet for the final position.
+        // Also capture the instant a nav link is clicked, in case the
+        // scroll event hasn't fired yet for the final position.
         sidebar.querySelectorAll('nav a').forEach(function(a) {
             a.addEventListener('click', function() {
                 try { sessionStorage.setItem(SCROLL_KEY, sidebar.scrollTop); } catch (e) {}

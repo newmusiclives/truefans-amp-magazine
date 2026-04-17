@@ -1855,6 +1855,45 @@ ALTER TABLE ai_agents ADD CONSTRAINT ai_agents_agent_type_check
 INSERT INTO schema_version (version) VALUES (33) ON CONFLICT DO NOTHING;
 """
 
+# v15 (PG-specific): the generic SQLite→PG converter doesn't add
+# IF NOT EXISTS to ADD COLUMN. If a prior deploy got stuck on v15
+# (columns added but schema_version never updated), re-running the
+# plain ALTER fails — blocking every later migration. This idempotent
+# version lets the migration replay cleanly.
+PG_MIGRATIONS[15] = """
+ALTER TABLE sponsor_blocks ADD COLUMN IF NOT EXISTS edition_slug TEXT DEFAULT '';
+ALTER TABLE sponsor_blocks ADD COLUMN IF NOT EXISTS edition_number INTEGER DEFAULT 1;
+CREATE INDEX IF NOT EXISTS idx_sponsor_blocks_edition ON sponsor_blocks(edition_slug, edition_number);
+INSERT INTO schema_version (version) VALUES (15) ON CONFLICT DO NOTHING;
+"""
+
+# v47 (PG-specific): safety net — ensure the Ad Blocks / Sponsor
+# Analytics dependencies exist on Postgres even if v15/v16 got skipped
+# on earlier deploys. All statements are idempotent.
+PG_MIGRATIONS[47] = """
+ALTER TABLE sponsor_blocks ADD COLUMN IF NOT EXISTS edition_slug TEXT DEFAULT '';
+ALTER TABLE sponsor_blocks ADD COLUMN IF NOT EXISTS edition_number INTEGER DEFAULT 1;
+CREATE INDEX IF NOT EXISTS idx_sponsor_blocks_edition ON sponsor_blocks(edition_slug, edition_number);
+
+CREATE TABLE IF NOT EXISTS edition_sponsors (
+    id SERIAL PRIMARY KEY,
+    edition_slug TEXT NOT NULL,
+    edition_number INTEGER NOT NULL DEFAULT 1,
+    sponsor_id INTEGER REFERENCES sponsors(id),
+    sponsor_name TEXT DEFAULT '',
+    logo_url TEXT DEFAULT '',
+    tagline TEXT DEFAULT '',
+    website_url TEXT DEFAULT '',
+    notes TEXT DEFAULT '',
+    is_active INTEGER DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(edition_slug, edition_number)
+);
+CREATE INDEX IF NOT EXISTS idx_edition_sponsors_slug ON edition_sponsors(edition_slug);
+
+INSERT INTO schema_version (version) VALUES (47) ON CONFLICT DO NOTHING;
+"""
+
 
 def run_pg_migrations(database_url: str) -> list[int]:
     """Run all pending PostgreSQL migrations. Returns list of versions applied."""

@@ -792,21 +792,18 @@ def create_app() -> FastAPI:
     async def _revenue_redirect():
         return _Redir("/admin/revenue/", status_code=302)
 
-    # Security logs (authenticated, uses Jinja2 template with autoescape)
-    from jinja2 import Environment, FileSystemLoader
-
-    _sec_env = Environment(
-        loader=FileSystemLoader(str(_TEMPLATES_DIR / "web")), autoescape=True
-    )
-
     @app.get("/admin/security-log")
     @app.get("/security/logs")  # legacy alias
     def security_logs(request: Request):
         """Admin audit log viewer. Reads security_log (written by
         security.py's _log_security_event). Supports ?event_type=X and
         ?limit=N query params for filtering/pagination.
+
+        Uses the shared `render()` helper so the sidebar's `ff()` feature-
+        flag global resolves — a prior inline Jinja Environment didn't
+        register it and 500'd on every request.
         """
-        from weeklyamp.web.deps import get_repo
+        from weeklyamp.web.deps import get_repo, render
         repo = get_repo()
         event_type = request.query_params.get("event_type", "").strip() or None
         try:
@@ -817,8 +814,8 @@ def create_app() -> FastAPI:
         # Build a list of distinct event types seen in recent history
         # so the filter dropdown reflects real data, not a hardcoded set.
         recent_types = sorted({e.get("event_type", "") for e in repo.get_security_log(limit=500)})
-        tpl = _sec_env.get_template("security_logs.html")
-        return HTMLResponse(tpl.render(
+        return HTMLResponse(render(
+            "security_logs.html",
             events=events,
             event_type=event_type or "",
             limit=limit,

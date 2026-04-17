@@ -923,6 +923,10 @@ class Repository:
         return row_id
 
     def get_sponsor_performance(self, limit: int = 50) -> list[dict]:
+        # Postgres's strict GROUP BY rejects non-aggregate columns that
+        # aren't functionally dependent on the group key — `i.*` isn't
+        # dependent on `sb.id` through a LEFT JOIN, so we enumerate
+        # every non-aggregate column explicitly.
         conn = self._conn()
         rows = conn.execute(
             """SELECT sb.id as block_id, sb.sponsor_name, sb.position, sb.headline,
@@ -935,7 +939,8 @@ class Repository:
                FROM sponsor_blocks sb
                LEFT JOIN sponsor_block_events sbe ON sbe.block_id = sb.id
                LEFT JOIN issues i ON i.id = sb.issue_id
-               GROUP BY sb.id
+               GROUP BY sb.id, sb.sponsor_name, sb.position, sb.headline,
+                        i.issue_number, i.edition_slug
                ORDER BY clicks DESC
                LIMIT ?""",
             (limit,),
@@ -3965,27 +3970,52 @@ class Repository:
         }
 
     def get_cohort_retention(self, months: int = 6) -> list[dict]:
+        # Fetch raw signup rows and bucket by YYYY-MM in Python — avoids
+        # relying on SQLite's strftime() which Postgres does not expose.
         conn = self._conn()
         rows = conn.execute(
-            """SELECT strftime('%%Y-%%m', subscribed_at) as cohort,
-                      COUNT(*) as total_signups,
-                      SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as still_active
+            """SELECT subscribed_at, status
                FROM subscribers
-               WHERE subscribed_at IS NOT NULL
-               GROUP BY cohort
-               ORDER BY cohort DESC
-               LIMIT ?""",
-            (months,),
+               WHERE subscribed_at IS NOT NULL"""
         ).fetchall()
         conn.close()
-        result = []
+
+        buckets: dict[str, dict[str, int]] = {}
         for r in rows:
             d = dict(r)
-            d["retention_pct"] = round(100 * d["still_active"] / d["total_signups"], 1) if d["total_signups"] > 0 else 0
-            result.append(d)
+            sub_at = d.get("subscribed_at")
+            if not sub_at:
+                continue
+            # Both SQLite (TEXT) and Postgres (TIMESTAMP) give us something
+            # whose str() starts with YYYY-MM — slice is safe for either.
+            cohort = str(sub_at)[:7]
+            if len(cohort) != 7 or cohort[4] != "-":
+                continue
+            b = buckets.setdefault(cohort, {"total_signups": 0, "still_active": 0})
+            b["total_signups"] += 1
+            if (d.get("status") or "") == "active":
+                b["still_active"] += 1
+
+        result: list[dict] = []
+        for cohort in sorted(buckets.keys(), reverse=True)[:months]:
+            b = buckets[cohort]
+            total = b["total_signups"]
+            result.append({
+                "cohort": cohort,
+                "total_signups": total,
+                "still_active": b["still_active"],
+                "retention_pct": round(100 * b["still_active"] / total, 1) if total else 0,
+            })
         return result
 
     def get_at_risk_subscribers(self, days_inactive: int = 30, limit: int = 50) -> list[dict]:
+        # SQLite's `datetime('now', ? || ' days')` is not portable to
+        # Postgres, and `NULLS FIRST` is only supported on Postgres —
+        # compute the cutoff in Python and sort in Python too.
+        from datetime import datetime, timedelta
+        cutoff = (datetime.utcnow() - timedelta(days=days_inactive)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
         conn = self._conn()
         rows = conn.execute(
             """SELECT s.id, s.email, s.subscribed_at,
@@ -3993,14 +4023,17 @@ class Repository:
                FROM subscribers s
                LEFT JOIN email_tracking_events ete ON ete.subscriber_id = s.id
                WHERE s.status = 'active'
-               GROUP BY s.id
-               HAVING last_activity IS NULL OR last_activity < datetime('now', ? || ' days')
-               ORDER BY last_activity ASC NULLS FIRST
-               LIMIT ?""",
-            (f"-{days_inactive}", limit),
+               GROUP BY s.id, s.email, s.subscribed_at"""
         ).fetchall()
         conn.close()
-        return [dict(r) for r in rows]
+
+        rows = [dict(r) for r in rows]
+        at_risk = [
+            r for r in rows
+            if r.get("last_activity") is None or str(r["last_activity"]) < cutoff
+        ]
+        at_risk.sort(key=lambda r: (r.get("last_activity") is not None, str(r.get("last_activity") or "")))
+        return at_risk[:limit]
 
     # ---- Admin Users ----
 

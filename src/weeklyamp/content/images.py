@@ -74,14 +74,9 @@ _POOL: list[dict] = [
         "credit_url": "https://unsplash.com/photos/charts-on-laptop-screen-9Nup6uk03gQ",
         "keywords": ("chart", "analytics", "streaming", "pulse", "data", "money", "royalt", "market"),
     },
-    # Record label / catalog — Industry label ops
-    {
-        "url": "https://images.unsplash.com/photo-1526394931762-90052e97b379?auto=format&fit=crop&w=1200&q=75",
-        "alt": "Stacked vinyl records at an independent label",
-        "credit": "Kelly Sikkema / Unsplash",
-        "credit_url": "https://unsplash.com/photos/vinyl-records-stacked-h7VBJRBcieM",
-        "keywords": ("label", "catalog", "rights", "licensing", "publishing", "independent"),
-    },
+    # (Removed: record-label/catalog entry had a 404 URL. Its keyword
+    # coverage is now folded into the mixing-desk entry below, which
+    # doubles as Industry production context.)
     # Festival / crowd — live & events
     {
         "url": "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=1200&q=75",
@@ -98,13 +93,18 @@ _POOL: list[dict] = [
         "credit_url": "https://unsplash.com/photos/black-and-silver-headphones-on-black-textile-4xe-yVFJCvw",
         "keywords": ("playlist", "discovery", "listen", "streaming", "spotify", "headphones", "fan"),
     },
-    # Mixing desk / console — production depth
+    # Mixing desk / console — production depth + label/catalog
+    # context for Industry-edition pieces. Keywords merged from the
+    # removed record-label entry.
     {
         "url": "https://images.unsplash.com/photo-1487215078519-e21cc028cb29?auto=format&fit=crop&w=1200&q=75",
-        "alt": "Hands on a mixing console",
+        "alt": "Hands on a mixing console in a recording studio",
         "credit": "Lee Campbell / Unsplash",
         "credit_url": "https://unsplash.com/photos/person-using-audio-mixer-TK6iM8b-0BE",
-        "keywords": ("engineer", "mixing", "console", "mastering", "studio"),
+        "keywords": (
+            "engineer", "mixing", "console", "mastering", "studio",
+            "label", "catalog", "rights", "licensing", "publishing", "independent",
+        ),
     },
     # Generic music silhouette — fallback for polls/surveys
     {

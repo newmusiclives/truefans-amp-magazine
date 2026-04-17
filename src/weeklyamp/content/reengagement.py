@@ -7,13 +7,24 @@ tracks responses, and auto-suppresses long-term non-responders.
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from weeklyamp.core.models import ReengagementConfig
 from weeklyamp.db.repository import Repository
 
 logger = logging.getLogger(__name__)
+
+
+def _cutoff_iso(days: int) -> str:
+    """Return an ISO timestamp *days* in the past.
+
+    Keeps the inactive-subscriber queries portable — SQLite's
+    ``datetime('now', ?||' days')`` doesn't exist in Postgres, so we
+    compute the cutoff in Python and compare a column against a literal
+    timestamp (a form both engines accept).
+    """
+    return (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d %H:%M:%S")
 
 
 class ReengagementManager:
@@ -37,6 +48,7 @@ class ReengagementManager:
             return []
 
         inactive_days = days if days is not None else self.config.inactive_days
+        cutoff = _cutoff_iso(inactive_days)
 
         conn = self.repo._conn()
         rows = conn.execute(
@@ -44,11 +56,11 @@ class ReengagementManager:
                FROM subscribers s
                LEFT JOIN email_tracking_events ete
                    ON ete.subscriber_id = s.id
-                   AND ete.created_at >= datetime('now', ? || ' days')
+                   AND ete.created_at >= ?
                WHERE s.status = 'active'
                GROUP BY s.id
                HAVING COUNT(ete.id) = 0""",
-            (str(-inactive_days),),
+            (cutoff,),
         ).fetchall()
         conn.close()
 
@@ -66,6 +78,7 @@ class ReengagementManager:
             return []
 
         suppress_days = days if days is not None else self.config.suppress_after_days
+        cutoff = _cutoff_iso(suppress_days)
 
         conn = self.repo._conn()
         rows = conn.execute(
@@ -73,13 +86,13 @@ class ReengagementManager:
                FROM subscribers s
                LEFT JOIN email_tracking_events ete
                    ON ete.subscriber_id = s.id
-                   AND ete.created_at >= datetime('now', ? || ' days')
+                   AND ete.created_at >= ?
                LEFT JOIN reengagement_log rl
                    ON rl.subscriber_id = s.id AND rl.opened = 1
                WHERE s.status = 'active'
                GROUP BY s.id
                HAVING COUNT(ete.id) = 0 AND COUNT(rl.id) = 0""",
-            (str(-suppress_days),),
+            (cutoff,),
         ).fetchall()
         conn.close()
 

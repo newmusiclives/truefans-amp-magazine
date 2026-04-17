@@ -63,24 +63,41 @@
 </div>
 {% endif %}
 
-<!-- Editorial Leadership -->
+<!-- AI Leadership Team -->
 {% if leadership %}
-<div style="margin-bottom: 8px;">
-    <span class="card-title">Leadership</span>
-    <span style="color:var(--text-dim);font-size:12px;margin-left:8px">Oversee all 3 newsletters</span>
+{% set role_labels = {
+    'editor_in_chief': 'Editor-in-Chief',
+    'head_of_growth': 'Head of Growth',
+    'cmo': 'CMO',
+    'vp_sales': 'VP of Sales',
+    'growth_lead': 'Growth Lead',
+    'marketing_lead': 'Marketing Lead',
+    'sales_lead': 'Sales Lead',
+    'expansion_lead': 'Expansion Lead',
+} %}
+{% set edition_labels = {'fan': 'Fan Edition', 'artist': 'Artist Edition', 'industry': 'Industry Edition'} %}
+{% set edition_colors = {'fan': '#e8645a', 'artist': '#7c5cfc', 'industry': '#f59e0b'} %}
+<div style="margin-bottom: 8px; display:flex; align-items:baseline; gap:8px;">
+    <span class="card-title">AI Leadership Team</span>
+    <span style="color:var(--text-dim);font-size:12px">{{ leadership|length }} leaders &middot; EIC + per-edition Growth / Marketing / Sales + Cities &amp; Genre expansion</span>
 </div>
 <div class="sections-grid" style="margin-bottom: 32px;">
     {% for agent in leadership %}
-    <div class="section-card" style="text-align: center;">
+    {% set chip_color = edition_colors.get(agent.edition) or (agent.expansion == 'cities' and '#06b6d4') or (agent.expansion == 'genre' and '#ec4899') or 'var(--text-dim)' %}
+    {% set chip_label = edition_labels.get(agent.edition) or (agent.expansion == 'cities' and 'Cities') or (agent.expansion == 'genre' and 'Genre') or 'All Editions' %}
+    <div class="section-card" style="text-align: center; border-top: 3px solid {{ chip_color }};">
         <div style="width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 700; color: #fff; background: {{ agent.name|avatar_color }};">
             {{ agent.name|initials }}
         </div>
         <div class="section-name" style="font-size: 15px;">{{ agent.name }}</div>
-        <div style="margin: 6px 0 8px;">
-            <span class="badge badge-{{ agent.agent_type }}">{{ agent.agent_type|replace('_', ' ')|title }}</span>
+        <div style="margin: 6px 0 4px; font-size: 12px; font-weight: 600; color: var(--text);">
+            {{ role_labels.get(agent.leadership_role, agent.agent_type|replace('_', ' ')|title) }}
+        </div>
+        <div style="margin-bottom: 10px;">
+            <span class="badge" style="background: {{ chip_color }}22; color: {{ chip_color }}; font-size: 10px; padding: 2px 8px; border-radius: 10px;">{{ chip_label }}</span>
         </div>
         <p style="color: var(--text-dim); font-size: 12px; line-height: 1.5; margin-bottom: 12px;">
-            {{ agent.persona|truncate_words(30) }}
+            {{ agent.persona|truncate_words(28) }}
         </p>
         <div class="meta" style="flex-direction: column; align-items: center; gap: 4px; font-size: 12px;">
             <span>Active: <strong>{{ agent.active_tasks }}</strong> &middot; Review: <strong>{{ agent.review_tasks }}</strong> &middot; Done: <strong>{{ agent.completed_tasks }}</strong></span>

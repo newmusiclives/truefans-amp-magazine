@@ -29,20 +29,42 @@ async def revenue_dashboard(request: Request):
     # summary already tracks pipeline vs paid — we use paid as the
     # floor). Affiliate revenue is likewise shown as cumulative.
     monthly_revenue_dollars = (summary["tier"]["mrr_cents"] or 0) / 100.0
-    total_revenue_dollars = (
+    lifetime_revenue_dollars = (
         summary["sponsor"]["paid_cents"]
         + summary["affiliate"]["total_revenue"]
         + summary["tier"]["mrr_cents"]
     ) / 100.0
     net_monthly_dollars = round(monthly_revenue_dollars - costs["total_monthly"], 2)
+    margin_pct = (
+        round(net_monthly_dollars / monthly_revenue_dollars * 100, 1)
+        if monthly_revenue_dollars > 0 else None
+    )
+    arpu_monthly = (
+        round(monthly_revenue_dollars / subscriber_count, 2)
+        if subscriber_count > 0 else 0.0
+    )
+    cost_per_sub = (
+        round(costs["total_monthly"] / subscriber_count, 3)
+        if subscriber_count > 0 else 0.0
+    )
+    cost_per_issue = (
+        round(costs["total_monthly"] / costs["issues_per_month"], 2)
+        if costs.get("issues_per_month") else 0.0
+    )
+    annualized_mrr = round(monthly_revenue_dollars * 12, 2)
 
     return HTMLResponse(render("revenue_dashboard.html",
         summary=summary, by_edition=by_edition,
         tier_breakdown=tier_breakdown, subscriber_count=subscriber_count,
         costs=costs,
         monthly_revenue_dollars=round(monthly_revenue_dollars, 2),
-        total_revenue_dollars=round(total_revenue_dollars, 2),
+        lifetime_revenue_dollars=round(lifetime_revenue_dollars, 2),
         net_monthly_dollars=net_monthly_dollars,
+        margin_pct=margin_pct,
+        arpu_monthly=arpu_monthly,
+        cost_per_sub=cost_per_sub,
+        cost_per_issue=cost_per_issue,
+        annualized_mrr=annualized_mrr,
     ))
 
 
