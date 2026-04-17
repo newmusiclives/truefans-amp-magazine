@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Cost Dashboard — TrueFans SIGNAL{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Cost Dashboard</h2>
+    <p class="page-subtitle">Per-edition cost to produce and deliver one issue. Measured from actual token usage once issues have been produced; modeled estimate until then.</p>
+</div>
+
+<style>
+.cd-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+@media (max-width: 880px) { .cd-grid { grid-template-columns: 1fr; } }
+.cd-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 10px; padding: 20px; }
+.cd-card h3 { margin: 0 0 12px; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
+.cd-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.cd-tag.measured { background: #e8f4e8; color: #1e5a1e; }
+.cd-tag.modeled { background: #fff6e0; color: #b06000; }
+.cd-total { font-size: 28px; font-weight: 700; color: #111; margin: 8px 0; }
+.cd-line { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: #555; border-top: 1px dashed #eee; }
+.cd-line:first-of-type { border-top: none; }
+.cd-meta { font-size: 12px; color: #888; margin-top: 12px; }
+.cd-assumptions { background: #f7f7f9; padding: 16px 20px; border-radius: 8px; font-size: 13px; color: #555; }
+.cd-assumptions table { width: 100%; border-collapse: collapse; }
+.cd-assumptions td { padding: 4px 0; }
+.cd-assumptions td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+
+<div class="cd-grid">
+    {% for row in rows %}
+    <div class="cd-card">
+        <h3>
+            {{ row.label }}
+            <span class="cd-tag {{ row.source }}">{{ row.source }}</span>
+        </h3>
+        <div class="cd-total">${{ "%.2f"|format(row.total) }}</div>
+        <div style="font-size:12px;color:#888;margin-bottom:12px;">per issue, all-in</div>
+        <div class="cd-line"><span>LLM generation</span><span>${{ "%.3f"|format(row.llm_cost) }}</span></div>
+        <div class="cd-line"><span>Infra (amortized)</span><span>${{ "%.3f"|format(row.infra_cost) }}</span></div>
+        <div class="cd-line"><span>Email delivery ({{ row.subscribers }} subs)</span><span>${{ "%.3f"|format(row.email_cost) }}</span></div>
+        <div class="cd-meta">
+            {% if row.source == "measured" %}
+            Based on {{ row.issue_count }} issue{{ 's' if row.issue_count != 1 else '' }} over the last {{ window_days }} days · avg {{ row.avg_tokens }} tokens/issue
+            {% else %}
+            No issues produced in the last {{ window_days }} days — showing modeled baseline. Numbers will become measured once the first issue is produced.
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="cd-assumptions">
+    <h3 style="margin-top:0;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:#666;">Pricing assumptions</h3>
+    <table>
+        <tr><td>LLM blended rate (input+output, assuming 30/70 split)</td><td>${{ "%.4f"|format(pricing.blended_per_1k) }} / 1k tokens</td></tr>
+        <tr><td>Email delivery (GHL/Mailgun)</td><td>${{ "%.2f"|format(pricing.email_per_1k) }} / 1,000 sends</td></tr>
+        <tr><td>Railway hosting (monthly)</td><td>${{ "%.2f"|format(pricing.hosting_monthly) }}</td></tr>
+        <tr><td>Postgres (monthly)</td><td>${{ "%.2f"|format(pricing.db_monthly) }}</td></tr>
+        <tr><td>Issues per month (schedule × 3 editions × 4 wks)</td><td>{{ issues_per_month }}</td></tr>
+    </table>
+    <p style="margin-top:12px;font-size:12px;color:#888;">
+        Overridable via env vars <code>WEEKLYAMP_COST_BLENDED_PER_1K</code>, <code>WEEKLYAMP_COST_EMAIL_PER_1K</code>, <code>WEEKLYAMP_COST_HOSTING_MONTHLY</code>, <code>WEEKLYAMP_COST_DB_MONTHLY</code>. Pin these to your actual bills once you have 1-2 months of real data.
+    </p>
+</div>
+{% endblock %}

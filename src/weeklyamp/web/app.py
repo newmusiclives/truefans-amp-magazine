@@ -593,6 +593,7 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import licensee_portal as licensee_portal_routes
     from weeklyamp.web.routes import admin_2fa as admin_2fa_routes
     from weeklyamp.web.routes import admin_account as admin_account_routes
+    from weeklyamp.web.routes import admin_cost_dashboard as admin_cost_dashboard_routes
     from weeklyamp.web.routes import admin_feature_flags as admin_feature_flags_routes
     from weeklyamp.web.routes import admin_password_reset as admin_password_reset_routes
     from weeklyamp.web.routes import analytics as analytics_hub_routes
@@ -736,10 +737,11 @@ def create_app() -> FastAPI:
         licensee_portal_routes.router, prefix="/licensee",
         dependencies=[Depends(require_feature(FeatureFlag.WHITE_LABEL))],
     )
-    # Admin self-service: change password + feature flags + 2FA + reset
+    # Admin self-service: change password + feature flags + 2FA + reset + cost
     app.include_router(admin_account_routes.router, prefix="/admin")
     app.include_router(admin_feature_flags_routes.router, prefix="/admin")
     app.include_router(admin_2fa_routes.router, prefix="/admin")
+    app.include_router(admin_cost_dashboard_routes.router, prefix="/admin")
     # Password reset lives under /login/* so it's reachable unauthenticated.
     # Public paths are matched by prefix — /login is already in
     # _PUBLIC_PREFIXES so /login/forgot and /login/reset inherit.

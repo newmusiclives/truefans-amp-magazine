@@ -4536,6 +4536,76 @@ class Repository:
         finally:
             conn.close()
 
+    # ---- Cost telemetry ----
+
+    def get_cost_stats_by_edition(self, since_days: int = 30) -> list[dict]:
+        """Aggregate LLM token usage per edition over a rolling window.
+
+        Joins agent_output_log (tokens_used) → agent_tasks (issue_id) →
+        issues (edition_slug). Returns one row per edition with:
+          - edition_slug
+          - issue_count: DISTINCT issues that had at least one logged call
+          - total_tokens: SUM of tokens_used across all agent calls
+          - avg_tokens_per_issue: total_tokens / issue_count
+
+        Excludes tasks with no issue_id (orchestrator-level work not
+        attributable to a specific edition).
+        """
+        from datetime import datetime, timedelta, timezone
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=since_days)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        conn = self._conn()
+        try:
+            rows = conn.execute(
+                "SELECT i.edition_slug AS edition_slug, "
+                "       COUNT(DISTINCT i.id) AS issue_count, "
+                "       COALESCE(SUM(aol.tokens_used), 0) AS total_tokens "
+                "FROM agent_output_log aol "
+                "JOIN agent_tasks at ON at.id = aol.task_id "
+                "JOIN issues i ON i.id = at.issue_id "
+                "WHERE aol.created_at >= ? AND i.edition_slug != '' "
+                "GROUP BY i.edition_slug "
+                "ORDER BY i.edition_slug",
+                (cutoff,),
+            ).fetchall()
+        finally:
+            conn.close()
+        out: list[dict] = []
+        for r in rows:
+            d = dict(r)
+            ic = d.get("issue_count") or 0
+            d["avg_tokens_per_issue"] = int(d["total_tokens"] / ic) if ic else 0
+            out.append(d)
+        return out
+
+    def get_subscriber_counts_by_edition(self) -> dict[str, int]:
+        """Return {edition_slug: active subscriber count} for all editions.
+
+        An edition with zero subscribers still appears in the output
+        (count=0), so the cost dashboard can render every edition
+        uniformly without nil-handling downstream.
+        """
+        conn = self._conn()
+        try:
+            editions = conn.execute(
+                "SELECT slug FROM newsletter_editions"
+            ).fetchall()
+            counts = conn.execute(
+                "SELECT ne.slug AS slug, COUNT(DISTINCT s.id) AS c "
+                "FROM subscribers s "
+                "JOIN subscriber_editions se ON se.subscriber_id = s.id "
+                "JOIN newsletter_editions ne ON ne.id = se.edition_id "
+                "WHERE s.status = 'active' "
+                "GROUP BY ne.slug"
+            ).fetchall()
+        finally:
+            conn.close()
+        by_slug = {r["slug"]: 0 for r in editions}
+        for r in counts:
+            by_slug[r["slug"]] = r["c"]
+        return by_slug
+
     # ---- Feature flags (runtime-mutable feature toggles) ----
     # Table schema (from db/schema.sql): feature_flags(
     #   name TEXT PK, is_active INTEGER, rollout_percent INTEGER,
