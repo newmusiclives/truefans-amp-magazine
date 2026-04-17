@@ -5,7 +5,47 @@
 {% block content %}
 <div class="page-header">
     <h2>Revenue Dashboard</h2>
-    <p class="subtitle">Unified view of all revenue streams</p>
+    <p class="subtitle">Unified view of all revenue streams — with cost and net margin from the <a href="/admin/cost-dashboard">Cost Dashboard</a>.</p>
+</div>
+
+{#
+  Monthly P&L banner. Revenue here is MRR (monthly recurring revenue
+  from paid tiers) since sponsor/affiliate figures in `summary` are
+  cumulative, not monthly. Net = MRR − estimated monthly cost. Both
+  sides sourced from the same cost_model so the two dashboards agree.
+#}
+<div class="card" style="margin-bottom:2rem;padding:1.5rem;border-left:4px solid {% if net_monthly_dollars >= 0 %}#2d8a2d{% else %}#b00{% endif %};">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <h3 style="margin:0 0 .25rem">Monthly P&amp;L</h3>
+            <p style="margin:0;font-size:.85em;color:var(--text-dim);">Tier MRR minus estimated monthly production + delivery cost.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,auto);gap:1.5rem;text-align:right;">
+            <div>
+                <div style="font-size:.8em;color:var(--text-dim);">MRR (monthly)</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#5cb85c;">${{ "%.2f"|format(monthly_revenue_dollars) }}</div>
+            </div>
+            <div>
+                <div style="font-size:.8em;color:var(--text-dim);">Est. monthly cost</div>
+                <div style="font-size:1.4rem;font-weight:700;color:#f0ad4e;">−${{ "%.2f"|format(costs.total_monthly) }}</div>
+            </div>
+            <div>
+                <div style="font-size:.8em;color:var(--text-dim);">Net margin</div>
+                <div style="font-size:1.4rem;font-weight:700;color:{% if net_monthly_dollars >= 0 %}#2d8a2d{% else %}#b00{% endif %};">${{ "%.2f"|format(net_monthly_dollars) }}</div>
+            </div>
+        </div>
+    </div>
+    <details style="margin-top:1rem;font-size:.85em;color:var(--text-dim);">
+        <summary style="cursor:pointer;">Cost breakdown</summary>
+        <ul style="margin:.5rem 0 0 1rem;padding:0;line-height:1.7;">
+            <li>LLM generation: ${{ "%.2f"|format(costs.llm_monthly) }} ({{ costs.issues_per_month }} issues/mo)</li>
+            <li>Infra (Railway + Postgres): ${{ "%.2f"|format(costs.infra_monthly) }}</li>
+            <li>Email delivery: ${{ "%.2f"|format(costs.email_monthly) }}</li>
+        </ul>
+        <p style="margin:.5rem 0 0;font-size:.9em;">
+            Sponsor and affiliate revenue are cumulative (lifetime) and not yet annualized here — see the cards below. Tune cost inputs via <code>WEEKLYAMP_COST_*</code> env vars.
+        </p>
+    </details>
 </div>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:2rem">

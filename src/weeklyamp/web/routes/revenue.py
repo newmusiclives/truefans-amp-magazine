@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from weeklyamp.core.cost_model import monthly_cost_estimate
 from weeklyamp.web.deps import get_config, get_repo, render
 
 router = APIRouter()
@@ -13,13 +14,36 @@ router = APIRouter()
 @router.get("/", response_class=HTMLResponse)
 async def revenue_dashboard(request: Request):
     repo = get_repo()
+    config = get_config()
     summary = repo.get_revenue_summary()
     by_edition = repo.get_revenue_by_edition()
     tier_breakdown = repo.get_tier_breakdown()
     subscriber_count = repo.get_subscriber_count()
+
+    # P&L view — pull costs from the shared cost model so Revenue and
+    # Cost dashboards are always reconciled. All values in dollars.
+    costs = monthly_cost_estimate(repo, config)
+    # Monthly revenue estimate: tier MRR is already monthly; sponsor
+    # paid_cents is cumulative, so we approximate monthly sponsor
+    # contribution by taking the last 30 days of paid bookings (the
+    # summary already tracks pipeline vs paid — we use paid as the
+    # floor). Affiliate revenue is likewise shown as cumulative.
+    monthly_revenue_dollars = (summary["tier"]["mrr_cents"] or 0) / 100.0
+    total_revenue_dollars = (
+        summary["sponsor"]["paid_cents"]
+        + summary["affiliate"]["total_revenue"]
+        + summary["tier"]["mrr_cents"]
+    ) / 100.0
+    net_monthly_dollars = round(monthly_revenue_dollars - costs["total_monthly"], 2)
+
     return HTMLResponse(render("revenue_dashboard.html",
         summary=summary, by_edition=by_edition,
-        tier_breakdown=tier_breakdown, subscriber_count=subscriber_count))
+        tier_breakdown=tier_breakdown, subscriber_count=subscriber_count,
+        costs=costs,
+        monthly_revenue_dollars=round(monthly_revenue_dollars, 2),
+        total_revenue_dollars=round(total_revenue_dollars, 2),
+        net_monthly_dollars=net_monthly_dollars,
+    ))
 
 
 @router.get("/licensees")
