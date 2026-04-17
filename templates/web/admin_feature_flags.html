@@ -15,12 +15,13 @@
 .ff-row .ff-meta { max-width: 75%; }
 .ff-row .ff-label { font-weight: 600; font-size: 15px; color: #111; }
 .ff-row .ff-desc { font-size: 13px; color: #666; margin-top: 2px; }
-.ff-toggle { position: relative; width: 44px; height: 24px; }
-.ff-toggle input { opacity: 0; width: 0; height: 0; }
-.ff-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 12px; transition: .2s; }
+.ff-toggle { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.ff-toggle input { opacity: 0; width: 0; height: 0; margin: 0; position: absolute; }
+.ff-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 12px; transition: .2s; display: block; }
 .ff-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: .2s; }
 .ff-toggle input:checked + .ff-slider { background: #2d8a2d; }
 .ff-toggle input:checked + .ff-slider:before { transform: translateX(20px); }
+.ff-row form { margin: 0; display: flex; align-items: center; }
 .ff-warn { font-size: 12px; color: #b06000; background: #fff6e0; padding: 8px 12px; border-radius: 6px; margin-top: 16px; }
 </style>
 
