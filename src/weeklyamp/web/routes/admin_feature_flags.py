@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from weeklyamp.core.feature_flags import (
     FLAG_METADATA,
+    LAUNCH_SET,
     enabled,
     invalidate_cache,
 )
@@ -28,19 +29,34 @@ def _require_admin(request: Request) -> Response | None:
 
 
 def _grouped_flags() -> dict[str, list[dict]]:
-    """Return flags grouped by category, preserving FLAG_METADATA order.
+    """Return flags grouped for the admin UI.
 
-    Each flag dict has: key, label, description, enabled (current value).
+    A pinned "Launch Set" group comes first, containing the ten flags
+    recommended ON for the minimum-viable public launch (see
+    :data:`weeklyamp.core.feature_flags.LAUNCH_SET`). The remaining
+    flags are grouped by their FLAG_METADATA category underneath.
+
+    A flag appearing in LAUNCH_SET is NOT duplicated in its original
+    category group — the Launch Set is its canonical home in the UI.
     """
-    groups: dict[str, list[dict]] = {}
-    for key, (label, category, description) in FLAG_METADATA.items():
-        cat = category or "Other"
-        groups.setdefault(cat, []).append({
+    def _entry(key: str) -> dict:
+        label, _category, description = FLAG_METADATA[key]
+        return {
             "key": key,
             "label": label,
             "description": description,
             "enabled": enabled(key),
-        })
+        }
+
+    groups: dict[str, list[dict]] = {
+        "Launch Set (minimum viable)": [_entry(k) for k in LAUNCH_SET if k in FLAG_METADATA],
+    }
+    launch_set = set(LAUNCH_SET)
+    for key, (label, category, description) in FLAG_METADATA.items():
+        if key in launch_set:
+            continue
+        cat = category or "Other"
+        groups.setdefault(cat, []).append(_entry(key))
     return groups
 
 

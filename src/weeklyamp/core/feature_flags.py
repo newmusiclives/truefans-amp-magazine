@@ -93,6 +93,25 @@ FLAG_METADATA: dict[str, tuple[str, str, str]] = {
 }
 
 
+# Launch Set — the ten flags recommended ON for the minimum-viable public
+# launch. Rendered as a pinned group at the top of /admin/feature-flags so
+# operators can confirm/toggle them without scrolling past the full list.
+# Membership here is a UI-only signal; it does not change a flag's default
+# or behavior.
+LAUNCH_SET: tuple[str, ...] = (
+    FeatureFlag.WELCOME_SEQUENCE,
+    FeatureFlag.REENGAGEMENT,
+    FeatureFlag.REFERRALS,
+    FeatureFlag.AB_TESTING,
+    FeatureFlag.CROSS_PROMO,
+    FeatureFlag.WEBHOOKS_INBOUND,
+    FeatureFlag.GDPR_EXPORT,
+    FeatureFlag.SECTION_HEATMAP,
+    FeatureFlag.COHORT_RETENTION,
+    FeatureFlag.CALENDAR_REBOOK,
+)
+
+
 # ---- In-process cache ----
 
 _cache: dict[str, bool] = {}

@@ -11,6 +11,9 @@
 <style>
 .ff-group { margin-bottom: 32px; }
 .ff-group h3 { margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: #666; }
+.ff-group.ff-launch { padding: 16px 18px 8px; background: #f4f8ff; border: 1px solid #cfd9ec; border-radius: 10px; }
+.ff-group.ff-launch h3 { color: #1c3a7a; }
+.ff-group.ff-launch .ff-row { border-color: #cfd9ec; }
 .ff-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 8px; background: #fff; }
 .ff-row .ff-meta { max-width: 75%; }
 .ff-row .ff-label { font-weight: 600; font-size: 15px; color: #111; }
@@ -26,7 +29,7 @@
 </style>
 
 {% for category, flags in groups.items() %}
-<div class="ff-group">
+<div class="ff-group{% if 'Launch Set' in category %} ff-launch{% endif %}">
     <h3>{{ category }}</h3>
     {% for flag in flags %}
     {% include "admin_feature_flags_row.html" %}
