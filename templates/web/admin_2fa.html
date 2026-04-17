@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Two-factor authentication — TrueFans SIGNAL{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Two-factor authentication</h2>
+    <p class="page-subtitle">Adds a 6-digit code step to admin login using any TOTP authenticator app (1Password, Authy, Google Authenticator).</p>
+</div>
+
+{% if enabled %}
+<div class="card" style="padding:20px;border-left:4px solid #2d8a2d;">
+    <h3 style="margin-top:0;">2FA is <strong style="color:#2d8a2d;">enabled</strong></h3>
+    <p style="color:#666;">Admin login now requires a 6-digit TOTP code after the password.</p>
+    <details style="margin-top:16px;">
+        <summary style="cursor:pointer;color:#b00;">Disable 2FA</summary>
+        {% if error %}<div style="color:#b00;margin-top:8px;">{{ error }}</div>{% endif %}
+        <p style="margin-top:12px;font-size:13px;color:#666;">Enter a current 6-digit code to confirm you still have access to your authenticator before disabling.</p>
+        <form method="post" action="/admin/2fa/disable" style="margin-top:8px;">
+            <input type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required style="padding:8px;width:120px;">
+            <button type="submit" class="btn btn-danger" style="margin-left:8px;">Disable 2FA</button>
+        </form>
+    </details>
+</div>
+{% else %}
+<div class="card" style="padding:20px;border-left:4px solid #b06000;">
+    <h3 style="margin-top:0;">2FA is <strong style="color:#b06000;">off</strong></h3>
+    <p style="color:#666;">Password alone protects admin access. Add TOTP for defense against credential theft.</p>
+    <a href="/admin/2fa/enroll" class="btn" style="margin-top:12px;">Enroll a device</a>
+</div>
+{% endif %}
+{% endblock %}

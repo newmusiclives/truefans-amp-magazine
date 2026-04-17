@@ -1,11 +1,31 @@
 {% extends "base.html" %}
-{% block title %}Security Logs — TrueFans SIGNAL{% endblock %}
+{% block title %}Security Audit Log — TrueFans SIGNAL{% endblock %}
 
 {% block content %}
 <div class="page-header">
     <h2>Security Audit Log</h2>
-    <p><a href="/dashboard">&larr; Dashboard</a></p>
+    <p class="page-subtitle">All authentication, rate-limit, and admin actions recorded by the security middleware.</p>
 </div>
+
+<form method="get" action="/admin/security-log" style="margin-bottom:16px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+    <label style="display:flex;flex-direction:column;font-size:13px;color:#666;">
+        Event type
+        <select name="event_type" style="min-width:220px;padding:6px;">
+            <option value="">(any)</option>
+            {% for t in event_types %}
+            <option value="{{ t }}" {% if t == event_type %}selected{% endif %}>{{ t }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <label style="display:flex;flex-direction:column;font-size:13px;color:#666;">
+        Limit
+        <input type="number" name="limit" value="{{ limit }}" min="10" max="500" style="width:80px;padding:6px;">
+    </label>
+    <button type="submit" class="btn">Filter</button>
+    {% if event_type %}
+    <a href="/admin/security-log" style="font-size:13px;">Clear</a>
+    {% endif %}
+</form>
 
 <div class="card">
     <div class="table-wrap">
@@ -22,15 +42,15 @@
             <tbody>
                 {% for ev in events %}
                 <tr>
-                    <td>{{ ev.get('created_at', '') }}</td>
-                    <td>{{ ev.get('event_type', '') }}</td>
+                    <td style="white-space:nowrap;">{{ ev.get('created_at', '') }}</td>
+                    <td><code>{{ ev.get('event_type', '') }}</code></td>
                     <td>{{ ev.get('ip_address', '') }}</td>
-                    <td>{{ ev.get('user_agent', '')[:80] }}</td>
+                    <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;">{{ ev.get('user_agent', '')[:80] }}</td>
                     <td>{{ ev.get('detail', '') }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align:center;color:#888">No events yet</td>
+                    <td colspan="5" style="text-align:center;color:#888;padding:24px;">No events match this filter</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -86,6 +86,49 @@ def invalidate_admin_hash_cache() -> None:
     _cached_admin_hash = ""
 
 
+# ---- 2FA (TOTP) ----
+# Two-factor auth lives in the same admin_settings key/value table we use
+# for the password hash. Key `admin_totp_secret` holds the base32 secret;
+# presence of a non-empty value = 2FA enabled. Absent = 2FA off, backwards-
+# compatible with existing single-factor admins.
+
+_PRE_2FA_COOKIE = "_pre_2fa"
+_PRE_2FA_TTL = 300  # 5 minutes — enough to find your authenticator app
+_PRE_2FA_VALUE = "admin"
+
+
+def is_2fa_enabled() -> bool:
+    try:
+        from weeklyamp.web.deps import get_repo
+        return bool(get_repo().get_admin_setting("admin_totp_secret"))
+    except Exception:
+        logger.debug("2FA check failed — treating as disabled", exc_info=True)
+        return False
+
+
+def get_totp_secret() -> str:
+    try:
+        from weeklyamp.web.deps import get_repo
+        return get_repo().get_admin_setting("admin_totp_secret") or ""
+    except Exception:
+        return ""
+
+
+def verify_totp(code: str) -> bool:
+    """Verify a 6-digit TOTP code. Uses pyotp with valid_window=1 (accepts
+    previous and next 30s step) so slight clock drift doesn't lock users
+    out — RFC 6238 §5.2 standard tolerance."""
+    secret = get_totp_secret()
+    if not secret:
+        return True  # no secret → 2FA not enforced
+    try:
+        import pyotp
+        return pyotp.TOTP(secret).verify((code or "").strip(), valid_window=1)
+    except Exception:
+        logger.warning("TOTP verification error", exc_info=True)
+        return False
+
+
 # Fallback secret key for dev when env var is not set
 _FALLBACK_SECRET_KEY = ""
 
@@ -321,6 +364,70 @@ def clear_session(response: Response) -> Response:
     return response
 
 
+def create_pre_2fa_cookie(response: Response, request: Request | None = None) -> Response:
+    """Short-lived signed cookie marking password OK, waiting on TOTP."""
+    signer = _get_signer()
+    signed = signer.sign(_PRE_2FA_VALUE).decode()
+    secure = _is_secure(request) if request else False
+    response.set_cookie(
+        _PRE_2FA_COOKIE, signed,
+        max_age=_PRE_2FA_TTL, httponly=True, samesite="lax", secure=secure,
+    )
+    return response
+
+
+def is_pre_2fa(request: Request) -> bool:
+    cookie = request.cookies.get(_PRE_2FA_COOKIE)
+    if not cookie:
+        return False
+    try:
+        _get_signer().unsign(cookie, max_age=_PRE_2FA_TTL)
+        return True
+    except (BadSignature, SignatureExpired):
+        return False
+
+
+def clear_pre_2fa_cookie(response: Response) -> Response:
+    response.delete_cookie(_PRE_2FA_COOKIE)
+    return response
+
+
+# ---- Password reset tokens ----
+# Signed timestamp tokens for the forgot-password flow. Max age = 30min.
+# Uses a distinct salt so a token can't be confused with a session cookie
+# or a pre-2FA cookie.
+
+_PASSWORD_RESET_SALT = "password-reset-v1"
+_PASSWORD_RESET_TTL = 1800  # 30 minutes
+
+
+def issue_password_reset_token(email: str) -> str:
+    """Issue a one-shot signed reset token for ``email``.
+
+    The caller should email the resulting token to the admin and also
+    store it under admin_settings[password_reset_token] so the reset
+    handler can enforce one-shot semantics (token is consumed on
+    successful password update).
+    """
+    signer = TimestampSigner(_get_secret_key() or _FALLBACK_SECRET_KEY, salt=_PASSWORD_RESET_SALT)
+    return signer.sign(email.encode()).decode()
+
+
+def verify_password_reset_token(token: str) -> str:
+    """Verify a reset token and return the email it was issued for.
+
+    Returns '' on any failure (expired, tampered, missing). Never
+    raises — callers just check the return value.
+    """
+    if not token:
+        return ""
+    try:
+        signer = TimestampSigner(_get_secret_key() or _FALLBACK_SECRET_KEY, salt=_PASSWORD_RESET_SALT)
+        return signer.unsign(token, max_age=_PASSWORD_RESET_TTL).decode()
+    except (BadSignature, SignatureExpired):
+        return ""
+
+
 def is_authenticated(request: Request) -> bool:
     """Check if the request has a valid session cookie."""
     if not _get_admin_hash():
@@ -458,6 +565,14 @@ async def login_submit(request: Request) -> Response:
         password_ok = True
     if password_ok:
         _clear_attempts(ip)
+        # 2FA branch — if a TOTP secret is on file, don't issue a full
+        # session yet. Set the short-lived pre-2FA cookie and redirect
+        # to the code challenge page.
+        if is_2fa_enabled():
+            _log_security_event(request, "login_password_ok_awaiting_2fa")
+            response = RedirectResponse("/login/2fa", status_code=302)
+            create_pre_2fa_cookie(response, request)
+            return response
         _log_security_event(request, "login_success")
         response = RedirectResponse("/dashboard", status_code=302)
         create_session(response, request)
@@ -468,6 +583,56 @@ async def login_submit(request: Request) -> Response:
     tpl = _login_env.get_template("login.html")
     return HTMLResponse(
         tpl.render(error="Invalid password"),
+        status_code=401,
+    )
+
+
+async def login_2fa_page(request: Request) -> Response:
+    """GET /login/2fa — TOTP challenge after password step.
+
+    Gated on the pre-2FA cookie: if someone hits this URL without
+    having completed the password step, send them back to /login.
+    """
+    if not is_pre_2fa(request):
+        return RedirectResponse("/login", status_code=302)
+    tpl = _login_env.get_template("login_2fa.html")
+    return HTMLResponse(tpl.render(error=""))
+
+
+async def login_2fa_submit(request: Request) -> Response:
+    """POST /login/2fa — verify the 6-digit TOTP code.
+
+    On success, issue the full session cookie and clear the pre-2FA
+    cookie. On failure, record an attempt and re-render with error.
+    """
+    ip = _get_client_ip(request)
+
+    if not is_pre_2fa(request):
+        return RedirectResponse("/login", status_code=302)
+
+    if _is_rate_limited(ip):
+        _log_security_event(request, "login_2fa_rate_limited")
+        tpl = _login_env.get_template("login_2fa.html")
+        return HTMLResponse(
+            tpl.render(error="Too many attempts. Please try again later."),
+            status_code=429,
+        )
+
+    form = await request.form()
+    code = str(form.get("code", "")).strip()
+    if verify_totp(code):
+        _clear_attempts(ip)
+        _log_security_event(request, "login_2fa_success")
+        response = RedirectResponse("/dashboard", status_code=302)
+        create_session(response, request)
+        clear_pre_2fa_cookie(response)
+        return response
+
+    _record_attempt(ip)
+    _log_security_event(request, "login_2fa_failure")
+    tpl = _login_env.get_template("login_2fa.html")
+    return HTMLResponse(
+        tpl.render(error="Invalid code. Try again."),
         status_code=401,
     )
 
@@ -494,6 +659,51 @@ _CSP = (
     "base-uri 'self'; "
     "form-action 'self'"
 )
+
+
+class AdminIPAllowlistMiddleware(BaseHTTPMiddleware):
+    """Optionally restrict /admin/* access to a list of IPs or CIDR ranges.
+
+    Configured via the ``WEEKLYAMP_ADMIN_IP_ALLOWLIST`` env var as a
+    comma-separated list of IPs (``203.0.113.42``) and/or CIDR ranges
+    (``192.168.1.0/24``). Empty / unset = no allowlist, all IPs allowed
+    (the safe default for setup-before-IPs-are-known).
+
+    Honors ``X-Forwarded-For`` so the real client IP is checked when
+    running behind Railway's proxy rather than the proxy's own IP.
+    """
+
+    def __init__(self, app, allowlist: str = "") -> None:
+        super().__init__(app)
+        self._networks: list = []
+        if allowlist.strip():
+            import ipaddress
+            for entry in allowlist.split(","):
+                entry = entry.strip()
+                if not entry:
+                    continue
+                try:
+                    # strict=False so bare IPs parse as /32 (v4) or /128 (v6)
+                    net = ipaddress.ip_network(entry, strict=False)
+                    self._networks.append(net)
+                except ValueError:
+                    logger.warning("Ignoring invalid IP/CIDR in allowlist: %s", entry)
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if not self._networks or not request.url.path.startswith("/admin"):
+            return await call_next(request)
+
+        import ipaddress
+        try:
+            client_ip = ipaddress.ip_address(_get_client_ip(request))
+        except ValueError:
+            _log_security_event(request, "admin_ip_invalid", detail="unparseable client IP")
+            return Response("Forbidden", status_code=403)
+
+        if not any(client_ip in net for net in self._networks):
+            _log_security_event(request, "admin_ip_blocked", detail=str(client_ip))
+            return Response("Forbidden", status_code=403)
+        return await call_next(request)
 
 
 class BodySizeLimitMiddleware(BaseHTTPMiddleware):

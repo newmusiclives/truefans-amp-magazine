@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — TrueFans SIGNAL</title>
+    <title>Two-factor verification — TrueFans SIGNAL</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
@@ -14,23 +14,20 @@
     <div class="login-card">
         <div class="login-brand">
             <h1>TrueFans SIGNAL</h1>
-            <div class="tagline">for Industry Professionals, Music Artists and Fans</div>
+            <div class="tagline">Two-factor verification</div>
         </div>
         {% if error %}
         <div class="login-error">{{ error }}</div>
         {% endif %}
-        <form method="post" action="{{ form_action or '/login' }}">
-            {% if csrf_token %}
-            <input type="hidden" name="_csrf_token" value="{{ csrf_token }}">
-            {% endif %}
+        <form method="post" action="/login/2fa">
             <div class="login-field">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required autofocus>
+                <label for="code">6-digit code from your authenticator app</label>
+                <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" required autofocus>
             </div>
-            <button type="submit" class="login-btn">Sign In</button>
+            <button type="submit" class="login-btn">Verify</button>
         </form>
         <p style="margin-top:16px;text-align:center;font-size:13px;color:#888;">
-            <a href="/login/forgot" style="color:#888;">Forgot password?</a>
+            <a href="/login" style="color:#888;">Start over</a>
         </p>
     </div>
 </body>

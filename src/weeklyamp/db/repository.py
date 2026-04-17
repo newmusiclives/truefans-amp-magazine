@@ -621,9 +621,28 @@ class Repository:
         conn.commit()
         conn.close()
 
-    def get_subscriber_count(self) -> int:
+    def get_subscriber_count(self, edition_slugs: "list[str] | None" = None) -> int:
+        """Count active subscribers.
+
+        Pass ``edition_slugs`` to scope the count to subscribers who are
+        subscribed to any of the given edition slugs — used by the
+        licensee portal so operators see their city's subscribers, not
+        the global tenant count.
+        """
         conn = self._conn()
-        row = conn.execute("SELECT COUNT(*) as c FROM subscribers WHERE status = 'active'").fetchone()
+        if edition_slugs:
+            placeholders = ",".join("?" for _ in edition_slugs)
+            sql = (
+                "SELECT COUNT(DISTINCT s.id) as c FROM subscribers s "
+                "JOIN subscriber_editions se ON se.subscriber_id = s.id "
+                "JOIN newsletter_editions ne ON ne.id = se.edition_id "
+                f"WHERE s.status = 'active' AND ne.slug IN ({placeholders})"
+            )
+            row = conn.execute(sql, tuple(edition_slugs)).fetchone()
+        else:
+            row = conn.execute(
+                "SELECT COUNT(*) as c FROM subscribers WHERE status = 'active'"
+            ).fetchone()
         conn.close()
         return row["c"]
 

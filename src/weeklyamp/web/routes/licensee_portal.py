@@ -27,7 +27,13 @@ def _render_dashboard(licensee: dict) -> HTMLResponse:
     repo = get_repo()
     config = get_config()
     city = licensee.get("city_market_slug", "")
-    subscriber_count = repo.get_subscriber_count()  # TODO: filter by licensee/city
+    # Scope subscriber count to the editions this licensee runs, not the
+    # global tenant-wide count. edition_slugs is a comma-separated list
+    # stored on the licensee row.
+    licensee_editions = [
+        s.strip() for s in (licensee.get("edition_slugs") or "").split(",") if s.strip()
+    ]
+    subscriber_count = repo.get_subscriber_count(edition_slugs=licensee_editions or None)
     revenue = repo.get_license_revenue(licensee["id"])
     prospects = repo.get_sponsor_prospects(limit=10)
     city_prospects = [

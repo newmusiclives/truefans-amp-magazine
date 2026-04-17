@@ -20,10 +20,13 @@ from weeklyamp.core.config import load_config
 from weeklyamp.core.database import init_database, seed_agents, seed_content, seed_editions, seed_guest_contacts, seed_sections
 from weeklyamp.research.sources import sync_sources_from_config
 from weeklyamp.web.security import (
+    AdminIPAllowlistMiddleware,
     AuthMiddleware,
     BodySizeLimitMiddleware,
     CSRFMiddleware,
     SecurityHeadersMiddleware,
+    login_2fa_page,
+    login_2fa_submit,
     login_page,
     login_submit,
     logout,
@@ -232,6 +235,12 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(CSRFMiddleware)
     app.add_middleware(AuthMiddleware)
+    # Admin IP allowlist runs BEFORE auth so blocked IPs never trigger
+    # login attempts (keeping the attacker surface small).
+    app.add_middleware(
+        AdminIPAllowlistMiddleware,
+        allowlist=os.environ.get("WEEKLYAMP_ADMIN_IP_ALLOWLIST", ""),
+    )
     app.add_middleware(
         BodySizeLimitMiddleware,
         max_bytes=config.max_request_body,
@@ -242,6 +251,24 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(GZipMiddleware, minimum_size=500)
 
+    # CORS — lock cross-origin requests to an explicit allowlist.
+    # Default: no origins allowed (same-origin only, no CORS headers).
+    # Configure via WEEKLYAMP_CORS_ORIGINS as a comma-separated list of
+    # full origin URLs (e.g. "https://truefanssignal.com,https://admin.truefanssignal.com").
+    # Use "*" only for local dev — it's incompatible with
+    # allow_credentials=True so session cookies won't work cross-origin anyway.
+    cors_env = os.environ.get("WEEKLYAMP_CORS_ORIGINS", "").strip()
+    if cors_env:
+        from fastapi.middleware.cors import CORSMiddleware
+        origins = [o.strip() for o in cors_env.split(",") if o.strip()]
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials="*" not in origins,
+            allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+            allow_headers=["Content-Type", "Authorization", "X-CSRF-Token", "HX-Request", "HX-Target"],
+        )
+
     # White-label domain routing (inactive unless white_label.enabled=true)
     if config.white_label.enabled:
         from weeklyamp.web.middleware.domain_router import DomainRoutingMiddleware
@@ -250,6 +277,8 @@ def create_app() -> FastAPI:
     # Auth routes
     app.add_api_route("/login", login_page, methods=["GET"])
     app.add_api_route("/login", login_submit, methods=["POST"])
+    app.add_api_route("/login/2fa", login_2fa_page, methods=["GET"])
+    app.add_api_route("/login/2fa", login_2fa_submit, methods=["POST"])
     app.add_api_route("/logout", logout, methods=["GET"])
 
     # Custom error pages
@@ -518,8 +547,10 @@ def create_app() -> FastAPI:
     from weeklyamp.web.routes import edition_pages as edition_pages_routes
     from weeklyamp.web.routes import notifications as notifications_routes
     from weeklyamp.web.routes import licensee_portal as licensee_portal_routes
+    from weeklyamp.web.routes import admin_2fa as admin_2fa_routes
     from weeklyamp.web.routes import admin_account as admin_account_routes
     from weeklyamp.web.routes import admin_feature_flags as admin_feature_flags_routes
+    from weeklyamp.web.routes import admin_password_reset as admin_password_reset_routes
     from weeklyamp.web.routes import analytics as analytics_hub_routes
     # v36+ future vision features
     from weeklyamp.web.routes import events as events_routes
@@ -661,9 +692,14 @@ def create_app() -> FastAPI:
         licensee_portal_routes.router, prefix="/licensee",
         dependencies=[Depends(require_feature(FeatureFlag.WHITE_LABEL))],
     )
-    # Admin self-service: change password + feature flags
+    # Admin self-service: change password + feature flags + 2FA + reset
     app.include_router(admin_account_routes.router, prefix="/admin")
     app.include_router(admin_feature_flags_routes.router, prefix="/admin")
+    app.include_router(admin_2fa_routes.router, prefix="/admin")
+    # Password reset lives under /login/* so it's reachable unauthenticated.
+    # Public paths are matched by prefix — /login is already in
+    # _PUBLIC_PREFIXES so /login/forgot and /login/reset inherit.
+    app.include_router(admin_password_reset_routes.router, prefix="/login")
     # Analytics hub (NPS, content reports, forecasting, media kit)
     app.include_router(analytics_hub_routes.router, prefix="/admin/analytics")
     # v36+ future vision features
@@ -697,12 +733,30 @@ def create_app() -> FastAPI:
         loader=FileSystemLoader(str(_TEMPLATES_DIR / "web")), autoescape=True
     )
 
-    @app.get("/security/logs")
-    def security_logs():
+    @app.get("/admin/security-log")
+    @app.get("/security/logs")  # legacy alias
+    def security_logs(request: Request):
+        """Admin audit log viewer. Reads security_log (written by
+        security.py's _log_security_event). Supports ?event_type=X and
+        ?limit=N query params for filtering/pagination.
+        """
         from weeklyamp.web.deps import get_repo
         repo = get_repo()
-        events = repo.get_security_log(limit=config.pagination_default)
+        event_type = request.query_params.get("event_type", "").strip() or None
+        try:
+            limit = min(500, int(request.query_params.get("limit") or config.pagination_default))
+        except ValueError:
+            limit = config.pagination_default
+        events = repo.get_security_log(limit=limit, event_type=event_type)
+        # Build a list of distinct event types seen in recent history
+        # so the filter dropdown reflects real data, not a hardcoded set.
+        recent_types = sorted({e.get("event_type", "") for e in repo.get_security_log(limit=500)})
         tpl = _sec_env.get_template("security_logs.html")
-        return HTMLResponse(tpl.render(events=events))
+        return HTMLResponse(tpl.render(
+            events=events,
+            event_type=event_type or "",
+            limit=limit,
+            event_types=[t for t in recent_types if t],
+        ))
 
     return app

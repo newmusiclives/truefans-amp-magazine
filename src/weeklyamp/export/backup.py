@@ -1,7 +1,13 @@
 """Backup and export utilities.
 
 Provides CSV subscriber exports, JSON content exports, sanitised
-config YAML dumps, and full timestamped backups.
+config YAML dumps, full timestamped backups, and encrypted/restorable
+backup archives.
+
+Encrypted backups use Fernet symmetric encryption keyed by the
+``WEEKLYAMP_BACKUP_KEY`` env var (32-byte URL-safe base64). Generate a
+key with :func:`generate_backup_key`; store it somewhere outside the
+repo and outside Railway's main env (e.g. a password manager).
 """
 
 from __future__ import annotations
@@ -11,6 +17,7 @@ import io
 import json
 import logging
 import os
+import tarfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -179,6 +186,114 @@ class ExportManager:
 
         logger.info("Full backup written to %s", backup_dir)
         return backup_dir
+
+    # ------------------------------------------------------------------
+    # Encrypted backup
+    # ------------------------------------------------------------------
+
+    def encrypted_full_backup(self, output_dir: str, key: "bytes | str | None" = None) -> str:
+        """Produce a single encrypted archive of the full backup contents.
+
+        Bundles subscribers.csv + content.json + config.yaml into a
+        tar.gz in memory, then encrypts with Fernet. Writes one file:
+        ``backup_<timestamp>.enc`` — no plaintext ever touches disk.
+
+        ``key`` may be passed explicitly (testing) or read from the
+        ``WEEKLYAMP_BACKUP_KEY`` env var. Raises ValueError if neither
+        is set — refusing to fall back silently to plaintext is the
+        whole point of this path.
+        """
+        from cryptography.fernet import Fernet
+
+        k = key or os.environ.get("WEEKLYAMP_BACKUP_KEY", "")
+        if not k:
+            raise ValueError(
+                "WEEKLYAMP_BACKUP_KEY not set — generate one with "
+                "ExportManager.generate_backup_key() and store in env."
+            )
+        if isinstance(k, str):
+            k = k.encode()
+
+        # Build files in memory, bundle into an in-memory tar, encrypt.
+        csv_content, _, sub_count = self.export_subscribers()
+        content_json = self.export_content()
+        config_yaml = self.export_config()
+
+        tar_buf = io.BytesIO()
+        with tarfile.open(fileobj=tar_buf, mode="w:gz") as tar:
+            for name, data in (
+                ("subscribers.csv", csv_content),
+                ("content.json", content_json),
+                ("config.yaml", config_yaml),
+            ):
+                info = tarfile.TarInfo(name=name)
+                payload = data.encode() if isinstance(data, str) else data
+                info.size = len(payload)
+                tar.addfile(info, io.BytesIO(payload))
+
+        ciphertext = Fernet(k).encrypt(tar_buf.getvalue())
+
+        os.makedirs(output_dir, exist_ok=True)
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        out_path = os.path.join(output_dir, f"backup_{timestamp}.enc")
+        with open(out_path, "wb") as f:
+            f.write(ciphertext)
+
+        # Audit: note encrypted backup in export_log (CHECK constraint
+        # limits export_type to the original four values, so reuse
+        # 'full_backup' and prefix the filename with 'enc:' so history
+        # is distinguishable).
+        conn = self.repo._conn()
+        try:
+            conn.execute(
+                """INSERT INTO export_log
+                       (export_type, file_path, record_count)
+                   VALUES (?, ?, ?)""",
+                ("full_backup", f"enc:{os.path.basename(out_path)}", sub_count),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+        logger.info("Encrypted backup written to %s (%d subscribers)", out_path, sub_count)
+        return out_path
+
+    @staticmethod
+    def generate_backup_key() -> str:
+        """Generate a fresh Fernet key suitable for WEEKLYAMP_BACKUP_KEY.
+
+        Returns the URL-safe base64 string form, ready to paste into an
+        env var or password manager.
+        """
+        from cryptography.fernet import Fernet
+        return Fernet.generate_key().decode()
+
+    @staticmethod
+    def restore_encrypted_backup(
+        encrypted_path: str, output_dir: str, key: "bytes | str | None" = None
+    ) -> str:
+        """Decrypt and extract an encrypted backup to ``output_dir``.
+
+        Returns the extracted directory path. Used for disaster recovery
+        and — importantly — in the restore round-trip test to verify
+        the encryption/compression pipeline actually round-trips.
+        """
+        from cryptography.fernet import Fernet
+
+        k = key or os.environ.get("WEEKLYAMP_BACKUP_KEY", "")
+        if not k:
+            raise ValueError("WEEKLYAMP_BACKUP_KEY not set")
+        if isinstance(k, str):
+            k = k.encode()
+
+        with open(encrypted_path, "rb") as f:
+            ciphertext = f.read()
+        plaintext = Fernet(k).decrypt(ciphertext)
+
+        os.makedirs(output_dir, exist_ok=True)
+        with tarfile.open(fileobj=io.BytesIO(plaintext), mode="r:gz") as tar:
+            tar.extractall(output_dir)
+        return output_dir
 
     # ------------------------------------------------------------------
     # Export history
