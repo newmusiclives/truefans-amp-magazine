@@ -4557,13 +4557,16 @@ class Repository:
         )
         conn = self._conn()
         try:
+            # Table alias 'at' is reserved in PostgreSQL (used in
+            # 'TIMESTAMP AT TIME ZONE' syntax). Use 't' instead —
+            # unreserved in both SQLite and Postgres.
             rows = conn.execute(
                 "SELECT i.edition_slug AS edition_slug, "
                 "       COUNT(DISTINCT i.id) AS issue_count, "
                 "       COALESCE(SUM(aol.tokens_used), 0) AS total_tokens "
                 "FROM agent_output_log aol "
-                "JOIN agent_tasks at ON at.id = aol.task_id "
-                "JOIN issues i ON i.id = at.issue_id "
+                "JOIN agent_tasks t ON t.id = aol.task_id "
+                "JOIN issues i ON i.id = t.issue_id "
                 "WHERE aol.created_at >= ? AND i.edition_slug != '' "
                 "GROUP BY i.edition_slug "
                 "ORDER BY i.edition_slug",
