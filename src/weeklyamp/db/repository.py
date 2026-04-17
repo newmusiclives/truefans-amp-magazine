@@ -4745,49 +4745,6 @@ class Repository:
 
     # ---- Feature flags ----
 
-    def get_feature_flag(self, name: str) -> Optional[dict]:
-        """Return a feature_flags row by name, or None."""
-        conn = self._conn()
-        row = conn.execute(
-            "SELECT * FROM feature_flags WHERE name = ?",
-            (name,),
-        ).fetchone()
-        conn.close()
-        return dict(row) if row else None
-
-    def upsert_feature_flag(
-        self,
-        name: str,
-        is_active: bool = True,
-        rollout_percent: int = 100,
-        description: str = "",
-    ) -> None:
-        """Insert or update a feature flag."""
-        conn = self._conn()
-        existing = conn.execute(
-            "SELECT name FROM feature_flags WHERE name = ?", (name,)
-        ).fetchone()
-        if existing:
-            conn.execute(
-                "UPDATE feature_flags SET is_active = ?, rollout_percent = ?, "
-                "description = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?",
-                (1 if is_active else 0, rollout_percent, description, name),
-            )
-        else:
-            conn.execute(
-                "INSERT INTO feature_flags (name, is_active, rollout_percent, description) "
-                "VALUES (?, ?, ?, ?)",
-                (name, 1 if is_active else 0, rollout_percent, description),
-            )
-        conn.commit()
-        conn.close()
-
-    def list_feature_flags(self) -> list[dict]:
-        conn = self._conn()
-        rows = conn.execute("SELECT * FROM feature_flags ORDER BY name").fetchall()
-        conn.close()
-        return [dict(r) for r in rows]
-
     # ---- Admin audit log ----
 
     def log_admin_action(
