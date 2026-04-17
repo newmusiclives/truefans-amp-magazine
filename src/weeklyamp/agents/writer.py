@@ -6,7 +6,7 @@ import json
 from typing import Optional
 
 from weeklyamp.agents.base import AgentBase
-from weeklyamp.content.generator import generate_draft
+from weeklyamp.content.generator import generate_draft, generate_draft_with_usage
 from weeklyamp.core.config import get_prompt_template
 from weeklyamp.core.models import WORD_COUNT_MAX_TOKENS
 
@@ -90,8 +90,12 @@ class WriterAgent(AgentBase):
         agent_row = self._ensure_agent()
         agent_system_prompt = agent_row.get("system_prompt", "") if agent_row else ""
 
-        # Generate with persona
-        content, model = generate_draft(prompt, self.config, max_tokens_override=max_tokens, system_prompt=agent_system_prompt)
+        # Generate with persona — capture actual token usage (not max)
+        # so per-edition cost telemetry reflects real spend, not the
+        # upper bound we'd pay if every generation hit the cap.
+        content, model, tokens_used = generate_draft_with_usage(
+            prompt, self.config, max_tokens_override=max_tokens, system_prompt=agent_system_prompt,
+        )
 
         # Save draft
         draft_id = self.repo.create_draft(
@@ -106,7 +110,7 @@ class WriterAgent(AgentBase):
         for c in content_items:
             self.repo.mark_content_used(c["id"])
 
-        self.log_output(task_id, "draft", content, tokens_used=max_tokens)
+        self.log_output(task_id, "draft", content, tokens_used=tokens_used)
 
         return {"draft_id": draft_id, "section": section_slug, "word_count": len(content.split())}
 

@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 import os
 import secrets
-import sqlite3
 from pathlib import Path
 
 import bcrypt
@@ -165,14 +164,42 @@ _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web
 _login_env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), autoescape=True)
 
 
-# ---- Rate limiting (SQLite-backed, survives restarts) ----
-
-_DB_PATH = Path(__file__).parent.parent.parent.parent / "data" / "weeklyamp.db"
+# ---- Rate limiting (backed by the app Repository, so SQLite OR Postgres) ----
+#
+# Previously this module opened its own sqlite3 connection to a file
+# path baked in relative to the module. That was fine in local dev but
+# broke in production where the app runs on Postgres — every login
+# attempt logged a traceback because the SQLite file didn't exist /
+# didn't have the rate_limits table, and the rate limiter fell open.
+#
+# We now use the app's Repository which auto-detects the backend.
+# Postgres doesn't have SQLite's datetime('now', '-N seconds') syntax,
+# so we compute the cutoff in Python and pass it as a bind param —
+# that works on both backends.
 
 
 def _rate_limit_conn():
-    """Open a lightweight SQLite connection for rate-limit queries."""
-    return sqlite3.connect(str(_DB_PATH))
+    """Return a Repository connection suitable for rate-limit queries.
+
+    Uses the same backend (SQLite or Postgres) as the rest of the app.
+    Callers are responsible for conn.commit() / conn.close().
+    """
+    from weeklyamp.web.deps import get_repo
+    return get_repo()._conn()
+
+
+def _cutoff_for(window_seconds: int) -> str:
+    """Return an ISO-8601 timestamp that's ``window_seconds`` in the past.
+
+    Used as the lower bound for counting recent rate-limit attempts.
+    Portable across SQLite and Postgres (both compare TIMESTAMP columns
+    against ISO strings correctly).
+    """
+    from datetime import datetime, timedelta, timezone
+    cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
+    # SQLite's default CURRENT_TIMESTAMP format is 'YYYY-MM-DD HH:MM:SS'
+    # without timezone, and Postgres handles both; format accordingly.
+    return cutoff.strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _get_login_rate_config() -> tuple[int, int]:
@@ -219,31 +246,23 @@ def _get_client_ip(request: Request) -> str:
 def _is_rate_limited(ip: str, limit_type: str = "login") -> bool:
     """Check if an IP has exceeded the attempt limit for the given limit type."""
     max_attempts, window = _get_login_rate_config()
-    try:
-        conn = _rate_limit_conn()
-        row = conn.execute(
-            "SELECT COUNT(*) FROM rate_limits "
-            "WHERE ip_address = ? AND limit_type = ? "
-            "AND attempted_at >= datetime('now', '-' || ? || ' seconds')",
-            (ip, limit_type, window),
-        ).fetchone()
-        conn.close()
-        return (row[0] if row else 0) >= max_attempts
-    except Exception:
-        logger.warning("Rate-limit check failed — allowing request", exc_info=True)
-        return False
+    return _is_rate_limited_with(ip, limit_type, max_attempts, window)
 
 
 def _record_attempt(ip: str, limit_type: str = "login") -> None:
     """Record a failed attempt for an IP under the given limit type."""
     try:
         conn = _rate_limit_conn()
-        conn.execute(
-            "INSERT INTO rate_limits (ip_address, limit_type) VALUES (?, ?)",
-            (ip, limit_type),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            # INSERT auto-gets RETURNING id appended by _PgConnAdapter —
+            # rate_limits does have an id column so that's fine here.
+            conn.execute(
+                "INSERT INTO rate_limits (ip_address, limit_type) VALUES (?, ?)",
+                (ip, limit_type),
+            )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception:
         logger.warning("Failed to record attempt for limit_type=%s", limit_type, exc_info=True)
 
@@ -252,12 +271,14 @@ def _clear_attempts(ip: str, limit_type: str = "login") -> None:
     """Clear attempts for an IP under the given limit type after a successful action."""
     try:
         conn = _rate_limit_conn()
-        conn.execute(
-            "DELETE FROM rate_limits WHERE ip_address = ? AND limit_type = ?",
-            (ip, limit_type),
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn.execute(
+                "DELETE FROM rate_limits WHERE ip_address = ? AND limit_type = ?",
+                (ip, limit_type),
+            )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception:
         logger.warning("Failed to clear attempts for limit_type=%s", limit_type, exc_info=True)
 
@@ -265,17 +286,27 @@ def _clear_attempts(ip: str, limit_type: str = "login") -> None:
 def _is_rate_limited_with(
     ip: str, limit_type: str, max_attempts: int, window_seconds: int
 ) -> bool:
-    """Check rate limit with custom threshold and window (not the login default)."""
+    """Check rate limit with custom threshold and window.
+
+    SQL uses a parameterised ISO timestamp cutoff rather than SQLite's
+    ``datetime('now', ...)`` so the same query runs on Postgres.
+    """
     try:
+        cutoff = _cutoff_for(window_seconds)
         conn = _rate_limit_conn()
-        row = conn.execute(
-            "SELECT COUNT(*) FROM rate_limits "
-            "WHERE ip_address = ? AND limit_type = ? "
-            "AND attempted_at >= datetime('now', '-' || ? || ' seconds')",
-            (ip, limit_type, window_seconds),
-        ).fetchone()
-        conn.close()
-        return (row[0] if row else 0) >= max_attempts
+        try:
+            row = conn.execute(
+                "SELECT COUNT(*) as c FROM rate_limits "
+                "WHERE ip_address = ? AND limit_type = ? AND attempted_at >= ?",
+                (ip, limit_type, cutoff),
+            ).fetchone()
+        finally:
+            conn.close()
+        if row is None:
+            return False
+        # Aliased COUNT works identically under sqlite3.Row and
+        # psycopg2 RealDictCursor (both support row["c"]).
+        return row["c"] >= max_attempts
     except Exception:
         logger.warning("Rate-limit check failed — allowing request", exc_info=True)
         return False

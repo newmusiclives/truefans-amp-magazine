@@ -153,6 +153,36 @@ def _is_production() -> bool:
     return os.environ.get("WEEKLYAMP_ENV", "development").lower() in ("production", "prod")
 
 
+def _preflight_db_admin_hash_present(config) -> bool:
+    """Return True if admin_settings.admin_password_hash exists in the DB.
+
+    Runs during startup preflight, so the DB may or may not be
+    reachable depending on what's already initialized. We treat any
+    failure as "not present" — callers still have the env-var path to
+    fall back on, and if both are absent we'll fail loudly anyway.
+
+    Important: this runs BEFORE the lifespan startup that calls
+    init_database, so the table may not exist yet on a truly fresh
+    deploy. That's fine — a fresh deploy legitimately has no DB
+    override and the env var path is required, which is the desired
+    behavior.
+    """
+    try:
+        from weeklyamp.db.repository import Repository
+        db_path = config.db_path
+        backend = config.db_backend
+        if backend == "sqlite" and not os.path.isabs(db_path):
+            if os.path.exists("/app"):
+                db_path = os.path.join("/app", db_path)
+            else:
+                db_path = os.path.abspath(db_path)
+        repo = Repository(db_path, config.database_url, backend)
+        return bool(repo.get_admin_setting("admin_password_hash"))
+    except Exception:
+        logger.debug("preflight DB admin-hash check failed", exc_info=True)
+        return False
+
+
 def create_app() -> FastAPI:
     _setup_logging()
     _setup_sentry()
@@ -164,15 +194,29 @@ def create_app() -> FastAPI:
         missing = []
         if not os.environ.get("WEEKLYAMP_SECRET_KEY"):
             missing.append("WEEKLYAMP_SECRET_KEY")
-        if not os.environ.get("WEEKLYAMP_ADMIN_HASH") and not os.environ.get("WEEKLYAMP_ADMIN_PASSWORD"):
-            missing.append("WEEKLYAMP_ADMIN_HASH or WEEKLYAMP_ADMIN_PASSWORD")
+        # Admin credentials satisfied by ANY of: env hash, env password,
+        # or admin_settings.admin_password_hash in the DB. The DB branch
+        # is how the in-app change-password UI rotates credentials
+        # without redeploying env vars (this is also what bit us on
+        # 2026-04-17 when env vars were removed mid-session and the
+        # DB check wasn't part of preflight).
+        has_env_admin = bool(
+            os.environ.get("WEEKLYAMP_ADMIN_HASH") or os.environ.get("WEEKLYAMP_ADMIN_PASSWORD")
+        )
+        has_db_admin = _preflight_db_admin_hash_present(config)
+        if not has_env_admin and not has_db_admin:
+            missing.append("admin credentials (env WEEKLYAMP_ADMIN_HASH/ADMIN_PASSWORD or admin_settings row)")
         if missing:
             logger.critical("Production mode: missing required config: %s", ", ".join(missing))
             sys.exit(1)
     else:
         if not os.environ.get("WEEKLYAMP_SECRET_KEY"):
             logger.warning("WEEKLYAMP_SECRET_KEY not set — sessions won't survive restarts")
-        if not os.environ.get("WEEKLYAMP_ADMIN_HASH") and not os.environ.get("WEEKLYAMP_ADMIN_PASSWORD"):
+        if (
+            not os.environ.get("WEEKLYAMP_ADMIN_HASH")
+            and not os.environ.get("WEEKLYAMP_ADMIN_PASSWORD")
+            and not _preflight_db_admin_hash_present(config)
+        ):
             logger.warning("No admin password configured — auth is disabled")
 
     if config.email.enabled and not config.email.smtp_host:
