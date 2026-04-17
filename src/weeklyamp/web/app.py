@@ -356,6 +356,26 @@ def create_app() -> FastAPI:
             site_domain=site_domain,
         ))
 
+    # Public sample-issue pages — link from the "3 Editions, One Mission"
+    # cards on the landing page. Serves the pre-rendered demo files from
+    # the repo root. Whitelist of slugs to prevent path traversal; any
+    # other slug 404s.
+    _SAMPLE_FILES = {
+        "fan": "demo_fan_monday.html",
+        "artist": "demo_artist_monday.html",
+        "industry": "demo_industry_monday.html",
+    }
+
+    @app.get("/sample/{edition}")
+    def sample_issue(edition: str):
+        fname = _SAMPLE_FILES.get(edition.lower())
+        if not fname:
+            return HTMLResponse(_error_404, status_code=404)
+        sample_path = _TEMPLATES_DIR.parent / fname
+        if not sample_path.exists():
+            return HTMLResponse(_error_404, status_code=404)
+        return HTMLResponse(sample_path.read_text())
+
     # Health checks
     @app.get("/health")
     def health():
