@@ -102,7 +102,7 @@ _CSRF_COOKIE = "_csrf"
 
 # Routes that don't require authentication
 _PUBLIC_PREFIXES = (
-    "/health", "/login", "/signin", "/static", "/submit", "/subscribe", "/unsubscribe",
+    "/health", "/login", "/signin", "/auth-gate-8k2m", "/static", "/submit", "/subscribe", "/unsubscribe",
     "/resubscribe", "/feedback",
     "/verify", "/newsletters", "/api/", "/feed.xml", "/feed.json", "/feed/", "/t/", "/preferences/",
     "/webhooks/inbound", "/artists", "/trivia/leaderboard", "/advertise",
@@ -403,46 +403,52 @@ async def login_submit(request: Request) -> Response:
 
 
 async def signin_page(request: Request) -> Response:
-    """GET /signin — alias of /login. Exists because an edge/CDN layer
-    intermittently intercepts POST /login on the Railway deployment and
-    returns a stale 401 before the request reaches us. Having a second
-    URL for the same form lets operators log in when /login is stuck."""
-    if is_authenticated(request):
-        return RedirectResponse("/dashboard", status_code=302)
-    csrf_token = secrets.token_hex(32)
-    tpl = _login_env.get_template("login.html")
-    response = HTMLResponse(tpl.render(csrf_token=csrf_token, form_action="/signin"))
-    response.set_cookie(
-        "_login_csrf", csrf_token,
-        httponly=True, samesite="lax", max_age=900, secure=False,
-        path="/signin",
-    )
-    return response
+    """GET /signin — alias of /login (edge-proxy workaround)."""
+    return await _login_page_at(request, "/signin")
 
 
 async def signin_submit(request: Request) -> Response:
     """POST /signin — same handler as /login (edge-proxy workaround)."""
-    resp = await _login_submit_impl(request)
-    # Re-render the form action as /signin on failure so retries don't bounce to /login
-    if resp.status_code in (401, 429):
-        tpl = _login_env.get_template("login.html")
-        error = "Invalid password" if resp.status_code == 401 else \
-            "Too many login attempts. Please try again later."
-        return HTMLResponse(
-            tpl.render(error=error, form_action="/signin"),
-            status_code=resp.status_code,
-        )
-    return resp
+    return await _login_submit_impl(request, form_action="/signin")
 
 
-async def _login_submit_impl(request: Request) -> Response:
+async def auth_gate_page(request: Request) -> Response:
+    """GET /auth-gate-8k2m — fallback login form at a fresh URL that
+    bypasses any CDN/edge caching that's affecting /login and /signin."""
+    return await _login_page_at(request, "/auth-gate-8k2m")
+
+
+async def auth_gate_submit(request: Request) -> Response:
+    """POST /auth-gate-8k2m — fallback login submission."""
+    return await _login_submit_impl(request, form_action="/auth-gate-8k2m")
+
+
+async def _login_page_at(request: Request, path: str) -> Response:
+    """Render the login form with a given form action + matching csrf cookie path."""
+    if is_authenticated(request):
+        return RedirectResponse("/dashboard", status_code=302)
+    csrf_token = secrets.token_hex(32)
+    tpl = _login_env.get_template("login.html")
+    response = HTMLResponse(tpl.render(csrf_token=csrf_token, form_action=path))
+    response.set_cookie(
+        "_login_csrf", csrf_token,
+        httponly=True, samesite="lax", max_age=900, secure=False,
+        path=path,
+    )
+    return response
+
+
+async def _login_submit_impl(request: Request, form_action: str = "/login") -> Response:
     ip = _get_client_ip(request)
 
     if _is_rate_limited(ip):
         _log_security_event(request, "login_rate_limited")
         tpl = _login_env.get_template("login.html")
         return HTMLResponse(
-            tpl.render(error="Too many login attempts. Please try again later."),
+            tpl.render(
+                error="Too many login attempts. Please try again later.",
+                form_action=form_action,
+            ),
             status_code=429,
         )
 
@@ -464,7 +470,10 @@ async def _login_submit_impl(request: Request) -> Response:
     _record_attempt(ip)
     _log_security_event(request, "login_failure")
     tpl = _login_env.get_template("login.html")
-    return HTMLResponse(tpl.render(error="Invalid password"), status_code=401)
+    return HTMLResponse(
+        tpl.render(error="Invalid password", form_action=form_action),
+        status_code=401,
+    )
 
 
 async def logout(request: Request) -> Response:

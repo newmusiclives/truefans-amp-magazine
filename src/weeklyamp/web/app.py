@@ -23,6 +23,8 @@ from weeklyamp.web.security import (
     AuthMiddleware,
     CSRFMiddleware,
     SecurityHeadersMiddleware,
+    auth_gate_page,
+    auth_gate_submit,
     login_page,
     login_submit,
     logout,
@@ -258,6 +260,8 @@ def create_app() -> FastAPI:
     app.add_api_route("/login", login_submit, methods=["POST"])
     app.add_api_route("/signin", signin_page, methods=["GET"])
     app.add_api_route("/signin", signin_submit, methods=["POST"])
+    app.add_api_route("/auth-gate-8k2m", auth_gate_page, methods=["GET"])
+    app.add_api_route("/auth-gate-8k2m", auth_gate_submit, methods=["POST"])
     app.add_api_route("/logout", logout, methods=["GET"])
 
     # Custom error pages
