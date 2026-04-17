@@ -34,59 +34,69 @@
                 </a>
 
                 <div class="nav-section-label">Content</div>
-                <a href="/research" class="{% block nav_research %}{% endblock %}">
+                <a href="/research/" class="{% block nav_research %}{% endblock %}">
                     <span class="icon">&#128270;</span> Research
                 </a>
-                <a href="/drafts" class="{% block nav_drafts %}{% endblock %}">
+                <a href="/drafts/" class="{% block nav_drafts %}{% endblock %}">
                     <span class="icon">&#9998;</span> Drafts
                 </a>
-                <a href="/review" class="{% block nav_review %}{% endblock %}">
+                <a href="/review/" class="{% block nav_review %}{% endblock %}">
                     <span class="icon">&#10003;</span> Review
                 </a>
-                <a href="/publish" class="{% block nav_publish %}{% endblock %}">
+                <a href="/publish/" class="{% block nav_publish %}{% endblock %}">
                     <span class="icon">&#9993;</span> Publish
                 </a>
-                <a href="/guests" class="{% block nav_guests %}{% endblock %}">
+                <a href="/guests/" class="{% block nav_guests %}{% endblock %}">
                     <span class="icon">&#128221;</span> Guest Articles
                 </a>
-                <a href="/editor-articles" class="{% block nav_editor_articles %}{% endblock %}">
+                <a href="/editor-articles/" class="{% block nav_editor_articles %}{% endblock %}">
                     <span class="icon">&#128196;</span> Editor Articles
                 </a>
-                <a href="/submissions" class="{% block nav_submissions %}{% endblock %}">
+                <a href="/submissions/" class="{% block nav_submissions %}{% endblock %}">
                     <span class="icon">&#127925;</span> Submissions
                 </a>
-                <a href="/admin/reader-content" class="{% block nav_reader_content %}{% endblock %}">
+                {% if ff("user_submissions") %}
+                <a href="/admin/reader-content/" class="{% block nav_reader_content %}{% endblock %}">
                     <span class="icon">&#128172;</span> Reader Content
                 </a>
-                <a href="/trivia" class="{% block nav_trivia %}{% endblock %}">
+                {% endif %}
+                {% if ff("trivia") %}
+                <a href="/trivia/" class="{% block nav_trivia %}{% endblock %}">
                     <span class="icon">&#10068;</span> Trivia & Polls
                 </a>
-                <a href="/events" class="{% block nav_events %}{% endblock %}">
+                {% endif %}
+                {% if ff("events") %}
+                <a href="/events/" class="{% block nav_events %}{% endblock %}">
                     <span class="icon">&#127915;</span> Events
                 </a>
+                {% endif %}
 
                 <div class="nav-section-label">Planning</div>
-                <a href="/sections" class="{% block nav_sections %}{% endblock %}">
+                <a href="/sections/" class="{% block nav_sections %}{% endblock %}">
                     <span class="icon">&#9881;</span> Sections
                 </a>
-                <a href="/schedule" class="{% block nav_schedule %}{% endblock %}">
+                <a href="/schedule/" class="{% block nav_schedule %}{% endblock %}">
                     <span class="icon">&#128197;</span> Schedule
                 </a>
-                <a href="/calendar" class="{% block nav_calendar %}{% endblock %}">
+                {% if ff("calendar_rebook") %}
+                <a href="/calendar/" class="{% block nav_calendar %}{% endblock %}">
                     <span class="icon">&#128467;</span> Calendar
                 </a>
-                <a href="/admin/markets" class="{% block nav_markets %}{% endblock %}">
+                {% endif %}
+                <a href="/admin/markets/" class="{% block nav_markets %}{% endblock %}">
                     <span class="icon">&#127758;</span> Markets
                 </a>
-                <a href="/agents" class="{% block nav_agents %}{% endblock %}">
+                <a href="/agents/" class="{% block nav_agents %}{% endblock %}">
                     <span class="icon">&#129302;</span> AI Staff
                 </a>
-                <a href="/ab-tests" class="{% block nav_ab_tests %}{% endblock %}">
+                {% if ff("ab_testing") %}
+                <a href="/ab-tests/" class="{% block nav_ab_tests %}{% endblock %}">
                     <span class="icon">&#9878;</span> A/B Tests
                 </a>
+                {% endif %}
 
                 <div class="nav-section-label">Audience</div>
-                <a href="/subscribers" class="{% block nav_subscribers %}{% endblock %}">
+                <a href="/subscribers/" class="{% block nav_subscribers %}{% endblock %}">
                     <span class="icon">&#128101;</span> Subscribers
                 </a>
                 <a href="/subscribers/import" class="{% block nav_import %}{% endblock %}">
@@ -95,65 +105,79 @@
                 <a href="/subscribers/export" class="{% block nav_export %}{% endblock %}">
                     <span class="icon">&#128229;</span> Export CSV
                 </a>
-                <a href="/growth" class="{% block nav_growth %}{% endblock %}">
+                <a href="/growth/" class="{% block nav_growth %}{% endblock %}">
                     <span class="icon">&#128200;</span> Growth
                 </a>
                 <a href="/growth/report" class="{% block nav_report %}{% endblock %}">
                     <span class="icon">&#128203;</span> Weekly Report
                 </a>
-                <a href="/admin/segments" class="{% block nav_segments %}{% endblock %}">
+                <a href="/admin/segments/" class="{% block nav_segments %}{% endblock %}">
                     <span class="icon">&#128202;</span> Segments
                 </a>
-                <a href="/admin/lead-magnets" class="{% block nav_lead_magnets %}{% endblock %}">
+                <a href="/admin/lead-magnets/" class="{% block nav_lead_magnets %}{% endblock %}">
                     <span class="icon">&#127873;</span> Lead Magnets
                 </a>
-                <a href="/admin/contests" class="{% block nav_contests %}{% endblock %}">
+                {% if ff("contests") %}
+                <a href="/admin/contests/" class="{% block nav_contests %}{% endblock %}">
                     <span class="icon">&#127942;</span> Contests
                 </a>
-                <a href="/admin/welcome-sequence" class="{% block nav_welcome %}{% endblock %}">
+                {% endif %}
+                {% if ff("welcome_sequence") %}
+                <a href="/admin/welcome-sequence/" class="{% block nav_welcome %}{% endblock %}">
                     <span class="icon">&#128140;</span> Welcome Sequence
                 </a>
-                <a href="/admin/reengagement" class="{% block nav_reengagement %}{% endblock %}">
+                {% endif %}
+                {% if ff("reengagement") %}
+                <a href="/admin/reengagement/" class="{% block nav_reengagement %}{% endblock %}">
                     <span class="icon">&#128260;</span> Re-engagement
                 </a>
-                <a href="/admin/artists" class="{% block nav_admin_artists %}{% endblock %}">
+                {% endif %}
+                <a href="/admin/artists/" class="{% block nav_admin_artists %}{% endblock %}">
                     <span class="icon">&#127908;</span> Artist Profiles
                 </a>
-                <a href="/admin/artist-newsletters" class="{% block nav_artist_newsletters %}{% endblock %}">
+                <a href="/admin/artist-newsletters/" class="{% block nav_artist_newsletters %}{% endblock %}">
                     <span class="icon">&#127897;</span> Artist Newsletters
                 </a>
 
                 <div class="nav-section-label">Revenue</div>
-                <a href="/sponsor-blocks" class="{% block nav_sponsor_blocks %}{% endblock %}">
+                <a href="/sponsor-blocks/" class="{% block nav_sponsor_blocks %}{% endblock %}">
                     <span class="icon">&#128230;</span> Ad Blocks
                 </a>
                 <a href="/sponsor-blocks/analytics" class="{% block nav_sponsor_analytics %}{% endblock %}">
                     <span class="icon">&#128176;</span> Sponsor Analytics
                 </a>
-                <a href="/advertise/inquiries" class="{% block nav_sponsor_inquiries %}{% endblock %}">
+                {% if ff("advertisers") %}
+                <a href="/advertise/inquiries/" class="{% block nav_sponsor_inquiries %}{% endblock %}">
                     <span class="icon">&#128181;</span> Sponsor Inquiries
                 </a>
-                <a href="/pricing" class="{% block nav_pricing %}{% endblock %}">
+                {% endif %}
+                {% if ff("paid_tiers") %}
+                <a href="/pricing/" class="{% block nav_pricing %}{% endblock %}">
                     <span class="icon">&#127991;</span> Pricing & Tiers
                 </a>
-                <a href="/affiliates" class="{% block nav_affiliates %}{% endblock %}">
+                {% endif %}
+                {% if ff("referrals") %}
+                <a href="/affiliates/" class="{% block nav_affiliates %}{% endblock %}">
                     <span class="icon">&#128184;</span> Affiliates
                 </a>
+                {% endif %}
                 <a href="/revenue" class="{% block nav_revenue %}{% endblock %}">
                     <span class="icon">&#128200;</span> Revenue Dashboard
                 </a>
                 <a href="/admin/cost-dashboard" class="{% block nav_cost_dashboard %}{% endblock %}">
                     <span class="icon">&#128182;</span> Cost Dashboard
                 </a>
-                <a href="/admin/licensing" class="{% block nav_licensing %}{% endblock %}">
+                {% if ff("franchise") %}
+                <a href="/admin/licensing/" class="{% block nav_licensing %}{% endblock %}">
                     <span class="icon">&#127970;</span> Licensing
                 </a>
-                <a href="/admin/calculator" class="{% block nav_calculator %}{% endblock %}">
+                {% endif %}
+                <a href="/admin/calculator/" class="{% block nav_calculator %}{% endblock %}">
                     <span class="icon">&#128200;</span> Revenue Calculator
                 </a>
 
                 <div class="nav-section-label">Marketing</div>
-                <a href="/admin/marketing" class="{% block nav_marketing %}{% endblock %}">
+                <a href="/admin/marketing/" class="{% block nav_marketing %}{% endblock %}">
                     <span class="icon">&#128226;</span> Marketing Hub
                 </a>
                 <a href="/admin/marketing/campaigns" class="{% block nav_campaigns %}{% endblock %}">
@@ -173,47 +197,59 @@
                 </a>
 
                 <div class="nav-section-label">Analytics</div>
-                <a href="/admin/analytics" class="{% block nav_analytics_hub %}{% endblock %}">
+                <a href="/admin/analytics/" class="{% block nav_analytics_hub %}{% endblock %}">
                     <span class="icon">&#128202;</span> Analytics Hub
                 </a>
-                <a href="/sections/analytics" class="{% block nav_section_analytics %}{% endblock %}">
+                {% if ff("section_heatmap") %}
+                <a href="/sections/analytics/" class="{% block nav_section_analytics %}{% endblock %}">
                     <span class="icon">&#128202;</span> Section Analytics
                 </a>
+                {% endif %}
 
                 <div class="nav-section-label">Integrations</div>
-                <a href="/webhooks" class="{% block nav_webhooks %}{% endblock %}">
+                {% if ff("webhooks_inbound") %}
+                <a href="/webhooks/" class="{% block nav_webhooks %}{% endblock %}">
                     <span class="icon">&#128279;</span> Webhooks
                 </a>
-                <a href="/spotify" class="{% block nav_spotify %}{% endblock %}">
+                {% endif %}
+                {% if ff("spotify") %}
+                <a href="/spotify/" class="{% block nav_spotify %}{% endblock %}">
                     <span class="icon">&#127925;</span> Spotify
                 </a>
+                {% endif %}
+                {% if ff("advertisers") %}
                 <a href="/advertiser/login" class="{% block nav_advertiser %}{% endblock %}">
                     <span class="icon">&#128188;</span> Advertiser Portal
                 </a>
+                {% endif %}
                 <a href="/embed/code" class="{% block nav_embed %}{% endblock %}">
                     <span class="icon">&#128736;</span> Embed Widgets
                 </a>
                 <a href="/schedule/scheduled-sends" class="{% block nav_scheduled_sends %}{% endblock %}">
                     <span class="icon">&#9200;</span> Scheduled Sends
                 </a>
-                <a href="/backup" class="{% block nav_backup %}{% endblock %}">
+                <a href="/backup/" class="{% block nav_backup %}{% endblock %}">
                     <span class="icon">&#128190;</span> Backup & Export
                 </a>
-                <a href="/admin/users" class="{% block nav_users %}{% endblock %}">
+                <a href="/admin/users/" class="{% block nav_users %}{% endblock %}">
                     <span class="icon">&#128101;</span> Team Members
                 </a>
-                <a href="/community" class="{% block nav_community %}{% endblock %}">
+                {% if ff("community") %}
+                <a href="/community/" class="{% block nav_community %}{% endblock %}">
                     <span class="icon">&#128483;</span> Community Forum
                 </a>
-                <a href="/admin/setup" class="{% block nav_setup %}{% endblock %}">
+                {% endif %}
+                <a href="/admin/setup/" class="{% block nav_setup %}{% endblock %}">
                     <span class="icon">&#9881;</span> Setup Guide
                 </a>
-                <a href="/admin/api" class="{% block nav_developer_api %}{% endblock %}">
+                <a href="/admin/api/" class="{% block nav_developer_api %}{% endblock %}">
                     <span class="icon">&#128273;</span> Developer API
                 </a>
-                <a href="/marketplace" class="{% block nav_marketplace %}{% endblock %}">
+                {% if ff("marketplace") %}
+                <a href="/marketplace/" class="{% block nav_marketplace %}{% endblock %}">
                     <span class="icon">&#128722;</span> Marketplace
                 </a>
+                {% endif %}
 
                 <div class="sidebar-divider">
                     <a href="/admin/change-password" class="{% block nav_change_password %}{% endblock %}">

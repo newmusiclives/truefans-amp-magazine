@@ -31,6 +31,18 @@ def _md_filter(text: str) -> str:
 _env.filters["markdown"] = _md_filter
 _env.filters["truncate_words"] = lambda s, n=20: " ".join((s or "").split()[:n]) + ("..." if len((s or "").split()) > n else "")
 
+# Expose feature flag resolver to all templates as `ff(name)` so the
+# sidebar can hide links for off-flag features instead of letting users
+# click into a 404. Uses the shared cache in core.feature_flags.
+def _ff(name: str) -> bool:
+    from weeklyamp.core.feature_flags import enabled
+    try:
+        return enabled(name)
+    except Exception:
+        return False
+
+_env.globals["ff"] = _ff
+
 
 import re as _re
 
