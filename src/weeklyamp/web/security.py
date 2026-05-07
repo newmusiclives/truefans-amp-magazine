@@ -910,7 +910,13 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 
 class CSRFMiddleware(BaseHTTPMiddleware):
-    """Double-submit cookie CSRF protection for state-changing requests."""
+    """Double-submit cookie CSRF protection for state-changing requests.
+
+    Accepts either ``X-CSRF-Token`` header (HTMX/AJAX path) or a
+    ``csrf_token`` form field (native form submit fallback). Without the
+    form-field fallback, an HTMX-blocked or JS-disabled browser fails the
+    CSRF check silently and users see "the Save button doesn't work".
+    """
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         # Check CSRF for state-changing methods on authenticated routes
@@ -918,7 +924,20 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             if not _is_public(request.url.path) and is_authenticated(request):
                 cookie_token = request.cookies.get(_CSRF_COOKIE, "")
                 header_token = request.headers.get("X-CSRF-Token", "")
-                if not cookie_token or not header_token or cookie_token != header_token:
+                token_ok = bool(cookie_token) and cookie_token == header_token
+                if not token_ok:
+                    # Fallback: form-field csrf_token (native submit). Only
+                    # consume the body for form-encoded requests; Starlette
+                    # caches it so the route handler can re-read it.
+                    content_type = request.headers.get("content-type", "")
+                    if cookie_token and "application/x-www-form-urlencoded" in content_type:
+                        from urllib.parse import parse_qs
+                        body = await request.body()
+                        form_csrf = parse_qs(
+                            body.decode("utf-8", errors="ignore")
+                        ).get("csrf_token", [""])[0]
+                        token_ok = form_csrf == cookie_token
+                if not token_ok:
                     return Response("CSRF token mismatch", status_code=403)
 
         response = await call_next(request)

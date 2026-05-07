@@ -15,12 +15,16 @@ class of foot-gun.
 
 from __future__ import annotations
 
+import secrets
+
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
 from weeklyamp.web.deps import get_repo, render
 from weeklyamp.web.security import (
+    _CSRF_COOKIE,
     _get_admin_hash,
+    _is_secure,
     hash_password,
     invalidate_admin_hash_cache,
     is_authenticated,
@@ -45,22 +49,66 @@ def _require_admin(request: Request) -> Response | None:
     return None
 
 
+def _ensure_csrf(request: Request, response: Response) -> str:
+    """Return the CSRF token to embed in the form, ensuring the cookie is set.
+
+    The global CSRFMiddleware sets `_csrf` on the *outgoing* response when it
+    isn't already on the *incoming* request. On the very first GET to this
+    page after login, the cookie hasn't been set yet — so we mint one here
+    and set it on the response, and use the same value as the form's hidden
+    `csrf_token` field. Subsequent visits use the existing cookie value.
+    """
+    existing = request.cookies.get(_CSRF_COOKIE, "")
+    if existing:
+        return existing
+    token = secrets.token_hex(32)
+    response.set_cookie(
+        _CSRF_COOKIE,
+        token,
+        httponly=False,
+        samesite="lax",
+        secure=_is_secure(request),
+    )
+    return token
+
+
 @router.get("/change-password", response_class=HTMLResponse)
 async def change_password_form(request: Request) -> Response:
     redirect = _require_admin(request)
     if redirect is not None:
         return redirect
-    return HTMLResponse(render("admin_change_password.html", error="", success=""))
+    response = HTMLResponse("")
+    csrf_token = _ensure_csrf(request, response)
+    response.body = render(
+        "admin_change_password.html",
+        error="",
+        success="",
+        csrf_token=csrf_token,
+    ).encode()
+    response.headers["content-length"] = str(len(response.body))
+    return response
 
 
-def _render_card(error: str, success: str, *, status_code: int = 200) -> HTMLResponse:
-    """Render the form card. The htmx swap target on the form is the
-    `.card` element, so we return only that fragment on POST so the
-    rest of the page (sidebar, header) is preserved."""
-    return HTMLResponse(
-        render("admin_change_password_card.html", error=error, success=success),
-        status_code=status_code,
-    )
+def _render_card(
+    request: Request,
+    error: str,
+    success: str,
+    *,
+    status_code: int = 200,
+) -> HTMLResponse:
+    """Render the form card. HTMX path swaps just this fragment; native
+    form submit replaces the whole page with it (functional but unstyled).
+    Either way the user gets feedback rather than a silent failure."""
+    response = HTMLResponse("", status_code=status_code)
+    csrf_token = _ensure_csrf(request, response)
+    response.body = render(
+        "admin_change_password_card.html",
+        error=error,
+        success=success,
+        csrf_token=csrf_token,
+    ).encode()
+    response.headers["content-length"] = str(len(response.body))
+    return response
 
 
 @router.post("/change-password")
@@ -69,24 +117,43 @@ async def change_password_submit(
     current_password: str = Form(...),
     new_password: str = Form(...),
     confirm_password: str = Form(...),
+    csrf_token: str = Form(""),
 ) -> Response:
     redirect = _require_admin(request)
     if redirect is not None:
         return redirect
 
+    # CSRF: accept either the X-CSRF-Token header (HTMX path) or the
+    # csrf_token form field (native form submit / HTMX-blocked path).
+    # The global CSRFMiddleware only checks the header — without this
+    # form-field fallback, a JS-disabled or HTMX-blocked browser fails
+    # silently and users see "Save doesn't work".
+    cookie_token = request.cookies.get(_CSRF_COOKIE, "")
+    header_token = request.headers.get("X-CSRF-Token", "")
+    token_ok = bool(cookie_token) and (
+        cookie_token == header_token or cookie_token == csrf_token
+    )
+    if not token_ok:
+        return _render_card(
+            request,
+            "Session expired. Reload the page and try again.",
+            "",
+            status_code=403,
+        )
+
     # Validate inputs
     if new_password != confirm_password:
-        return _render_card("New password and confirmation do not match.", "", status_code=400)
+        return _render_card(request, "New password and confirmation do not match.", "", status_code=400)
     if len(new_password) < 12:
-        return _render_card("New password must be at least 12 characters.", "", status_code=400)
+        return _render_card(request, "New password must be at least 12 characters.", "", status_code=400)
     if new_password == current_password:
-        return _render_card("New password must differ from the current one.", "", status_code=400)
+        return _render_card(request, "New password must differ from the current one.", "", status_code=400)
 
     # Verify the current password against the active hash. We use the
     # same check the login flow uses so behavior matches exactly.
     current_hash = _get_admin_hash()
     if not current_hash or not verify_password(current_password, current_hash):
-        return _render_card("Current password is incorrect.", "", status_code=401)
+        return _render_card(request, "Current password is incorrect.", "", status_code=401)
 
     # Hash the new password and persist it. Cache invalidation is the
     # critical step — without it, the in-process cache keeps serving
@@ -97,6 +164,7 @@ async def change_password_submit(
     invalidate_admin_hash_cache()
 
     return _render_card(
+        request,
         "",
         "Password updated. Existing sessions remain valid until logout.",
     )
