@@ -172,6 +172,11 @@ _PUBLIC_EXACT = frozenset({
     "/robots.txt",
     "/sitemap.xml",
     "/favicon.ico",
+    # Sample-edition index. The /sample/{edition} routes are covered
+    # by the "/sample" public prefix, but /samples (the plural index)
+    # does not satisfy the segment-bounded match and would otherwise
+    # 302 to /login.
+    "/samples",
 })
 
 _TEMPLATES_DIR = Path(__file__).parent.parent.parent.parent / "templates" / "web"
