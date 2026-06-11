@@ -427,6 +427,104 @@ def create_app() -> FastAPI:
         )
         return HTMLResponse(body)
 
+    # Pre-launch waitlist capture — posted from the "coming soon" holding
+    # page. Reachable while the gate is closed via the ComingSoonMiddleware
+    # allow-list and the "/coming-soon" public prefix. Re-renders the same
+    # holding page with a success/error banner (works without JavaScript).
+    @app.post("/coming-soon/notify", response_class=HTMLResponse)
+    async def coming_soon_notify(request: Request):
+        from weeklyamp.web.security import render_coming_soon_page
+        from weeklyamp.web.routes.subscribe import (
+            _EMAIL_RE, _get_client_ip, _is_subscribe_rate_limited, _record_subscribe,
+        )
+        form = await request.form()
+        email = (form.get("email", "") or "").strip()[:254]
+        ip = _get_client_ip(request)
+
+        if _is_subscribe_rate_limited(ip):
+            return HTMLResponse(
+                render_coming_soon_page(
+                    error="Too many requests — please try again in a few minutes.", email=email),
+                status_code=429,
+            )
+        if not email or not _EMAIL_RE.match(email):
+            return HTMLResponse(
+                render_coming_soon_page(error="Please enter a valid email address.", email=email),
+            )
+        try:
+            from weeklyamp.web.deps import get_repo
+            repo = get_repo()
+            referrer = (request.query_params.get("ref", "") or request.headers.get("referer", ""))[:500]
+            repo.add_to_launch_waitlist(email=email, source="coming-soon", referrer=referrer)
+            _record_subscribe(ip)
+        except Exception:
+            logger.exception("Launch waitlist capture failed")
+            return HTMLResponse(
+                render_coming_soon_page(
+                    error="Something went wrong — please try again later.", email=email),
+            )
+        # Idempotent: a repeat email also lands here, which is the right UX.
+        return HTMLResponse(
+            render_coming_soon_page(
+                message="You're on the list — we'll email you the moment we launch. Thank you!"),
+        )
+
+    # Admin viewer for the pre-launch waitlist. Protected by AuthMiddleware
+    # (non-public path → anonymous is redirected to /login). ?export=csv
+    # downloads the full list.
+    @app.get("/admin/waitlist", response_class=HTMLResponse)
+    def admin_waitlist(request: Request):
+        from weeklyamp.web.deps import get_repo
+        repo = get_repo()
+        if request.query_params.get("export") == "csv":
+            import csv
+            import io
+            buf = io.StringIO()
+            writer = csv.writer(buf)
+            writer.writerow(["email", "source", "referrer", "created_at"])
+            for e in repo.get_launch_waitlist(limit=100000):
+                writer.writerow([
+                    e.get("email", ""), e.get("source", ""),
+                    e.get("referrer", ""), e.get("created_at", ""),
+                ])
+            return PlainTextResponse(
+                buf.getvalue(),
+                media_type="text/csv",
+                headers={"Content-Disposition": "attachment; filename=launch_waitlist.csv"},
+            )
+
+        import html as _html
+        entries = repo.get_launch_waitlist(limit=2000)
+        count = repo.get_launch_waitlist_count()
+        rows = "".join(
+            f'<tr><td>{_html.escape(str(e.get("email","")))}</td>'
+            f'<td>{_html.escape(str(e.get("source","")))}</td>'
+            f'<td>{_html.escape(str(e.get("created_at","")))}</td></tr>'
+            for e in entries
+        ) or '<tr><td colspan="3" style="color:#9ca3af;">No signups yet.</td></tr>'
+        body = (
+            '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+            '<title>Launch Waitlist</title>'
+            '<style>body{font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;'
+            'background:#f9f9f9;margin:0;padding:40px 20px;color:#1a1a1a}'
+            '.wrap{max-width:760px;margin:0 auto}h1{font-size:24px;margin:0 0 4px}'
+            '.sub{color:#6b7280;font-size:14px;margin:0 0 20px}'
+            'a.btn{display:inline-block;background:#b09a3a;color:#fff;text-decoration:none;'
+            'padding:8px 14px;border-radius:6px;font-size:14px;font-weight:600;margin-bottom:18px}'
+            'table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;'
+            'border-radius:8px;overflow:hidden}th,td{text-align:left;padding:10px 14px;'
+            'border-bottom:1px solid #f0f0f0;font-size:14px}th{background:#fafafa;color:#374151}'
+            '</style></head><body><div class="wrap">'
+            '<h1>Launch Waitlist</h1>'
+            f'<p class="sub">{count} email{"" if count == 1 else "s"} captured from the coming-soon page.</p>'
+            '<a class="btn" href="/admin/waitlist?export=csv">Download CSV</a>'
+            '<table><thead><tr><th>Email</th><th>Source</th><th>Signed up</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table>'
+            '</div></body></html>'
+        )
+        return HTMLResponse(body)
+
     # Health checks
     @app.get("/health")
     def health():

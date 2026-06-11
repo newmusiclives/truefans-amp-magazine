@@ -4080,6 +4080,45 @@ class Repository:
         conn.close()
         return dict(row)["count"] if row else 0
 
+    # ---- Launch waitlist (pre-launch "coming soon" capture) ----
+
+    def add_to_launch_waitlist(self, email: str, source: str = "coming-soon", referrer: str = "") -> bool:
+        """Record a pre-launch email signup. Returns True if newly added,
+        False if the email was already on the list (idempotent — a repeat
+        signup is a success from the visitor's perspective, not an error)."""
+        conn = self._conn()
+        try:
+            conn.execute(
+                "INSERT INTO launch_waitlist (email, source, referrer) VALUES (?, ?, ?)",
+                (email, source, referrer),
+            )
+            conn.commit()
+            return True
+        except Exception:
+            # UNIQUE violation on email → already signed up. Roll back so the
+            # connection is reusable (Postgres aborts the txn on error).
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+            return False
+        finally:
+            conn.close()
+
+    def get_launch_waitlist(self, limit: int = 1000) -> list[dict]:
+        conn = self._conn()
+        rows = conn.execute(
+            "SELECT * FROM launch_waitlist ORDER BY created_at DESC LIMIT ?", (limit,)
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
+    def get_launch_waitlist_count(self) -> int:
+        conn = self._conn()
+        row = conn.execute("SELECT COUNT(*) as count FROM launch_waitlist").fetchone()
+        conn.close()
+        return dict(row)["count"] if row else 0
+
     # ---- Subscriber Segments ----
 
     def get_subscriber_segments_summary(self) -> dict:

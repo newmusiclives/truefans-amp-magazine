@@ -1748,3 +1748,16 @@ CREATE INDEX IF NOT EXISTS idx_cross_promo_status ON cross_promo_partners(status
 CREATE INDEX IF NOT EXISTS idx_cross_promo_edition ON cross_promo_partners(edition_slug);
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (52);
+
+-- v53: Pre-launch "coming soon" email capture
+CREATE TABLE IF NOT EXISTS launch_waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    source TEXT NOT NULL DEFAULT 'coming-soon',
+    referrer TEXT NOT NULL DEFAULT '',
+    notified INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_launch_waitlist_created ON launch_waitlist(created_at DESC);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (53);

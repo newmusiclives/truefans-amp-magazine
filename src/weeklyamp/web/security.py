@@ -163,6 +163,8 @@ _PUBLIC_PREFIXES = (
     "/pricing", "/billing/webhook", "/billing/success", "/billing/checkout",
     # Living Editions — public web-hosted versions of published issues
     "/edition",
+    # Pre-launch waitlist capture (posted from the "coming soon" holding page)
+    "/coming-soon",
 )
 _PUBLIC_EXACT = frozenset({
     "/",
@@ -911,7 +913,28 @@ class AuthMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-_COMING_SOON_HTML = """<!DOCTYPE html>
+def render_coming_soon_page(message: str = "", error: str = "", email: str = "") -> str:
+    """Build the pre-launch holding page, including the email-capture form.
+
+    Shared by ComingSoonMiddleware (the gate) and the /coming-soon/notify
+    route (the form handler) so the page looks identical whether it's the
+    initial view or the post-submit confirmation. ``message``/``error``
+    render a status banner under the form; ``email`` re-fills the input on
+    a validation error. All three are HTML-escaped — they can echo back
+    visitor input.
+    """
+    import html as _html
+    safe_email = _html.escape(email, quote=True)
+    banner = ""
+    if message:
+        banner = (
+            f'<p class="note ok">{_html.escape(message)}</p>'
+        )
+    elif error:
+        banner = (
+            f'<p class="note err">{_html.escape(error)}</p>'
+        )
+    return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -919,17 +942,31 @@ _COMING_SOON_HTML = """<!DOCTYPE html>
 <meta name="robots" content="noindex, nofollow">
 <title>TrueFans DISPATCH &mdash; Coming Soon</title>
 <style>
-  html,body{margin:0;height:100%}
-  body{font-family:Georgia,'Times New Roman',serif;background:#111;color:#f4f4f4;
-       display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}
-  .wrap{max-width:560px}
-  .kicker{letter-spacing:.28em;text-transform:uppercase;font-size:12px;color:#b09a3a;
-          font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;margin:0 0 18px}
-  h1{font-size:40px;line-height:1.1;margin:0 0 18px;font-weight:700}
-  p{font-size:17px;line-height:1.6;color:#c9c9c9;margin:0 auto;max-width:440px}
-  .rule{width:48px;height:3px;background:#b09a3a;margin:28px auto;border-radius:2px}
-  .foot{margin-top:40px;font-size:12px;color:#777;
-        font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;letter-spacing:.04em}
+  html,body{{margin:0;height:100%}}
+  body{{font-family:Georgia,'Times New Roman',serif;background:#111;color:#f4f4f4;
+       display:flex;align-items:center;justify-content:center;text-align:center;padding:24px}}
+  .wrap{{max-width:560px;width:100%}}
+  .kicker{{letter-spacing:.28em;text-transform:uppercase;font-size:12px;color:#b09a3a;
+          font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;margin:0 0 18px}}
+  h1{{font-size:40px;line-height:1.1;margin:0 0 18px;font-weight:700}}
+  p.lede{{font-size:17px;line-height:1.6;color:#c9c9c9;margin:0 auto;max-width:440px}}
+  .rule{{width:48px;height:3px;background:#b09a3a;margin:28px auto;border-radius:2px}}
+  form.cap{{display:flex;gap:10px;max-width:420px;margin:28px auto 0;flex-wrap:wrap;
+           justify-content:center}}
+  form.cap input[type=email]{{flex:1 1 220px;min-width:0;padding:13px 15px;font-size:15px;
+           font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;border:1px solid #3a3a3a;
+           border-radius:8px;background:#1b1b1b;color:#f4f4f4}}
+  form.cap input[type=email]:focus{{outline:none;border-color:#b09a3a}}
+  form.cap button{{padding:13px 22px;font-size:15px;font-weight:600;cursor:pointer;
+           font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;border:0;border-radius:8px;
+           background:#b09a3a;color:#111}}
+  form.cap button:hover{{background:#c4ab43}}
+  .note{{font-size:14px;margin:16px auto 0;max-width:420px;
+        font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif}}
+  .note.ok{{color:#7ed98a}}
+  .note.err{{color:#e88}}
+  .foot{{margin-top:40px;font-size:12px;color:#777;
+        font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;letter-spacing:.04em}}
 </style>
 </head>
 <body>
@@ -937,8 +974,14 @@ _COMING_SOON_HTML = """<!DOCTYPE html>
     <p class="kicker">TrueFans DISPATCH</p>
     <h1>Something good is on its way.</h1>
     <div class="rule"></div>
-    <p>We're putting the finishing touches on a newsletter built for artists, fans,
-       and the people who move the music business. Check back soon.</p>
+    <p class="lede">A newsletter built for artists, fans, and the people who move the
+       music business. Leave your email and we'll tell you the moment it's live.</p>
+    <form class="cap" method="post" action="/coming-soon/notify">
+      <input type="email" name="email" placeholder="you@email.com" value="{safe_email}"
+             required autocomplete="email" aria-label="Email address">
+      <button type="submit">Notify me</button>
+    </form>
+    {banner}
     <p class="foot">&copy; 2026 TrueFans DISPATCH</p>
   </div>
 </body>
@@ -974,7 +1017,9 @@ class ComingSoonMiddleware(BaseHTTPMiddleware):
 
     _PREVIEW_COOKIE = "_preview"
     # Paths that must remain reachable even while the site is hidden.
-    _ALWAYS_ALLOW = ("/health", "/static", "/login", "/logout", "/favicon.ico")
+    # /coming-soon is the waitlist capture endpoint posted to from the
+    # holding page itself, so it has to work while the gate is closed.
+    _ALWAYS_ALLOW = ("/health", "/static", "/login", "/logout", "/favicon.ico", "/coming-soon")
 
     def __init__(self, app, enabled: bool = False, token: str = "") -> None:
         super().__init__(app)
@@ -1010,7 +1055,7 @@ class ComingSoonMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         return HTMLResponse(
-            _COMING_SOON_HTML,
+            render_coming_soon_page(),
             status_code=503,
             headers={
                 "Retry-After": "86400",
