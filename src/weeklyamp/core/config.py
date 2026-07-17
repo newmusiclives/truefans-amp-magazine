@@ -30,6 +30,7 @@ from weeklyamp.core.models import (
     NewsletterConfig,
     PaidTiersConfig,
     PodcastConfig,
+    PromoConfig,
     RateLimitConfig,
     ReengagementConfig,
     ReferralConfig,
@@ -170,6 +171,14 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
         utm_source=analytics_data.get("utm_source", "truefans_newsletter"),
         utm_medium=analytics_data.get("utm_medium", "email"),
     )
+
+    # Ecosystem cross-sell promo block config (AMP / RISE / EDGE).
+    # Env override lets us flip it on in prod without a deploy, matching the
+    # coming-soon gate's WEEKLYAMP_COMING_SOON pattern.
+    promo_data = yaml_data.get("promo", {})
+    if os.getenv("WEEKLYAMP_PROMO_ENABLED", "").lower() in ("1", "true", "yes"):
+        promo_data = {**promo_data, "enabled": True}
+    promo = PromoConfig(**promo_data) if promo_data else PromoConfig()
 
     # Tracking config
     trk_data = yaml_data.get("tracking", {})
@@ -347,6 +356,7 @@ def load_config(config_path: Optional[str] = None) -> AppConfig:
         submissions=submissions,
         email=email,
         analytics=analytics,
+        promo=promo,
         tracking=tracking,
         ab_testing=ab_testing,
         deliverability=deliverability,

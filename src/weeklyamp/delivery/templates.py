@@ -134,6 +134,24 @@ def render_submission_section(
     )
 
 
+def render_promo_block(target, cta_url: str) -> str:
+    """Render the ecosystem cross-sell promo block (AMP / RISE / EDGE).
+
+    *target* is a :class:`weeklyamp.core.models.PromoTarget`; *cta_url* is
+    the fully-built, UTM-tagged destination. Copy is sanitized here; the
+    URL is caller-constructed and passed through as-is.
+    """
+    env = get_env()
+    template = env.get_template("promo_block.html.j2")
+    return template.render(
+        label=sanitize_html(target.label or ""),
+        headline=sanitize_html(target.headline or ""),
+        body_html=sanitize_html(target.body_html or ""),
+        cta_text=sanitize_html(target.cta_text or "Learn more"),
+        cta_url=cta_url,
+    )
+
+
 def render_sponsor_block(block: dict) -> str:
     """Render a single sponsor ad block for email."""
     env = get_env()

@@ -195,10 +195,12 @@ def assemble_newsletter(
     # Resolve edition name for edition-aware prompts
     edition_slug = issue.get("edition_slug", "")
     edition_name = ""
+    edition_audience = ""
     if edition_slug:
         edition = repo.get_edition_by_slug(edition_slug)
         if edition:
             edition_name = edition.get("name", "")
+            edition_audience = edition.get("audience", "") or ""
 
     drafts = repo.get_drafts_for_issue(issue_id)
     section_map = get_section_map(repo)
@@ -367,6 +369,27 @@ def assemble_newsletter(
         # Add sponsor text to plain text
         for b in sponsor_blocks:
             plain_parts.append(f"--- SPONSORED: {b['sponsor_name']} ---\n{b['headline']}\n{b['cta_url']}\n")
+
+    # Inject the ecosystem cross-sell promo block (AMP / RISE / EDGE).
+    # Config-driven and disabled by default; renders one positioned CTA
+    # routed by edition. Licensee/city editions inherit it automatically
+    # since they flow through this same assembly path.
+    promo_cfg = getattr(config, "promo", None)
+    if promo_cfg is not None:
+        from weeklyamp.content.promo import build_promo_block
+        promo = build_promo_block(
+            promo_cfg, edition_slug, audience=edition_audience,
+            campaign=edition_slug or "dispatch",
+        )
+        if promo:
+            entry = {"html": promo["html"]}
+            if promo["position"] == "top":
+                sections_html.insert(0, entry)
+            elif promo["position"] == "mid":
+                sections_html.insert(len(sections_html) // 2, entry)
+            else:  # bottom
+                sections_html.append(entry)
+            plain_parts.append(promo["plain"])
 
     # Render full newsletter (using edition-specific template if available)
     from datetime import date as _date

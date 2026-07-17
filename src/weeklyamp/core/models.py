@@ -725,6 +725,69 @@ class AnalyticsConfig(BaseModel):
     utm_medium: str = "email"
 
 
+class PromoTarget(BaseModel):
+    """A single call-to-action destination for the ecosystem promo block.
+
+    ``url`` is the bare destination; UTM params are appended at render time
+    by :func:`weeklyamp.content.promo.build_promo_block`. An empty ``url``
+    means "not configured yet" — the block is skipped rather than rendered
+    with a dead link.
+    """
+    label: str = ""            # small eyebrow, e.g. "For artists"
+    headline: str = ""
+    body_html: str = ""
+    cta_text: str = "Learn more"
+    url: str = ""
+
+
+class PromoConfig(BaseModel):
+    """Cross-sell "promo block" that routes each edition's readers to the
+    right next step in the TrueFans ecosystem (AMP / RISE / EDGE).
+
+    Rendered by :func:`weeklyamp.content.promo.build_promo_block` and
+    injected into every assembled edition — including licensee/city
+    editions, which flow through the same assembly path. Disabled by
+    default so it stays dark until real destination URLs are set and it is
+    explicitly enabled.
+
+    ``routing`` maps an ``edition_slug`` (or the edition's ``audience``) to
+    a key in ``targets``; unmapped editions fall back to ``default_target``.
+    """
+    enabled: bool = False
+    position: str = "bottom"           # top | mid | bottom
+    utm_source: str = "dispatch"
+    utm_medium: str = "newsletter"
+    routing: dict[str, str] = Field(default_factory=lambda: {
+        "fan": "amp",
+        "industry": "amp",
+        "artist": "rise",
+    })
+    default_target: str = "edge"
+    targets: dict[str, PromoTarget] = Field(default_factory=lambda: {
+        "amp": PromoTarget(
+            label="Go deeper",
+            headline="Meet TrueFans AMP",
+            body_html="A monthly letter from editor John Milton Fogg — the writing behind the signal, plus one EDGE Move each issue. Depth an algorithm can't give you.",
+            cta_text="Subscribe to AMP — $20/mo",
+            url="https://newmusiclives.beehiiv.com/subscribe",
+        ),
+        "rise": PromoTarget(
+            label="For artists",
+            headline="Start your Crew — free",
+            body_html="Every artist starts with a Soundcheck. Create your free Crew and begin the climb toward your own Team.",
+            cta_text="Create your free Crew",
+            url="",
+        ),
+        "edge": PromoTarget(
+            label="Coming soon",
+            headline="TrueFans EDGE — 48 Moves",
+            body_html="A working toolkit for the whole artist journey. Join the waitlist and be first through the door.",
+            cta_text="Join the EDGE waitlist",
+            url="https://truefans-playbook.netlify.app/",
+        ),
+    })
+
+
 class TrackingConfig(BaseModel):
     open_tracking: bool = False
     click_tracking: bool = False
@@ -935,6 +998,7 @@ class AppConfig(BaseModel):
     submissions: SubmissionsConfig = Field(default_factory=SubmissionsConfig)
     email: EmailConfig = Field(default_factory=EmailConfig)
     analytics: AnalyticsConfig = Field(default_factory=AnalyticsConfig)
+    promo: PromoConfig = Field(default_factory=PromoConfig)
     tracking: TrackingConfig = Field(default_factory=TrackingConfig)
     ab_testing: ABTestConfig = Field(default_factory=ABTestConfig)
     deliverability: DeliverabilityConfig = Field(default_factory=DeliverabilityConfig)
