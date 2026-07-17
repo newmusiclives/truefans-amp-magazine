@@ -723,6 +723,7 @@ def create_app() -> FastAPI:
         subscribers,
     )
     from weeklyamp.web.routes import agents as agents_routes
+    from weeklyamp.web.routes import promo_admin as promo_admin_routes
     from weeklyamp.web.routes import calendar as calendar_routes
     from weeklyamp.web.routes import growth as growth_routes
     from weeklyamp.web.routes import editor_articles as editor_articles_routes
@@ -923,6 +924,7 @@ def create_app() -> FastAPI:
         dependencies=[Depends(require_feature(FeatureFlag.WHITE_LABEL))],
     )
     # Admin self-service: change password + feature flags + 2FA + reset + cost
+    app.include_router(promo_admin_routes.router, prefix="/admin/promo")
     app.include_router(admin_account_routes.router, prefix="/admin")
     app.include_router(admin_feature_flags_routes.router, prefix="/admin")
     app.include_router(admin_2fa_routes.router, prefix="/admin")

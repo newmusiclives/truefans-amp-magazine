@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Promo Block — TrueFans DISPATCH{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Ecosystem Promo Block</h2>
+    <p class="page-subtitle">The AMP / RISE / EDGE cross-sell CTA injected into every edition. Edits here take effect on the next assembled edition — no deploy.</p>
+</div>
+
+{% if saved %}
+<div class="alert alert-success" role="status" style="background:#1d3b2a;border:1px solid #2a6b3f;color:#c8f0d6;padding:12px 16px;border-radius:8px;margin-bottom:16px;max-width:820px;">
+    Saved. Changes apply to the next assembled edition.
+</div>
+{% endif %}
+
+{% if env_forced %}
+<div class="alert" role="status" style="background:#3b331d;border:1px solid #6b5a2a;color:#f0e6c8;padding:12px 16px;border-radius:8px;margin-bottom:16px;max-width:820px;">
+    <strong>WEEKLYAMP_PROMO_ENABLED</strong> is set — the block is force-enabled by env and the "Enabled" toggle below is overridden.
+</div>
+{% endif %}
+
+<form action="/admin/promo/save" method="post" style="max-width:820px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+    <div class="card" style="margin-bottom:20px;padding:20px;">
+        <h3 style="margin-top:0;">Settings</h3>
+        <label style="display:block;margin-bottom:12px;">
+            <input type="checkbox" name="enabled" {% if cfg.enabled %}checked{% endif %}> Enabled
+        </label>
+        <label style="display:block;margin-bottom:12px;">
+            <input type="checkbox" name="track_clicks" {% if cfg.track_clicks %}checked{% endif %}> Track clicks (wrap CTA via /t/promo for first-party click logs)
+        </label>
+        <div style="margin-bottom:12px;">
+            <label for="position" style="display:block;margin-bottom:6px;font-weight:600;">Position</label>
+            <select name="position" id="position" style="padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+                {% for p in ["top", "mid", "bottom"] %}
+                <option value="{{ p }}" {% if cfg.position == p %}selected{% endif %}>{{ p }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="default_target" style="display:block;margin-bottom:6px;font-weight:600;">Default target (unmapped editions)</label>
+            <select name="default_target" id="default_target" style="padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+                {% for k in target_keys %}
+                <option value="{{ k }}" {% if cfg.default_target == k %}selected{% endif %}>{{ k }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;padding:20px;">
+        <h3 style="margin-top:0;">Routing</h3>
+        <p style="color:#888;font-size:13px;margin-top:0;">Which target each edition points at. A target with an empty URL falls back to the default.</p>
+        {% for ed in route_editions %}
+        <div style="margin-bottom:12px;">
+            <label for="route_{{ ed }}" style="display:inline-block;width:120px;font-weight:600;text-transform:capitalize;">{{ ed }}</label>
+            <select name="route_{{ ed }}" id="route_{{ ed }}" style="padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+                {% for k in target_keys %}
+                <option value="{{ k }}" {% if cfg.routing.get(ed) == k %}selected{% endif %}>{{ k }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% for key, t in targets %}
+    <div class="card" style="margin-bottom:20px;padding:20px;">
+        <h3 style="margin-top:0;text-transform:uppercase;">{{ key }} target
+            {% if not t.url %}<span style="font-size:12px;color:#c88;font-weight:normal;">— no URL set (skipped / falls back)</span>{% endif %}
+        </h3>
+        <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-weight:600;">Eyebrow label</label>
+            <input type="text" name="{{ key }}_label" value="{{ t.label }}" style="width:100%;padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-weight:600;">Headline</label>
+            <input type="text" name="{{ key }}_headline" value="{{ t.headline }}" style="width:100%;padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-weight:600;">Body</label>
+            <textarea name="{{ key }}_body" rows="3" style="width:100%;padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">{{ t.body_html }}</textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-weight:600;">CTA text</label>
+            <input type="text" name="{{ key }}_cta" value="{{ t.cta_text }}" style="width:100%;padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+        </div>
+        <div>
+            <label style="display:block;margin-bottom:4px;font-weight:600;">Destination URL</label>
+            <input type="url" name="{{ key }}_url" value="{{ t.url }}" placeholder="https://…" style="width:100%;padding:8px;border-radius:6px;background:#1a1a1a;color:#eee;border:1px solid #444;">
+        </div>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary" style="padding:10px 24px;background:#b09a3a;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Save promo settings</button>
+</form>
+
+<div class="card" style="max-width:820px;margin-top:28px;padding:20px;">
+    <h3 style="margin-top:0;">Click performance</h3>
+    {% if performance %}
+    <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <thead>
+            <tr style="text-align:left;color:#888;border-bottom:1px solid #333;">
+                <th style="padding:8px 6px;">Target</th>
+                <th style="padding:8px 6px;">Edition</th>
+                <th style="padding:8px 6px;text-align:right;">Clicks</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in performance %}
+            <tr style="border-bottom:1px solid #222;">
+                <td style="padding:8px 6px;text-transform:uppercase;">{{ row.target }}</td>
+                <td style="padding:8px 6px;">{{ row.edition_slug or '—' }}</td>
+                <td style="padding:8px 6px;text-align:right;">{{ row.clicks }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:#888;margin:0;">No promo clicks recorded yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

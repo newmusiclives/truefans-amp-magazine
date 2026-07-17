@@ -1019,7 +1019,9 @@ class ComingSoonMiddleware(BaseHTTPMiddleware):
     # Paths that must remain reachable even while the site is hidden.
     # /coming-soon is the waitlist capture endpoint posted to from the
     # holding page itself, so it has to work while the gate is closed.
-    _ALWAYS_ALLOW = ("/health", "/static", "/login", "/logout", "/favicon.ico", "/coming-soon")
+    # /t = email tracking pixels + click/promo redirects; these are email
+    # infrastructure and must keep working even while the gate is closed.
+    _ALWAYS_ALLOW = ("/health", "/static", "/login", "/logout", "/favicon.ico", "/coming-soon", "/t")
 
     def __init__(self, app, enabled: bool = False, token: str = "") -> None:
         super().__init__(app)

@@ -84,3 +84,31 @@ async def track_click(
             logger.exception("Failed to record click event issue=%s sub=%s", issue_id, subscriber_id)
 
     return RedirectResponse(url=original_url, status_code=302)
+
+
+@router.get("/t/promo")
+async def track_promo_click(
+    t: str = Query(""),          # target key: amp | rise | edge
+    e: str = Query(""),          # edition slug
+    url: str = Query(""),        # base64-encoded destination
+):
+    """Record an ecosystem promo-block click and redirect to the target.
+
+    First-party click log for AMP/RISE/EDGE CTAs. Always records (the block
+    is opt-in at render time), independent of email open/click tracking.
+    """
+    try:
+        dest = base64.urlsafe_b64decode(url.encode()).decode("utf-8")
+    except Exception:
+        dest = url or "/"
+    # Guard against open-redirect: only follow http(s) destinations.
+    if not dest.startswith(("http://", "https://")):
+        dest = "/"
+
+    try:
+        repo = get_repo()
+        repo.record_promo_event(target=t[:32], edition_slug=e[:64], event_type="click")
+    except Exception:
+        logger.exception("Failed to record promo click t=%s e=%s", t, e)
+
+    return RedirectResponse(url=dest, status_code=302)

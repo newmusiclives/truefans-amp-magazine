@@ -1849,6 +1849,23 @@ CREATE INDEX IF NOT EXISTS idx_launch_waitlist_created ON launch_waitlist(create
 
 INSERT OR IGNORE INTO schema_version (version) VALUES (53);
 """,
+
+    54: """
+-- v54: First-party click log for the ecosystem promo block (AMP/RISE/EDGE)
+CREATE TABLE IF NOT EXISTS promo_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    target TEXT NOT NULL DEFAULT '',
+    edition_slug TEXT NOT NULL DEFAULT '',
+    event_type TEXT NOT NULL DEFAULT 'click',
+    subscriber_id INTEGER,
+    ip_address TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_promo_events_target ON promo_events(target);
+CREATE INDEX IF NOT EXISTS idx_promo_events_created ON promo_events(created_at DESC);
+
+INSERT OR IGNORE INTO schema_version (version) VALUES (54);
+""",
 }
 
 

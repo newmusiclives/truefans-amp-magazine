@@ -988,6 +988,40 @@ class Repository:
         conn.close()
         return [dict(r) for r in rows]
 
+    # ---- Promo Block Events (ecosystem cross-sell click tracking) ----
+
+    def record_promo_event(
+        self, target: str, edition_slug: str = "", event_type: str = "click",
+        subscriber_id: int = 0, ip_address: str = "",
+    ) -> int:
+        conn = self._conn()
+        cur = conn.execute(
+            """INSERT INTO promo_events
+               (target, edition_slug, event_type, subscriber_id, ip_address)
+               VALUES (?, ?, ?, ?, ?)""",
+            (target, edition_slug, event_type, subscriber_id or None, ip_address),
+        )
+        conn.commit()
+        row_id = cur.lastrowid
+        conn.close()
+        return row_id
+
+    def get_promo_performance(self, limit: int = 100) -> list[dict]:
+        """Clicks aggregated by promo target + edition, most-clicked first."""
+        conn = self._conn()
+        rows = conn.execute(
+            """SELECT target, edition_slug,
+                      COUNT(CASE WHEN event_type = 'click' THEN 1 END) as clicks,
+                      COUNT(*) as events
+               FROM promo_events
+               GROUP BY target, edition_slug
+               ORDER BY clicks DESC
+               LIMIT ?""",
+            (limit,),
+        ).fetchall()
+        conn.close()
+        return [dict(r) for r in rows]
+
     # ---- Edition Markets ----
 
     def get_edition_markets(self, edition_slug: str = "") -> list[dict]:

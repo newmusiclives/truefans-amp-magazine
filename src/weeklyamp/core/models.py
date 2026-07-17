@@ -755,6 +755,7 @@ class PromoConfig(BaseModel):
     """
     enabled: bool = False
     position: str = "bottom"           # top | mid | bottom
+    track_clicks: bool = True          # wrap CTA via /t/promo for first-party clicks
     utm_source: str = "dispatch"
     utm_medium: str = "newsletter"
     routing: dict[str, str] = Field(default_factory=lambda: {

@@ -376,10 +376,16 @@ def assemble_newsletter(
     # since they flow through this same assembly path.
     promo_cfg = getattr(config, "promo", None)
     if promo_cfg is not None:
-        from weeklyamp.content.promo import build_promo_block
+        import os
+        from weeklyamp.content.promo import build_promo_block, effective_promo_config
+        # Overlay any runtime admin edits (copy/routing/targets) stored in
+        # admin_settings; env kill-switch still wins on `enabled`.
+        env_forced = os.getenv("WEEKLYAMP_PROMO_ENABLED", "").lower() in ("1", "true", "yes")
+        promo_cfg = effective_promo_config(repo, promo_cfg, env_forced=env_forced)
+        click_base = config.site_domain if promo_cfg.track_clicks else ""
         promo = build_promo_block(
             promo_cfg, edition_slug, audience=edition_audience,
-            campaign=edition_slug or "dispatch",
+            campaign=edition_slug or "dispatch", click_base=click_base,
         )
         if promo:
             entry = {"html": promo["html"]}
